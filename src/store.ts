@@ -1,5 +1,5 @@
 export type Role = 'customer' | 'admin';
-export type User = { id: string; name: string; email: string; pass: string; role: Role; createdAt: string };
+export type User = { id: string; name: string; email: string; pass?: string; role: Role; createdAt: string; photoURL?: string; authProvider?: 'password' | 'google' };
 export type Category = { id: string; name: string; slug: string; image: string; status: 'active' | 'hidden' };
 export type Review = { name: string; rating: number; text: string; date: string };
 export type Product = {
@@ -30,8 +30,25 @@ export type CartLine = { productId: string };
 export type View = 'home' | 'products' | 'details' | 'cart' | 'checkout' | 'orders' | 'purchases' | 'dashboard' | 'admin';
 
 // ---------- helpers ----------
+export const safeStringify = (v: unknown): string => {
+  const seen = new WeakSet();
+  return JSON.stringify(v, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      // Don't serialize DOM nodes or event targets if any accidentally leak in
+      if ('nodeType' in value || ('window' in value && (value as unknown as Window).window === value)) {
+        return undefined;
+      }
+      if (seen.has(value)) {
+        return undefined;
+      }
+      seen.add(value);
+    }
+    return value;
+  });
+};
+
 export const load = <T,>(k: string, fb: T): T => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) as T : fb; } catch { return fb; } };
-export const save = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* full */ } };
+export const save = (k: string, v: unknown) => { try { localStorage.setItem(k, safeStringify(v)); } catch { /* full or blocked */ } };
 export const tk = (n: number) => '৳' + n.toLocaleString('en-IN');
 export const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9\u0980-\u09FF]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('item-' + Date.now());
 export const uid = (p: string) => p + '-' + Date.now().toString(36) + Math.floor(Math.random() * 999);
@@ -100,17 +117,8 @@ export const SEED_PRODUCTS: Product[] = [
 
 export const SEED_USERS: User[] = [
   { id: 'u-admin', name: 'Murad Admin', email: 'admin@muradgraphics.store', pass: 'murad123', role: 'admin', createdAt: nowStr() },
-  { id: 'u-demo', name: 'Shariful Islam', email: 'demo@demo.com', pass: 'demo123', role: 'customer', createdAt: nowStr() },
 ];
 
-export const SEED_ORDERS: Order[] = [
-  {
-    id: 'MG-100001', userId: 'u-demo', items: [{ productId: 'p3', name: 'Ultimate Digital Assets Mega Bundle', price: 259 }],
-    subtotal: 259, discount: 0, total: 259, coupon: '', paymentMethod: 'bKash',
-    paymentStatus: 'Paid', orderStatus: 'Completed', trxId: 'DEMO-TRX-1', createdAt: nowStr(),
-  },
-];
+export const SEED_ORDERS: Order[] = [];
 
-export const SEED_PURCHASES = [
-  { id: 'pu-seed1', userId: 'u-demo', productId: 'p3', orderId: 'MG-100001', accessStatus: 'active' as const, purchasedAt: nowStr() },
-];
+export const SEED_PURCHASES: Purchase[] = [];

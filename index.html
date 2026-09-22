@@ -3,6 +3,36 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>
+  // Ensure window.fetch is safe from strict read-only getter collisions in sandboxed iframes
+  (function() {
+    try {
+      var origFetch = window.fetch ? window.fetch.bind(window) : null;
+      var currentFetch = origFetch;
+
+      // Ensure fetch on window can be both read and assigned without throwing
+      try {
+        Object.defineProperty(window, 'fetch', {
+          get: function() { return currentFetch; },
+          set: function(fn) { currentFetch = fn; },
+          configurable: true,
+          enumerable: true
+        });
+      } catch (e1) {
+        try {
+          if (window.Window && window.Window.prototype) {
+            Object.defineProperty(window.Window.prototype, 'fetch', {
+              get: function() { return currentFetch; },
+              set: function(fn) { currentFetch = fn; },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e2) {}
+      }
+    } catch (e) {}
+  })();
+</script>
 <title>Murad Graphics — Digital Store Bangladesh</title>
 <meta name="description" content="Murad Graphics - Premium digital products: themes, software, bundles, subscriptions. Pay with bKash/Nagad, get instant Drive access after verification." />
 <link rel="preconnect" href="https://fonts.googleapis.com">

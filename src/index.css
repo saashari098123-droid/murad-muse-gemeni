@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
 html { scroll-behavior: smooth; }
 body { font-family: 'Noto Serif Bengali', 'Hind Siliguri', Inter, sans-serif; background: #f7f4ef; color: #0f172a; }
 .font-display { font-family: 'Space Grotesk', 'Noto Serif Bengali', 'Hind Siliguri', sans-serif; }
@@ -48,9 +53,10 @@ body { font-family: 'Noto Serif Bengali', 'Hind Siliguri', Inter, sans-serif; ba
 input,select,textarea{outline:none}
 input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-shadow:0 0 0 3px rgba(194,112,29,.15)}
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #efe8dc; }
-::-webkit-scrollbar-thumb { background: linear-gradient(#5a2e0d,#c2701d); border-radius: 8px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d6c7b2; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #b89f81; }
 ::selection { background: #5a2e0d; color: #fff; }
 
 .mesh-hero {

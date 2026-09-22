@@ -5,6 +5,7 @@ import {
   ChevronRight, ChevronLeft, ChevronDown, User as UserIcon, Users, Tag, Bell, Box, Globe, Store,
   Download, Headphones, BadgeCheck, ShieldCheck, Zap, History, LogIn, AlertCircle,
   ArrowRight, ArrowLeft, LayoutGrid, MapPin, Phone, Facebook, Youtube, Instagram, Send,
+  Lock, Key,
 } from 'lucide-react';
 import { STR, type Lang } from './i18n';
 import {
@@ -12,6 +13,9 @@ import {
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
   type User, type Category, type Product, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
+import { db, auth, loginWithGoogle, logoutFirebase, firebaseEnabled } from './store/firebase';
+import { collection, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
 const BROWN_D = '#3d1e07';
@@ -42,7 +46,7 @@ export default function App() {
   const [payments, setPayments] = useState<Payment[]>(() => load('ks_payments_v2', [] as Payment[]));
   const [settings, setSettings] = useState<Settings>(() => load('ks_settings_v2', SEED_SETTINGS));
   const [cart, setCart] = useState<CartLine[]>(() => load('ks_cart_v1', [] as CartLine[]));
-  const [sessionId, setSessionId] = useState<string | null>(() => sessionStorage.getItem('ks_session_v1'));
+  const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('ks_session_v1') || sessionStorage.getItem('ks_session_v1'));
 
   const [view, setView] = useState<View>('home');
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -56,6 +60,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState<'login' | 'register' | null>(null);
   const [authForm, setAuthForm] = useState({ name: '', email: '', pass: '' });
   const [authErr, setAuthErr] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
   const [toast, setToast] = useState('');
   const [err, setErr] = useState('');
   const [copied, setCopied] = useState('');
@@ -74,8 +79,139 @@ export default function App() {
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'product' | 'category'; id: string; name: string } | null>(null);
+  const [couponDraft, setCouponDraft] = useState<string>(() => Object.entries(load('ks_settings_v2', SEED_SETTINGS).coupons || {}).map(([k, v]) => `${k}=${v}`).join(', '));
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+  const [adminPassForm, setAdminPassForm] = useState({ currentPass: '', newPass: '', confirmPass: '' });
+  const [passUpdating, setPassUpdating] = useState(false);
+  const [passMsg, setPassMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   const t = STR[lang];
+
+  // Live sync with Firebase Firestore if available, otherwise localStorage fallback
+  useEffect(() => {
+    if (!firebaseEnabled || !db) return;
+
+    // Listen to users
+    const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
+      const cloudUsers: User[] = [];
+      snap.forEach(d => cloudUsers.push(d.data() as User));
+      if (cloudUsers.length > 0) {
+        setUsers(prev => {
+          const map = new Map<string, User>();
+          prev.forEach(u => map.set(u.id, u));
+          cloudUsers.forEach(u => map.set(u.id, u));
+          return Array.from(map.values());
+        });
+      }
+    }, (err) => {
+      console.warn('Users listener:', err.message);
+    });
+
+    // Listen to categories
+    const unsubCats = onSnapshot(collection(db, 'categories'), snap => {
+      if (!snap.empty) {
+        const cloudCats: Category[] = [];
+        snap.forEach(d => cloudCats.push(d.data() as Category));
+        setCategories(cloudCats);
+      }
+    }, (err) => {
+      console.warn('Categories listener:', err.message);
+    });
+
+    // Listen to products
+    const unsubProducts = onSnapshot(collection(db, 'products'), snap => {
+      if (!snap.empty) {
+        const cloudProds: Product[] = [];
+        snap.forEach(d => cloudProds.push(d.data() as Product));
+        setProducts(cloudProds);
+      }
+    }, (err) => {
+      console.warn('Products listener:', err.message);
+    });
+
+    // Listen to orders
+    const unsubOrders = onSnapshot(collection(db, 'orders'), snap => {
+      if (!snap.empty) {
+        const cloudOrders: Order[] = [];
+        snap.forEach(d => cloudOrders.push(d.data() as Order));
+        setOrders(cloudOrders);
+      }
+    }, (err) => {
+      console.warn('Orders listener:', err.message);
+    });
+
+    // Listen to purchases
+    const unsubPurchases = onSnapshot(collection(db, 'purchases'), snap => {
+      if (!snap.empty) {
+        const cloudPurchases: Purchase[] = [];
+        snap.forEach(d => cloudPurchases.push(d.data() as Purchase));
+        setPurchases(cloudPurchases);
+      }
+    }, (err) => {
+      console.warn('Purchases listener:', err.message);
+    });
+
+    // Listen to settings
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), snap => {
+      if (snap.exists()) {
+        const cloudSettings = snap.data() as Settings;
+        if (cloudSettings) {
+          setSettings(prev => ({ ...prev, ...cloudSettings }));
+        }
+      }
+    }, (err) => {
+      console.warn('Settings listener:', err.message);
+    });
+
+    // Auth state changed listener
+    const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const isAdminUser = fbUser.email === 'saashari098123@gmail.com' || fbUser.email === 'admin@muradgraphics.store';
+        const role = isAdminUser ? 'admin' : 'customer';
+        const userDoc: User = {
+          id: fbUser.uid,
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+          email: fbUser.email || '',
+          role,
+          photoURL: fbUser.photoURL || undefined,
+          authProvider: 'google',
+          createdAt: nowStr(),
+        };
+
+        // sync user to firestore
+        try {
+          if (db) {
+            await setDoc(doc(db, 'users', fbUser.uid), userDoc, { merge: true });
+            if (isAdminUser) {
+              await setDoc(doc(db, 'admins', fbUser.uid), { id: fbUser.uid, email: fbUser.email, role: 'admin' }, { merge: true });
+            }
+          }
+        } catch {
+          // offline or permission
+        }
+
+        setUsers(prev => {
+          const filtered = prev.filter(u => u.id !== fbUser.uid);
+          return [userDoc, ...filtered];
+        });
+        localStorage.setItem('ks_session_v1', fbUser.uid);
+        sessionStorage.setItem('ks_session_v1', fbUser.uid);
+        setSessionId(fbUser.uid);
+      }
+    });
+
+    return () => {
+      unsubUsers();
+      unsubCats();
+      unsubProducts();
+      unsubOrders();
+      unsubPurchases();
+      unsubSettings();
+      unsubAuth();
+    };
+  }, []);
 
   useEffect(() => save('ks_lang', lang), [lang]);
   useEffect(() => save('ks_users_v2', users), [users]);
@@ -152,15 +288,88 @@ export default function App() {
   const goDetails = (id: string) => { setDetailId(id); setView('details'); };
 
   // ---------- auth ----------
-  const doRegister = () => {
+  const handleGoogleAuth = async () => {
+    setAuthErr('');
+    setAuthLoading(true);
+    try {
+      const fbUser = await loginWithGoogle();
+      if (!fbUser) throw new Error('No user returned from Google sign-in');
+
+      const userEmail = (fbUser.email || '').toLowerCase();
+      const isAdminUser = userEmail === 'saashari098123@gmail.com' || userEmail === 'admin@muradgraphics.store';
+      const role = isAdminUser ? 'admin' : 'customer';
+      const u: User = {
+        id: fbUser.uid,
+        name: fbUser.displayName || (userEmail ? userEmail.split('@')[0] : 'Google User'),
+        email: fbUser.email || '',
+        role,
+        photoURL: fbUser.photoURL || undefined,
+        authProvider: 'google',
+        createdAt: nowStr(),
+      };
+
+      // Update local state immediately so user is registered & logged in without blocking
+      setUsers(prev => [u, ...prev.filter(x => x.id !== u.id)]);
+      localStorage.setItem('ks_session_v1', u.id);
+      sessionStorage.setItem('ks_session_v1', u.id);
+      setSessionId(u.id);
+      setAuthOpen(null);
+      notify('✓ ' + (lang === 'bn' ? 'গুগল দিয়ে প্রবেশ সফল হয়েছে: ' : 'Google Sign-in successful: ') + u.name);
+      consumePendingBuy(u.id);
+      if (role === 'admin' && !pendingBuy) setView('admin');
+
+      // Sync user to Firestore in the background
+      if (db) {
+        setDoc(doc(db, 'users', fbUser.uid), u, { merge: true }).catch((err: unknown) => {
+          console.warn('Firestore user sync note:', err);
+        });
+        if (isAdminUser) {
+          setDoc(doc(db, 'admins', fbUser.uid), { id: fbUser.uid, email: fbUser.email, role: 'admin' }, { merge: true }).catch((err: unknown) => {
+            console.warn('Firestore admin sync note:', err);
+          });
+        }
+      }
+    } catch (e: unknown) {
+      const errObj = e as { code?: string; message?: string };
+      const code = errObj?.code || '';
+      let msg = errObj?.message || 'Google authentication failed';
+
+      if (code === 'auth/popup-closed-by-user') {
+        msg = lang === 'bn' ? 'লগইন পপ-আপটি বন্ধ করা হয়েছে।' : 'Sign-in window was closed.';
+      } else if (code === 'auth/cancelled-popup-request') {
+        msg = lang === 'bn' ? 'আগের সাইন-ইন রিকোয়েস্ট বাতিল করা হয়েছে।' : 'Previous popup request was cancelled.';
+      } else if (code === 'auth/popup-blocked') {
+        msg = lang === 'bn' ? 'ব্রাউজার পপ-আপ ব্লক করেছে। পপ-আপ অ্যালাউ করুন বা ইমেইল দিয়ে লগইন করুন।' : 'Popup blocked by browser. Please allow popups or use email/password.';
+      } else if (code === 'auth/network-request-failed') {
+        msg = lang === 'bn' ? 'নেটওয়ার্ক সমস্যা। ইন্টারনেট কানেকশন চেক করুন।' : 'Network error. Please check your internet connection.';
+      } else if (code === 'auth/unauthorized-domain') {
+        msg = lang === 'bn' ? 'অননুমোদিত ডোমেন। Firebase Console-এ Auth ডোমেন যোগ করুন।' : 'Unauthorized domain in Firebase Auth settings.';
+      }
+      setAuthErr(msg);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const doRegister = async () => {
     setAuthErr('');
     try {
       if (!authForm.name.trim() || !authForm.email.trim() || !authForm.pass) throw new Error(lang === 'bn' ? 'নাম, ইমেইল ও পাসওয়ার্ড দিন।' : 'Name, email and password required.');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(authForm.email)) throw new Error(lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email.');
       if (users.some(u => u.email.toLowerCase() === authForm.email.toLowerCase())) throw new Error(lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'Account exists — please login.');
-      const u: User = { id: uid('u'), name: authForm.name.trim(), email: authForm.email.trim(), pass: authForm.pass, role: 'customer', createdAt: nowStr() };
+      const isAdminUser = authForm.email.toLowerCase() === 'admin@muradgraphics.store' || authForm.email.toLowerCase() === 'saashari098123@gmail.com';
+      const role = isAdminUser ? 'admin' : 'customer';
+      const u: User = { id: uid('u'), name: authForm.name.trim(), email: authForm.email.trim(), pass: authForm.pass, role, createdAt: nowStr(), authProvider: 'password' };
+      if (db) {
+        await setDoc(doc(db, 'users', u.id), u).catch(() => {});
+        if (isAdminUser) {
+          await setDoc(doc(db, 'admins', u.id), { id: u.id, email: u.email, role: 'admin' }).catch(() => {});
+        }
+      }
       setUsers([...users, u]);
-      sessionStorage.setItem('ks_session_v1', u.id); setSessionId(u.id);
+      localStorage.setItem('ks_session_v1', u.id);
+      sessionStorage.setItem('ks_session_v1', u.id);
+      setSessionId(u.id);
       setAuthOpen(null); notify('✓ ' + u.name); consumePendingBuy(u.id);
     } catch (e: unknown) { setAuthErr(e instanceof Error ? e.message : 'Failed'); }
   };
@@ -168,11 +377,20 @@ export default function App() {
     setAuthErr('');
     const u = users.find(x => x.email.toLowerCase() === authForm.email.toLowerCase() && x.pass === authForm.pass);
     if (!u) { setAuthErr(lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড। (demo@demo.com / demo123)' : 'Wrong email/password. (demo@demo.com / demo123)'); return; }
-    sessionStorage.setItem('ks_session_v1', u.id); setSessionId(u.id);
+    localStorage.setItem('ks_session_v1', u.id);
+    sessionStorage.setItem('ks_session_v1', u.id);
+    setSessionId(u.id);
     setAuthOpen(null); notify('✓ ' + u.name); consumePendingBuy(u.id);
     if (u.role === 'admin' && !pendingBuy) setView('admin');
   };
-  const logout = () => { sessionStorage.removeItem('ks_session_v1'); setSessionId(null); setAcctMenu(false); setView('home'); };
+  const logout = async () => {
+    try { await logoutFirebase(); } catch { /* ignore */ }
+    localStorage.removeItem('ks_session_v1');
+    sessionStorage.removeItem('ks_session_v1');
+    setSessionId(null);
+    setAcctMenu(false);
+    setView('home');
+  };
 
   // ---------- cart (digital: one per product, no qty) ----------
   const addCart = (pid: string) => {
@@ -210,7 +428,12 @@ export default function App() {
         paymentMethod: payMethod, paymentStatus: 'Pending', orderStatus: 'Awaiting Verification', trxId: trxId.trim(), createdAt: nowStr(),
       };
       setOrders([order, ...orders]);
-      setPayments([{ id: uid('pay'), orderId: oid, userId: me.id, amount: total, transactionId: trxId.trim(), method: payMethod, status: 'Pending', createdAt: nowStr() }, ...payments]);
+      const paymentItem = { id: uid('pay'), orderId: oid, userId: me.id, amount: total, transactionId: trxId.trim(), method: payMethod, status: 'Pending' as const, createdAt: nowStr() };
+      setPayments([paymentItem, ...payments]);
+      if (db) {
+        setDoc(doc(db, 'orders', oid), order).catch(() => {});
+        setDoc(doc(db, 'payments', paymentItem.id), paymentItem).catch(() => {});
+      }
       setOrderPlaced(order); setCart([]); setAppliedCoupon(''); setCouponInput(''); setTrxId('');
     } catch (e: unknown) { fail(e instanceof Error ? e.message : 'Failed'); }
   };
@@ -218,13 +441,20 @@ export default function App() {
   const verifyPayment = (orderId: string, ok: boolean) => {
     const o = orders.find(x => x.id === orderId); if (!o) return;
     const st = ok ? 'Paid' : 'Failed';
-    setOrders(orders.map(x => x.id === orderId ? { ...x, paymentStatus: st as Order['paymentStatus'], orderStatus: (ok ? 'Completed' : 'Payment Failed') as Order['orderStatus'] } : x));
+    const updatedStatus = ok ? 'Completed' : 'Payment Failed';
+    setOrders(orders.map(x => x.id === orderId ? { ...x, paymentStatus: st as Order['paymentStatus'], orderStatus: updatedStatus as Order['orderStatus'] } : x));
     setPayments(payments.map(p => p.orderId === orderId ? { ...p, status: st as Payment['status'] } : p));
+    if (db) {
+      updateDoc(doc(db, 'orders', orderId), { paymentStatus: st, orderStatus: updatedStatus }).catch(() => {});
+    }
     if (ok) {
       const fresh: Purchase[] = [];
       o.items.forEach(it => {
-        if (!purchases.some(p => p.userId === o.userId && p.productId === it.productId && p.accessStatus === 'active'))
-          fresh.push({ id: uid('pu'), userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() });
+        if (!purchases.some(p => p.userId === o.userId && p.productId === it.productId && p.accessStatus === 'active')) {
+          const pu: Purchase = { id: uid('pu'), userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() };
+          fresh.push(pu);
+          if (db) setDoc(doc(db, 'purchases', pu.id), pu).catch(() => {});
+        }
       });
       setPurchases([...fresh, ...purchases]);
       setProducts(products.map(p => o.items.some(i => i.productId === p.id) ? { ...p, sold: p.sold + 1 } : p));
@@ -272,34 +502,34 @@ export default function App() {
   const ProductCard = ({ p }: { p: Product }) => {
     const owned = owns(sessionId, p.id);
     return (
-      <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden card-hover flex flex-col">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 overflow-hidden card-hover flex flex-col shadow-xs hover:shadow-md transition">
         <div className="relative cursor-pointer img-zoom group" onClick={() => goDetails(p.id)}>
-          <img src={p.previewImages[0] || IMG(p.id)} alt={p.name} loading="lazy" className="w-full h-52 md:h-64 object-cover" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id); }} />
-          {offPct(p) > 0 && <span className="absolute bottom-2 left-2 text-white text-[11px] font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow" style={{ background: BROWN }}><Zap size={11} className="fill-orange-400 text-orange-400" />{offPct(p)}% {t.off}</span>}
+          <img src={p.previewImages[0] || IMG(p.id)} alt={p.name} loading="lazy" className="w-full h-36 sm:h-48 md:h-60 object-cover" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id); }} />
+          {offPct(p) > 0 && <span className="absolute bottom-2 left-2 text-white text-[9px] sm:text-[11px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full flex items-center gap-0.5 sm:gap-1 shadow" style={{ background: BROWN }}><Zap size={10} className="fill-orange-400 text-orange-400" />{offPct(p)}% {t.off}</span>}
           {owned
-            ? <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-full flex items-center gap-1 shadow"><Check size={11} />{t.ownedBadge}</span>
-            : <span className="absolute top-2 left-2 text-white text-[10px] font-black px-2 py-1 rounded-full shadow" style={{ background: BROWN }}>{t.digitalTag}</span>}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end justify-center gap-2 pb-4">
+            ? <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 sm:py-1 rounded-full flex items-center gap-1 shadow"><Check size={10} />{t.ownedBadge}</span>
+            : <span className="absolute top-2 left-2 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 sm:py-1 rounded-full shadow" style={{ background: BROWN }}>{t.digitalTag}</span>}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition hidden sm:flex items-end justify-center gap-2 pb-4">
             {owned
-              ? <button onClick={e => { e.stopPropagation(); openAccess(sessionId, p.id); }} className="bg-emerald-500 text-white text-xs font-black px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-xl"><Download size={14} />{t.download}</button>
-              : <><button onClick={e => { e.stopPropagation(); goDetails(p.id); }} className="bg-white text-slate-800 text-xs font-black px-5 py-2.5 rounded-full shadow-xl hover:bg-orange-50">{t.buyNow}</button>
-                <button onClick={e => { e.stopPropagation(); addCart(p.id); }} className="bg-white/20 backdrop-blur border border-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/30" title={t.addToCart}><ShoppingCart size={16} /></button></>}
+              ? <button onClick={e => { e.stopPropagation(); openAccess(sessionId, p.id); }} className="bg-emerald-500 text-white text-xs font-black px-4 py-2 rounded-full flex items-center gap-1.5 shadow-xl cursor-pointer"><Download size={13} />{t.download}</button>
+              : <><button onClick={e => { e.stopPropagation(); goDetails(p.id); }} className="bg-white text-slate-800 text-xs font-black px-4 py-2 rounded-full shadow-xl hover:bg-orange-50 cursor-pointer">{t.buyNow}</button>
+                <button onClick={e => { e.stopPropagation(); addCart(p.id); }} className="bg-white/20 backdrop-blur border border-white/40 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/30 cursor-pointer" title={t.addToCart}><ShoppingCart size={15} /></button></>}
           </div>
         </div>
-        <div className="p-3 flex flex-col flex-1">
-          <h3 className="text-[13px] md:text-sm text-slate-800 leading-snug line-clamp-2 min-h-[2.6em] cursor-pointer hover:text-[#7c2d12]" onClick={() => goDetails(p.id)}>{p.name}</h3>
-          <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-400"><Star size={12} className="fill-amber-400 text-amber-400" />{p.rating} <span>({p.sold.toLocaleString()})</span></div>
-          <div className="border-t border-slate-100 mt-2 pt-2 flex items-end justify-between gap-2">
-            <div>
-              <div className="font-display font-black text-xl md:text-2xl" style={{ color: BROWN }}>{tk(eff(p))}</div>
-              <div className="flex items-center gap-2">
-                {offPct(p) > 0 && <s className="text-xs text-slate-400">{tk(p.price)}</s>}
-                {offPct(p) > 0 && <span className="text-[11px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-md">-{offPct(p)}%</span>}
+        <div className="p-2.5 sm:p-3.5 flex flex-col flex-1">
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug line-clamp-2 min-h-[2.4em] cursor-pointer hover:text-[#7c2d12]" onClick={() => goDetails(p.id)}>{p.name}</h3>
+          <div className="flex items-center gap-1 mt-1 text-[10px] sm:text-[11px] text-slate-400"><Star size={11} className="fill-amber-400 text-amber-400" />{p.rating} <span>({p.sold.toLocaleString()})</span></div>
+          <div className="border-t border-slate-100 mt-2 pt-2 flex items-end justify-between gap-1">
+            <div className="min-w-0 flex-1">
+              <div className="font-display font-black text-base sm:text-lg md:text-xl truncate" style={{ color: BROWN }}>{tk(eff(p))}</div>
+              <div className="flex items-center gap-1 flex-wrap">
+                {offPct(p) > 0 && <s className="text-[10px] sm:text-xs text-slate-400">{tk(p.price)}</s>}
+                {offPct(p) > 0 && <span className="text-[9px] sm:text-[10px] font-bold text-rose-500 bg-rose-50 px-1 py-0.5 rounded">-{offPct(p)}%</span>}
               </div>
             </div>
             {owned
-              ? <button onClick={() => openAccess(sessionId, p.id)} className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition shrink-0" title={t.download}><Download size={17} /></button>
-              : <button onClick={() => addCart(p.id)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-[#5a2e0d] hover:text-[#5a2e0d] hover:bg-orange-50 transition shrink-0" title={t.addToCart}><ShoppingCart size={17} /></button>}
+              ? <button onClick={() => openAccess(sessionId, p.id)} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition shrink-0 cursor-pointer" title={t.download}><Download size={15} /></button>
+              : <button onClick={() => addCart(p.id)} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:border-[#5a2e0d] hover:text-[#5a2e0d] hover:bg-orange-50 transition shrink-0 cursor-pointer" title={t.addToCart}><ShoppingCart size={15} /></button>}
           </div>
         </div>
       </div>
@@ -313,69 +543,243 @@ export default function App() {
         <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow">
           <AlertCircle size={40} className="mx-auto text-rose-500" />
           <h2 className="font-black text-xl mt-2">Access Denied</h2>
-          <p className="text-sm text-slate-500 mt-1">admin@muradgraphics.store / murad123</p>
+          <p className="text-xs text-slate-500 mt-1">{lang === 'bn' ? 'শুধুমাত্র অনুমোদিত অ্যাডমিন এই প্যানেল দেখতে পারবেন।' : 'Only authorized administrators can access this panel.'}</p>
           <div className="grid gap-2 mt-4">
-            <button onClick={() => { setView('home'); setAuthOpen('login'); }} className="text-white font-bold py-3 rounded-2xl text-sm" style={{ background: BROWN }}>Admin Login</button>
-            <button onClick={() => setView('home')} className="bg-slate-100 font-bold py-3 rounded-2xl text-sm">{t.home}</button>
+            <button onClick={() => { setView('home'); setAuthOpen('login'); }} className="text-white font-bold py-3 rounded-2xl text-sm cursor-pointer" style={{ background: BROWN }}>Admin Login</button>
+            <button onClick={() => setView('home')} className="bg-slate-100 hover:bg-slate-200 font-bold py-3 rounded-2xl text-sm cursor-pointer">{t.home}</button>
           </div>
         </div>
       </div>
     );
     const pendPay = payments.filter(p => p.status === 'Pending');
+
+    const confirmDeleteProduct = (id: string, name: string) => {
+      setDeleteConfirm({ type: 'product', id, name });
+    };
+
+    const confirmDeleteCategory = (id: string, name: string) => {
+      if (products.some(p => p.categoryId === id)) {
+        fail(lang === 'bn' ? 'এই ক্যাটাগরিতে প্রোডাক্ট রয়েছে। আগে প্রোডাক্ট মুছুন বা ক্যাটাগরি বদলান।' : 'Category has products. Remove or reassign them first.');
+        return;
+      }
+      setDeleteConfirm({ type: 'category', id, name });
+    };
+
+    const executeDelete = async () => {
+      if (!deleteConfirm) return;
+      const { type, id, name } = deleteConfirm;
+      if (type === 'product') {
+        setProducts(prev => prev.filter(x => x.id !== id));
+        if (db) {
+          try {
+            await deleteDoc(doc(db, 'products', id));
+          } catch {
+            // fallback
+          }
+        }
+        notify(`✓ "${name}" ` + (lang === 'bn' ? 'মুছে ফেলা হয়েছে' : 'deleted'));
+      } else if (type === 'category') {
+        setCategories(prev => prev.filter(x => x.id !== id));
+        if (db) {
+          try {
+            await deleteDoc(doc(db, 'categories', id));
+          } catch {
+            // fallback
+          }
+        }
+        notify(`✓ "${name}" ` + (lang === 'bn' ? 'মুছে ফেলা হয়েছে' : 'deleted'));
+      }
+      setDeleteConfirm(null);
+    };
+
+    const handleSaveProduct = async () => {
+      if (!editing) return;
+      if (!editing.name.trim()) { fail(lang === 'bn' ? 'প্রোডাক্টের নাম দিন' : 'Name required'); return; }
+      if (!editing.googleDriveLink.trim()) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
+      const updated = products.find(x => x.id === editing.id)
+        ? products.map(x => x.id === editing.id ? editing : x)
+        : [...products, editing];
+      setProducts(updated);
+      if (db) {
+        try {
+          await setDoc(doc(db, 'products', editing.id), editing, { merge: true });
+        } catch {
+          // fallback
+        }
+      }
+      setEditing(null);
+      notify('✓ ' + t.saved);
+    };
+
+    const handleSaveCategory = async () => {
+      if (!editingCat) return;
+      if (!editingCat.name.trim()) { fail(lang === 'bn' ? 'ক্যাটাগরির নাম দিন' : 'Name required'); return; }
+      const updated = categories.find(x => x.id === editingCat.id)
+        ? categories.map(x => x.id === editingCat.id ? editingCat : x)
+        : [...categories, editingCat];
+      setCategories(updated);
+      if (db) {
+        try {
+          await setDoc(doc(db, 'categories', editingCat.id), editingCat, { merge: true });
+        } catch {
+          // fallback
+        }
+      }
+      setEditingCat(null);
+      notify('✓ ' + t.saved);
+    };
+
+    const handlePromoImageUpload = async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      setUploading(true);
+      try {
+        const d = await fileToResizedDataUrl(files[0], 900);
+        setSettings(prev => ({ ...prev, promoImage: d }));
+        notify('✓ ' + (lang === 'bn' ? 'ব্যানার ইমেজ আপলোড হয়েছে' : 'Banner image uploaded'));
+      } catch (e: unknown) {
+        fail(e instanceof Error ? e.message : 'Banner upload failed');
+      }
+      setUploading(false);
+    };
+
+    const handleSaveSettings = async () => {
+      setSettingsSaving(true);
+      setSettingsSuccess(false);
+
+      // Parse coupon draft into record
+      const parsedCoupons: Record<string, string> = {};
+      if (couponDraft.trim()) {
+        couponDraft.split(',').forEach(s => {
+          const parts = s.split('=');
+          if (parts.length >= 2) {
+            const k = parts[0]?.trim().toUpperCase();
+            const v = parts.slice(1).join('=').trim();
+            if (k && v) parsedCoupons[k] = v;
+          }
+        });
+      }
+
+      const updatedSettings: Settings = {
+        ...settings,
+        coupons: parsedCoupons,
+      };
+
+      setSettings(updatedSettings);
+      save('ks_settings_v2', updatedSettings);
+
+      if (db) {
+        try {
+          await setDoc(doc(db, 'settings', 'global'), updatedSettings, { merge: true });
+        } catch (error) {
+          console.warn('Firestore settings save error:', error);
+        }
+      }
+
+      setSettingsSaving(false);
+      setSettingsSuccess(true);
+      notify('✓ ' + (lang === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত ও সিঙ্ক হয়েছে' : 'Settings saved & synced successfully'));
+      setTimeout(() => setSettingsSuccess(false), 4000);
+    };
+
+    const handleUpdateAdminPassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setPassMsg(null);
+      if (!me) return;
+
+      if (me.authProvider !== 'google' && me.pass && adminPassForm.currentPass !== me.pass) {
+        setPassMsg({ type: 'err', text: lang === 'bn' ? 'বর্তমান পাসওয়ার্ড সঠিক নয়।' : 'Current password is incorrect.' });
+        return;
+      }
+      if (!adminPassForm.newPass || adminPassForm.newPass.length < 6) {
+        setPassMsg({ type: 'err', text: lang === 'bn' ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'New password must be at least 6 characters.' });
+        return;
+      }
+      if (adminPassForm.newPass !== adminPassForm.confirmPass) {
+        setPassMsg({ type: 'err', text: lang === 'bn' ? 'নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না।' : 'New passwords do not match.' });
+        return;
+      }
+
+      setPassUpdating(true);
+      try {
+        const updatedUsers = users.map(u => u.id === me.id ? { ...u, pass: adminPassForm.newPass } : u);
+        setUsers(updatedUsers);
+        save('ks_users_v2', updatedUsers);
+
+        if (db) {
+          await setDoc(doc(db, 'users', me.id), { pass: adminPassForm.newPass }, { merge: true });
+        }
+
+        setPassMsg({ type: 'ok', text: lang === 'bn' ? '✓ অ্যাডমিন পাসওয়ার্ড সফলভাবে আপডেট ও সংরক্ষিত হয়েছে!' : '✓ Admin password successfully updated!' });
+        setAdminPassForm({ currentPass: '', newPass: '', confirmPass: '' });
+        notify(lang === 'bn' ? '✓ পাসওয়ার্ড পরিবর্তন সম্পন্ন হয়েছে' : '✓ Password updated successfully');
+      } catch (err: unknown) {
+        setPassMsg({ type: 'err', text: err instanceof Error ? err.message : 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে' });
+      } finally {
+        setPassUpdating(false);
+      }
+    };
+
     return (
-      <div className="min-h-screen bg-slate-100">
-        <header className="text-white px-4 py-3 flex items-center gap-3 sticky top-0 z-20" style={{ background: BROWN_D }}>
+      <div className="min-h-screen bg-slate-100 pb-12 w-full max-w-full overflow-x-hidden">
+        <header className="text-white px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 sticky top-0 z-20 shadow-md w-full max-w-full" style={{ background: BROWN_D }}>
           <Logo />
-          <div className="flex-1 min-w-0"><div className="font-bold truncate">Admin Dashboard</div><div className="text-xs text-orange-200/70 truncate hidden sm:block">{me.name}</div></div>
-          <button onClick={() => setView('home')} className="shrink-0 text-xs bg-white/10 px-3 py-2 rounded-lg flex items-center gap-1"><Eye size={14} /> Store</button>
-          <button onClick={logout} className="shrink-0 text-xs bg-rose-500 px-3 py-2 rounded-lg flex items-center gap-1"><LogOut size={14} /> {t.logout}</button>
+          <div className="flex-1 min-w-0"><div className="font-bold text-sm sm:text-base truncate">Admin Dashboard</div><div className="text-[11px] text-orange-200/70 truncate hidden sm:block">{me.name}</div></div>
+          <button onClick={() => setView('home')} className="shrink-0 text-xs bg-white/10 hover:bg-white/20 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1 cursor-pointer transition"><Eye size={13} /> <span className="hidden sm:inline">Store</span></button>
+          <button onClick={logout} className="shrink-0 text-xs bg-rose-500 hover:bg-rose-600 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1 cursor-pointer transition"><LogOut size={13} /> <span className="hidden sm:inline">{t.logout}</span></button>
         </header>
-        <div className="max-w-6xl mx-auto p-4">
-          <div className="flex gap-2 flex-wrap mb-4">
+        <div className="max-w-6xl mx-auto p-3 sm:p-4 w-full">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-4">
             {([['overview', 'Overview', LayoutDashboard], ['products', 'Products', Package], ['orders', 'Orders', ShoppingBag], ['customers', 'Customers', Users], ['cats', 'Categories', Tag], ['settings', 'Settings', SettingsIcon]] as [typeof adminTab, string, typeof LayoutDashboard][]).map(([k, l, Icon]) => (
-              <button key={k} onClick={() => setAdminTab(k)} className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 ${adminTab === k ? 'text-white shadow' : 'bg-white text-slate-600'}`} style={adminTab === k ? { background: BROWN } : {}}><Icon size={15} />{l}{k === 'orders' && pendPay.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendPay.length}</span>}</button>
+              <button key={k} onClick={() => setAdminTab(k)} className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer transition ${adminTab === k ? 'text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-50'}`} style={adminTab === k ? { background: BROWN } : {}}><Icon size={15} />{l}{k === 'orders' && pendPay.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendPay.length}</span>}</button>
             ))}
           </div>
 
           {adminTab === 'overview' && (
-            <div className="grid gap-4">
+            <div className="grid gap-4 w-full">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[[lang === 'bn' ? 'মোট Revenue (Paid)' : 'Revenue (Paid)', tk(revenue)], ['Orders', String(orders.length)], ['Products', String(products.length)], ['Customers', String(users.filter(u => u.role === 'customer').length)]].map(([l, v]) => (
-                  <div key={l as string} className="text-white rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${BROWN}, #8a4a12)` }}><div className="text-xs opacity-80">{l as string}</div><div className="text-2xl font-extrabold font-display">{v as string}</div></div>
+                  <div key={l as string} className="text-white rounded-2xl p-4 min-w-0" style={{ background: `linear-gradient(135deg, ${BROWN}, #8a4a12)` }}><div className="text-xs opacity-80 truncate">{l as string}</div><div className="text-xl sm:text-2xl font-extrabold font-display truncate">{v as string}</div></div>
                 ))}
               </div>
-              <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
                 <h3 className="font-bold mb-2">⏳ Pending Verification ({pendPay.length})</h3>
                 {pendPay.length === 0 ? <p className="text-sm text-slate-500">—</p> : pendPay.map(p => (
-                  <div key={p.id} className="border rounded-xl p-3 mb-2 text-sm flex flex-wrap items-center gap-2">
+                  <div key={p.id} className="border border-slate-200 rounded-xl p-3 mb-2 text-sm flex flex-wrap items-center justify-between gap-2">
                     <div className="flex-1 min-w-[200px]"><span className="font-mono font-bold">{p.orderId}</span><span className="text-slate-500"> • {users.find(u => u.id === p.userId)?.name} • {p.method} • Trx: <b className="font-mono">{p.transactionId}</b> • <b>{tk(p.amount)}</b></span></div>
-                    <button onClick={() => verifyPayment(p.orderId, true)} className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg">✓ Verify & Grant</button>
-                    <button onClick={() => verifyPayment(p.orderId, false)} className="bg-rose-50 text-rose-600 text-xs font-bold px-3 py-2 rounded-lg">Reject</button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button onClick={() => verifyPayment(p.orderId, true)} className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer">✓ Verify & Grant</button>
+                      <button onClick={() => verifyPayment(p.orderId, false)} className="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold px-3 py-2 rounded-lg cursor-pointer">Reject</button>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
                 <h3 className="font-bold mb-2">Recent Orders</h3>
                 <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-slate-500 text-xs"><th className="p-2">Order</th><th className="p-2">Customer</th><th className="p-2">Total</th><th className="p-2">Payment</th></tr></thead><tbody>
-                  {orders.slice(0, 6).map(o => <tr key={o.id} className="border-t"><td className="p-2 font-mono font-bold">{o.id}</td><td className="p-2">{users.find(u => u.id === o.userId)?.name}</td><td className="p-2 font-bold">{tk(o.total)}</td><td className="p-2"><span className={`text-xs px-2 py-1 rounded-full font-bold ${payBadge(o.paymentStatus)}`}>{o.paymentStatus}</span></td></tr>)}
+                  {orders.slice(0, 6).map(o => <tr key={o.id} className="border-t"><td className="p-2 font-mono font-bold whitespace-nowrap">{o.id}</td><td className="p-2 truncate max-w-[140px]">{users.find(u => u.id === o.userId)?.name}</td><td className="p-2 font-bold whitespace-nowrap">{tk(o.total)}</td><td className="p-2 whitespace-nowrap"><span className={`text-xs px-2 py-1 rounded-full font-bold ${payBadge(o.paymentStatus)}`}>{o.paymentStatus}</span></td></tr>)}
                 </tbody></table></div>
               </div>
             </div>
           )}
 
           {adminTab === 'products' && (
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-xs overflow-hidden">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                <h3 className="font-bold">Products ({products.length})</h3>
-                <button onClick={() => { setImgUrl(''); setEditing({ id: uid('p'), name: '', slug: '', description: '', price: 500, categoryId: categories[0]?.id || '', previewImages: [], googleDriveLink: '', features: [], reviews: [], status: 'active', rating: 4.8, sold: 0, createdAt: nowStr() }); }} className="text-white text-sm px-4 py-2 rounded-xl flex items-center gap-1" style={{ background: BROWN }}><Plus size={15} /> New</button>
+                <h3 className="font-bold text-sm sm:text-base">Products ({products.length})</h3>
+                <button onClick={() => { setImgUrl(''); setEditing({ id: uid('p'), name: '', slug: '', description: '', price: 500, categoryId: categories[0]?.id || '', previewImages: [], googleDriveLink: '', features: [], reviews: [], status: 'active', rating: 4.8, sold: 0, createdAt: nowStr() }); }} className="text-white text-xs sm:text-sm px-3.5 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0" style={{ background: BROWN }}><Plus size={15} /> New</button>
               </div>
               <div className="grid gap-2">
                 {products.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 border rounded-xl p-2">
-                    <img src={p.previewImages[0] || IMG(p.id, 200)} alt="" className="w-14 h-14 rounded-lg object-cover bg-slate-200" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id, 200); }} />
-                    <div className="flex-1 min-w-0"><div className="font-semibold text-sm truncate">{p.name}</div><div className="text-xs text-slate-500">{catName(p.categoryId)} • {tk(eff(p))} • {p.status} • {p.sold} sold</div></div>
-                    <button onClick={() => { setImgUrl(''); setEditing({ ...p }); }} className="p-2 bg-slate-100 rounded-lg"><Edit3 size={15} /></button>
-                    <button onClick={() => { if (confirm('Delete?')) setProducts(products.filter(x => x.id !== p.id)); }} className="p-2 bg-rose-50 text-rose-600 rounded-lg"><Trash2 size={15} /></button>
+                  <div key={p.id} className="flex items-center gap-2 sm:gap-3 border border-slate-200 rounded-xl p-2.5 bg-white hover:bg-slate-50/50 transition">
+                    <img src={p.previewImages[0] || IMG(p.id, 200)} alt="" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover bg-slate-200 shrink-0" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id, 200); }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-xs sm:text-sm truncate text-slate-800">{p.name}</div>
+                      <div className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">{catName(p.categoryId)} • {tk(eff(p))} • <span className={p.status === 'active' ? 'text-emerald-600 font-medium' : 'text-slate-400'}>{p.status}</span> • {p.sold} sold</div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => { setImgUrl(''); setEditing({ ...p }); }} className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer" title="Edit"><Edit3 size={15} /></button>
+                      <button onClick={() => confirmDeleteProduct(p.id, p.name)} className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer" title="Delete"><Trash2 size={15} /></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -399,24 +803,22 @@ export default function App() {
                         <div className="flex gap-1.5 flex-wrap mb-2">
                           {editing.previewImages.map((src, i) => src ? (
                             <div key={i} className="relative"><img src={src} alt="" className="w-16 h-16 rounded-lg object-cover border" />
-                              <button onClick={() => setEditing({ ...editing, previewImages: editing.previewImages.filter((_, j) => j !== i) })} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5"><X size={11} /></button></div>
+                              <button onClick={() => setEditing({ ...editing, previewImages: editing.previewImages.filter((_, j) => j !== i) })} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer"><X size={11} /></button></div>
                           ) : null)}
                         </div>
                         <label className="block text-center text-xs font-bold px-3 py-2.5 rounded-lg cursor-pointer text-white" style={{ background: BROWN }}>{uploading ? '⏳…' : '📤 Device থেকে Upload'}
                           <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={e => { handleFiles(e.target.files, false); e.target.value = ''; }} /></label>
                         <div className="flex gap-1.5 mt-1.5">
                           <input className="flex-1 border rounded-lg px-2.5 py-2 text-xs bg-white" placeholder="…or image URL" value={imgUrl} onChange={e => setImgUrl(e.target.value)} />
-                          <button onClick={() => { if (!imgUrl.trim()) return; setEditing({ ...editing, previewImages: [...editing.previewImages.filter(Boolean), imgUrl.trim()] }); setImgUrl(''); }} className="text-xs bg-slate-900 text-white px-3 rounded-lg font-bold">Add</button>
+                          <button onClick={() => { if (!imgUrl.trim()) return; setEditing({ ...editing, previewImages: [...editing.previewImages.filter(Boolean), imgUrl.trim()] }); setImgUrl(''); }} className="text-xs bg-slate-900 text-white px-3 rounded-lg font-bold cursor-pointer">Add</button>
                         </div>
                       </div>
                       <textarea className="border rounded-lg px-3 py-2" rows={2} placeholder="Description" value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
                       <textarea className="border rounded-lg px-3 py-2" rows={2} placeholder="Features (line per item)" value={editing.features.join('\n')} onChange={e => setEditing({ ...editing, features: e.target.value.split('\n').filter(Boolean) })} />
-                      <div className="flex gap-2"><button onClick={() => {
-                        if (!editing.name.trim()) { fail('Name required'); return; }
-                        if (!editing.googleDriveLink.trim()) { fail('Google Drive link আবশ্যক'); return; }
-                        setProducts(products.find(x => x.id === editing.id) ? products.map(x => x.id === editing.id ? editing : x) : [...products, editing]);
-                        setEditing(null); notify('✓ ' + t.saved);
-                      }} className="flex-1 text-white py-2.5 rounded-xl font-bold" style={{ background: BROWN }}>Save</button><button onClick={() => setEditing(null)} className="px-4 bg-slate-100 rounded-xl">Cancel</button></div>
+                      <div className="flex gap-2">
+                        <button onClick={handleSaveProduct} className="flex-1 text-white py-2.5 rounded-xl font-bold cursor-pointer" style={{ background: BROWN }}>Save</button>
+                        <button onClick={() => setEditing(null)} className="px-4 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer">Cancel</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -425,15 +827,15 @@ export default function App() {
           )}
 
           {adminTab === 'orders' && (
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
               <h3 className="font-bold mb-3">Orders ({orders.length}) • {tk(revenue)} (Paid)</h3>
               {orders.length === 0 ? <p className="text-sm text-slate-500">—</p> : orders.map(o => (
-                <div key={o.id} className="border rounded-xl p-3 mb-2 text-sm">
+                <div key={o.id} className="border border-slate-200 rounded-xl p-3 mb-2 text-sm">
                   <div className="flex items-center justify-between flex-wrap gap-2"><span className="font-mono font-bold">{o.id}</span><span className={`text-xs px-2 py-1 rounded-full font-bold ${payBadge(o.paymentStatus)}`}>{o.paymentStatus}</span></div>
                   <div className="text-slate-600 mt-1">{users.find(u => u.id === o.userId)?.name} • {o.paymentMethod} • Trx: <b className="font-mono">{o.trxId || '—'}</b></div>
                   <div className="text-xs text-slate-500 mt-1">{o.items.map(i => i.name).join(', ')}</div>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap"><span className="font-bold">{tk(o.total)}</span><span className="text-xs text-slate-400">{o.createdAt}</span>
-                    {o.paymentStatus === 'Pending' && <><button onClick={() => verifyPayment(o.id, true)} className="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold">✓ Verify & Grant</button><button onClick={() => verifyPayment(o.id, false)} className="text-xs bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-bold">Reject</button></>}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap justify-between"><span className="font-bold">{tk(o.total)}</span><span className="text-xs text-slate-400">{o.createdAt}</span>
+                    {o.paymentStatus === 'Pending' && <div className="flex items-center gap-1.5"><button onClick={() => verifyPayment(o.id, true)} className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer">✓ Verify & Grant</button><button onClick={() => verifyPayment(o.id, false)} className="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg font-bold cursor-pointer">Reject</button></div>}
                   </div>
                 </div>
               ))}
@@ -441,13 +843,13 @@ export default function App() {
           )}
 
           {adminTab === 'customers' && (
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
               <h3 className="font-bold mb-3">Customers ({users.filter(u => u.role === 'customer').length})</h3>
               {users.filter(u => u.role === 'customer').map(u => {
                 const uo = orders.filter(o => o.userId === u.id);
                 const up = purchases.filter(p => p.userId === u.id && p.accessStatus === 'active');
-                return <div key={u.id} className="border rounded-xl p-3 mb-2 text-sm">
-                  <div className="font-bold flex items-center gap-1.5"><UserIcon size={14} />{u.name} <span className="text-xs font-normal text-slate-500">{u.email}</span></div>
+                return <div key={u.id} className="border border-slate-200 rounded-xl p-3 mb-2 text-sm">
+                  <div className="font-bold flex items-center gap-1.5 truncate"><UserIcon size={14} className="shrink-0" /><span className="truncate">{u.name}</span> <span className="text-xs font-normal text-slate-500 truncate">({u.email})</span></div>
                   <div className="text-xs text-slate-500 mt-1">{u.createdAt} • Orders: {uo.length} • Purchased: {up.length}</div>
                   {up.length > 0 && <div className="text-xs text-emerald-700 mt-1">✓ {up.map(p => products.find(x => x.id === p.productId)?.name).join(', ')}</div>}
                 </div>;
@@ -456,15 +858,17 @@ export default function App() {
           )}
 
           {adminTab === 'cats' && (
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3"><h3 className="font-bold">Categories ({categories.length})</h3>
-                <button onClick={() => setEditingCat({ id: uid('c'), name: '', slug: '', image: '', status: 'active' })} className="text-white text-sm px-4 py-2 rounded-xl flex items-center gap-1" style={{ background: BROWN }}><Plus size={15} /> New</button></div>
+            <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-xs overflow-hidden">
+              <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-sm sm:text-base">Categories ({categories.length})</h3>
+                <button onClick={() => setEditingCat({ id: uid('c'), name: '', slug: '', image: '', status: 'active' })} className="text-white text-xs sm:text-sm px-3.5 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0" style={{ background: BROWN }}><Plus size={15} /> New</button></div>
               {categories.map(c => (
-                <div key={c.id} className="flex items-center gap-2 border rounded-xl p-2.5 mb-2 text-sm">
-                  {c.image ? <img src={c.image} alt="" className="w-10 h-10 rounded-full object-cover" /> : <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center"><Tag size={16} className="text-[#7c2d12]" /></div>}
-                  <div className="flex-1"><b>{c.name}</b> <span className="text-xs text-slate-400">• {products.filter(p => p.categoryId === c.id).length} • {c.status}</span></div>
-                  <button onClick={() => setEditingCat({ ...c })} className="p-2 bg-slate-100 rounded-lg"><Edit3 size={14} /></button>
-                  <button onClick={() => { if (products.some(p => p.categoryId === c.id)) { fail('Category has products'); return; } if (confirm('Delete?')) setCategories(categories.filter(x => x.id !== c.id)); }} className="p-2 bg-rose-50 text-rose-600 rounded-lg"><Trash2 size={14} /></button>
+                <div key={c.id} className="flex items-center gap-2.5 border border-slate-200 rounded-xl p-2.5 mb-2 text-sm bg-white">
+                  {c.image ? <img src={c.image} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" /> : <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0"><Tag size={16} className="text-[#7c2d12]" /></div>}
+                  <div className="flex-1 min-w-0"><div className="font-semibold text-xs sm:text-sm truncate">{c.name}</div><div className="text-xs text-slate-400 truncate">{products.filter(p => p.categoryId === c.id).length} items • {c.status}</div></div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => setEditingCat({ ...c })} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer" title="Edit"><Edit3 size={14} /></button>
+                    <button onClick={() => confirmDeleteCategory(c.id, c.name)} className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer" title="Delete"><Trash2 size={14} /></button>
+                  </div>
                 </div>
               ))}
               {editingCat && (
@@ -478,7 +882,10 @@ export default function App() {
                       <label className="block text-center text-xs font-bold px-3 py-2.5 rounded-lg cursor-pointer text-white" style={{ background: BROWN }}>{uploading ? '⏳…' : '📤 Upload image'}
                         <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e => { handleFiles(e.target.files, true); e.target.value = ''; }} /></label>
                       <input className="border rounded-lg px-3 py-2" placeholder="…or image URL" value={editingCat.image.startsWith('data:') ? '' : editingCat.image} onChange={e => setEditingCat({ ...editingCat, image: e.target.value })} />
-                      <div className="flex gap-2"><button onClick={() => { if (!editingCat.name.trim()) { fail('Name required'); return; } setCategories(categories.find(x => x.id === editingCat.id) ? categories.map(x => x.id === editingCat.id ? editingCat : x) : [...categories, editingCat]); setEditingCat(null); notify('✓ ' + t.saved); }} className="flex-1 text-white py-2.5 rounded-xl font-bold" style={{ background: BROWN }}>Save</button><button onClick={() => setEditingCat(null)} className="px-4 bg-slate-100 rounded-xl">Cancel</button></div>
+                      <div className="flex gap-2">
+                        <button onClick={handleSaveCategory} className="flex-1 text-white py-2.5 rounded-xl font-bold cursor-pointer" style={{ background: BROWN }}>Save</button>
+                        <button onClick={() => setEditingCat(null)} className="px-4 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer">Cancel</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -487,26 +894,352 @@ export default function App() {
           )}
 
           {adminTab === 'settings' && (
-            <div className="bg-white rounded-2xl p-5 shadow-sm grid gap-4 text-sm max-w-2xl">
-              <h3 className="font-bold text-base">⚙️ Settings</h3>
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                <label className="font-bold text-emerald-800">WhatsApp Number *</label>
-                <input className="mt-1 w-full border rounded-lg px-3 py-2 font-mono" value={settings.whatsapp} onChange={e => setSettings({ ...settings, whatsapp: e.target.value })} />
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 grid gap-6 text-sm max-w-3xl">
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">⚙️ {lang === 'bn' ? 'স্টোর সেটিংস ও কনফিগারেশন' : 'Store Settings & Configuration'}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{lang === 'bn' ? 'স্টোরের যাবতীয় তথ্য, পেমেন্ট নম্বর, কুপন এবং ব্যানার আপডেট করুন' : 'Update store details, payment numbers, coupons, and promo banner'}</p>
+                </div>
+                {settingsSuccess && (
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 animate-pulse">
+                    <Check size={14} /> {lang === 'bn' ? 'সফলভাবে সংরক্ষিত!' : 'Saved Successfully!'}
+                  </span>
+                )}
               </div>
-              <div className="grid md:grid-cols-2 gap-2">
-                <label>Store Name<input className="w-full border rounded-lg px-3 py-2 mt-1" value={settings.storeName} onChange={e => setSettings({ ...settings, storeName: e.target.value })} /></label>
-                <label>Topbar text<input className="w-full border rounded-lg px-3 py-2 mt-1" value={settings.announcement} onChange={e => setSettings({ ...settings, announcement: e.target.value })} /></label>
-                <label>bKash<input className="w-full border rounded-lg px-3 py-2 mt-1 font-mono" value={settings.bkash} onChange={e => setSettings({ ...settings, bkash: e.target.value })} /></label>
-                <label>Nagad<input className="w-full border rounded-lg px-3 py-2 mt-1 font-mono" value={settings.nagad} onChange={e => setSettings({ ...settings, nagad: e.target.value })} /></label>
-                <label>Rocket<input className="w-full border rounded-lg px-3 py-2 mt-1 font-mono" value={settings.rocket} onChange={e => setSettings({ ...settings, rocket: e.target.value })} /></label>
-                <label>Binance ID<input className="w-full border rounded-lg px-3 py-2 mt-1 font-mono" value={settings.binance} onChange={e => setSettings({ ...settings, binance: e.target.value })} /></label>
-                <label>Facebook<input className="w-full border rounded-lg px-3 py-2 mt-1" value={settings.facebook} onChange={e => setSettings({ ...settings, facebook: e.target.value })} /></label>
-                <label>YouTube<input className="w-full border rounded-lg px-3 py-2 mt-1" value={settings.youtube} onChange={e => setSettings({ ...settings, youtube: e.target.value })} /></label>
+
+              {/* WhatsApp Support */}
+              <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4">
+                <label className="font-bold text-emerald-900 flex items-center gap-2 mb-1">
+                  <MessageCircle size={18} className="text-emerald-600" />
+                  WhatsApp Number * ({lang === 'bn' ? 'সাপোর্ট ও অর্ডারের জন্য' : 'For support & orders'})
+                </label>
+                <input
+                  className="w-full bg-white border border-emerald-300 rounded-xl px-3.5 py-2.5 font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-hidden font-bold"
+                  value={settings.whatsapp}
+                  onChange={e => setSettings({ ...settings, whatsapp: e.target.value })}
+                  placeholder="8801977981796"
+                />
+                <p className="text-[11px] text-emerald-700 mt-1.5">দেশ কোড সহ দিন (যেমন: 8801977981796)</p>
               </div>
-              <label>Promo title<input className="w-full border rounded-lg px-3 py-2 mt-1" value={settings.promoTitle} onChange={e => setSettings({ ...settings, promoTitle: e.target.value })} /></label>
-              <label>Promo banner image URL<input className="w-full border rounded-lg px-3 py-2 mt-1" value={settings.promoImage.startsWith('data:') ? '' : settings.promoImage} onChange={e => setSettings({ ...settings, promoImage: e.target.value })} /></label>
-              <label>Coupons (WELCOME10=10%, TK50=50)<input className="w-full border rounded-lg px-3 py-2 mt-1 font-mono" value={Object.entries(settings.coupons).map(([k, v]) => `${k}=${v}`).join(', ')} onChange={e => { const o: Record<string, string> = {}; e.target.value.split(',').forEach(s => { const [k, v] = s.split('=').map(x => x?.trim()); if (k && v) o[k] = v; }); setSettings({ ...settings, coupons: o }); }} /></label>
-              <button onClick={() => notify('✓ ' + t.saved)} className="text-white px-6 py-2.5 rounded-xl font-bold w-fit" style={{ background: BROWN }}>Save</button>
+
+              {/* Store & Announcement */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Store Name</label>
+                  <input
+                    className="w-full border rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[#5a2e0d] outline-hidden"
+                    value={settings.storeName}
+                    onChange={e => setSettings({ ...settings, storeName: e.target.value })}
+                    placeholder="Murad Graphics"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Topbar Announcement</label>
+                  <input
+                    className="w-full border rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[#5a2e0d] outline-hidden"
+                    value={settings.announcement}
+                    onChange={e => setSettings({ ...settings, announcement: e.target.value })}
+                    placeholder="Welcome to Murad Graphics!"
+                  />
+                </div>
+              </div>
+
+              {/* Payment Numbers */}
+              <div className="border rounded-2xl p-4 bg-slate-50/40">
+                <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">💳 {lang === 'bn' ? 'পেমেন্ট মেথড নম্বরসমূহ' : 'Payment Methods'}</h4>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-[#e2136e] block mb-1">bKash Personal / Send Money</label>
+                    <input
+                      className="w-full border border-pink-200 rounded-xl px-3 py-2 font-mono bg-white"
+                      value={settings.bkash}
+                      onChange={e => setSettings({ ...settings, bkash: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#f6921e] block mb-1">Nagad Personal / Send Money</label>
+                    <input
+                      className="w-full border border-orange-200 rounded-xl px-3 py-2 font-mono bg-white"
+                      value={settings.nagad}
+                      onChange={e => setSettings({ ...settings, nagad: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#8c3494] block mb-1">Rocket Personal</label>
+                    <input
+                      className="w-full border border-purple-200 rounded-xl px-3 py-2 font-mono bg-white"
+                      value={settings.rocket}
+                      onChange={e => setSettings({ ...settings, rocket: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">Binance Pay ID</label>
+                    <input
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 font-mono bg-white"
+                      value={settings.binance}
+                      onChange={e => setSettings({ ...settings, binance: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="border rounded-2xl p-4 bg-slate-50/40">
+                <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">🌐 {lang === 'bn' ? 'সোশ্যাল মিডিয়া লিংক' : 'Social Links'}</h4>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">Facebook Page / Group URL</label>
+                    <input
+                      className="w-full border rounded-xl px-3 py-2 bg-white text-xs"
+                      value={settings.facebook}
+                      onChange={e => setSettings({ ...settings, facebook: e.target.value })}
+                      placeholder="https://facebook.com/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">YouTube Channel URL</label>
+                    <input
+                      className="w-full border rounded-xl px-3 py-2 bg-white text-xs"
+                      value={settings.youtube}
+                      onChange={e => setSettings({ ...settings, youtube: e.target.value })}
+                      placeholder="https://youtube.com/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">Telegram Channel / Support URL</label>
+                    <input
+                      className="w-full border rounded-xl px-3 py-2 bg-white text-xs"
+                      value={settings.telegram}
+                      onChange={e => setSettings({ ...settings, telegram: e.target.value })}
+                      placeholder="https://t.me/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">Instagram URL</label>
+                    <input
+                      className="w-full border rounded-xl px-3 py-2 bg-white text-xs"
+                      value={settings.instagram}
+                      onChange={e => setSettings({ ...settings, instagram: e.target.value })}
+                      placeholder="https://instagram.com/..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Promo Banner & Title */}
+              <div className="border rounded-2xl p-4 bg-slate-50/40">
+                <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">🎉 {lang === 'bn' ? 'হোমপেজ প্রোমো ব্যানার' : 'Homepage Promo Banner'}</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Promo Title Badge</label>
+                    <input
+                      className="w-full border rounded-xl px-3.5 py-2.5 bg-white"
+                      value={settings.promoTitle}
+                      onChange={e => setSettings({ ...settings, promoTitle: e.target.value })}
+                      placeholder="MEGA BUNDLE SALE"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Banner Image ({lang === 'bn' ? 'ডিভাইস থেকে আপলোড করুন অথবা লিংক দিন' : 'Upload or Enter URL'})</label>
+                    <div className="flex gap-2 flex-wrap items-center">
+                      <label className="text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer text-white flex items-center gap-1.5 shadow-xs" style={{ background: BROWN }}>
+                        {uploading ? '⏳ Uploading…' : '📤 Upload Banner from Device'}
+                        <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e => { handlePromoImageUpload(e.target.files); e.target.value = ''; }} />
+                      </label>
+                      <input
+                        className="flex-1 min-w-[200px] border rounded-xl px-3 py-2 bg-white text-xs"
+                        placeholder="...or paste image URL"
+                        value={settings.promoImage.startsWith('data:') ? '' : settings.promoImage}
+                        onChange={e => setSettings({ ...settings, promoImage: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  {/* Live Banner Preview */}
+                  {settings.promoImage && (
+                    <div className="mt-2 rounded-2xl overflow-hidden border border-slate-200 relative max-h-48 bg-slate-900">
+                      <img
+                        src={settings.promoImage}
+                        alt="Promo Preview"
+                        className="w-full h-40 object-cover opacity-90"
+                        onError={e => { (e.target as HTMLImageElement).src = IMG('mg-promo', 800); }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent p-4 flex flex-col justify-center">
+                        <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-2.5 py-1 rounded-md w-fit uppercase tracking-wider">{settings.promoTitle || 'PROMO'}</span>
+                        <div className="text-white font-bold text-base mt-1">Live Banner Preview</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Coupons */}
+              <div className="border rounded-2xl p-4 bg-slate-50/40">
+                <h4 className="font-bold text-slate-800 mb-1 flex items-center gap-2">🎟️ {lang === 'bn' ? 'ডিসকাউন্ট কুপন কোড' : 'Discount Coupons'}</h4>
+                <p className="text-xs text-slate-500 mb-3">{lang === 'bn' ? 'ফরম্যাট: CODE=DISCOUNT, যেমন: WELCOME10=10%, TK50=50 (কমা দিয়ে আলাদা করুন)' : 'Format: CODE=DISCOUNT, e.g. WELCOME10=10%, TK50=50 (comma separated)'}</p>
+                <input
+                  className="w-full border rounded-xl px-3.5 py-2.5 font-mono bg-white text-sm"
+                  value={couponDraft}
+                  onChange={e => setCouponDraft(e.target.value)}
+                  placeholder="WELCOME10=10%, TK50=50, SPECIAL=100"
+                />
+                {/* Visual decoded coupons chips */}
+                <div className="flex flex-wrap gap-2 mt-2.5">
+                  {couponDraft.split(',').map((item, idx) => {
+                    const [k, v] = item.split('=').map(x => x?.trim());
+                    if (!k) return null;
+                    return (
+                      <span key={idx} className="inline-flex items-center gap-1.5 bg-orange-100/70 border border-orange-200 text-[#5a2e0d] px-2.5 py-1 rounded-lg text-xs font-bold">
+                        <Tag size={12} />
+                        <span className="font-mono">{k.toUpperCase()}</span>
+                        <span className="bg-white/80 px-1.5 py-0.5 rounded text-[11px] font-semibold text-orange-800">{v || '—'}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  onClick={handleSaveSettings}
+                  disabled={settingsSaving}
+                  className="text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition cursor-pointer disabled:opacity-50"
+                  style={{ background: BROWN }}
+                >
+                  {settingsSaving ? (
+                    <>⏳ {lang === 'bn' ? 'সংরক্ষণ হচ্ছে...' : 'Saving...'}</>
+                  ) : (
+                    <>✓ {lang === 'bn' ? 'সব সেটিংস সেভ করুন (Save Settings)' : 'Save Settings'}</>
+                  )}
+                </button>
+                {settingsSuccess && (
+                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                    <Check size={16} /> {lang === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত হয়েছে!' : 'Settings saved and synced!'}
+                  </span>
+                )}
+              </div>
+
+              {/* Admin Password & Security Manager */}
+              <div className="mt-8 border-t border-slate-200 pt-6">
+                <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 border border-amber-200/80 rounded-2xl p-5 shadow-xs">
+                  <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#5a2e0d] text-white flex items-center justify-center shrink-0">
+                        <Lock size={18} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">
+                          {lang === 'bn' ? '🔐 অ্যাডমিন পাসওয়ার্ড পরিবর্তন (Admin Password)' : '🔐 Change Admin Password'}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {lang === 'bn' ? `বর্তমান অ্যাডমিন: ${me.email}` : `Current Admin: ${me.email}`}
+                        </p>
+                      </div>
+                    </div>
+                    {me.authProvider === 'google' && (
+                      <span className="text-[11px] bg-sky-100 text-sky-800 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
+                        <ShieldCheck size={13} /> {lang === 'bn' ? 'Google সাইন-ইন সক্রিয়' : 'Google Auth Active'}
+                      </span>
+                    )}
+                  </div>
+
+                  <form onSubmit={handleUpdateAdminPassword} className="grid md:grid-cols-3 gap-3 mt-4">
+                    {me.authProvider !== 'google' && me.pass && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          {lang === 'bn' ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={adminPassForm.currentPass}
+                          onChange={e => setAdminPassForm(prev => ({ ...prev, currentPass: e.target.value }))}
+                          placeholder="••••••••"
+                          className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-[#5a2e0d] focus:border-transparent outline-hidden"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        {lang === 'bn' ? 'নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)' : 'New Password (min 6 chars)'}
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        value={adminPassForm.newPass}
+                        onChange={e => setAdminPassForm(prev => ({ ...prev, newPass: e.target.value }))}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-[#5a2e0d] focus:border-transparent outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        {lang === 'bn' ? 'নতুন পাসওয়ার্ড কনফার্ম করুন' : 'Confirm New Password'}
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        value={adminPassForm.confirmPass}
+                        onChange={e => setAdminPassForm(prev => ({ ...prev, confirmPass: e.target.value }))}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-[#5a2e0d] focus:border-transparent outline-hidden"
+                      />
+                    </div>
+                    <div className="md:col-span-3 flex items-center gap-3 pt-1 flex-wrap">
+                      <button
+                        type="submit"
+                        disabled={passUpdating}
+                        className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer disabled:opacity-50"
+                      >
+                        <Key size={14} />
+                        {passUpdating ? (lang === 'bn' ? 'আপডেট হচ্ছে...' : 'Updating...') : (lang === 'bn' ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Update Password')}
+                      </button>
+                      {passMsg && (
+                        <span className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${passMsg.type === 'ok' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                          {passMsg.text}
+                        </span>
+                      )}
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* In-App Delete Confirmation Modal (Delete Box) */}
+          {deleteConfirm && (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs" onClick={() => setDeleteConfirm(null)}>
+              <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-scale-up" onClick={e => e.stopPropagation()}>
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4 mx-auto">
+                  <Trash2 size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 text-center mb-2">
+                  {lang === 'bn' ? 'মুছে ফেলার নিশ্চিতকরণ' : 'Confirm Deletion'}
+                </h3>
+                <p className="text-sm text-slate-600 text-center mb-6">
+                  {lang === 'bn' ? (
+                    <>আপনি কি নিশ্চিত যে <b>"{deleteConfirm.name}"</b> মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।</>
+                  ) : (
+                    <>Are you sure you want to delete <b>"{deleteConfirm.name}"</b>? This action cannot be undone.</>
+                  )}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    className="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={executeDelete}
+                    className="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors shadow-sm cursor-pointer"
+                  >
+                    {lang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -519,136 +1252,175 @@ export default function App() {
   const trustItems: [typeof Zap, string][] = [[Zap, t.instantAccess], [BadgeCheck, t.verifiedPay], [Headphones, t.support247], [Download, t.lifetimeLib], [ShieldCheck, t.securePay]];
 
   return (
-    <div className="min-h-screen bg-[#f7f4ef]">
+    <div className="min-h-screen bg-[#f7f4ef] pb-20 md:pb-0">
       {/* topbar */}
       <div className="text-white text-xs md:text-sm" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
           <span className="font-medium truncate min-w-0">{lang === 'bn' ? settings.announcement.replace('Welcome to Murad Graphics!', 'মুরাদ গ্রাফিক্সে স্বাগতম!') : settings.announcement}</span>
           <div className="flex-1" />
-          <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="shrink-0 flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg font-bold"><Globe size={14} />{lang === 'bn' ? 'বাংলা' : 'EN'}</button>
-          <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="hover:text-orange-200 font-semibold hidden sm:block">{t.myOrders}</button>
+          <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="shrink-0 flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg font-bold cursor-pointer transition"><Globe size={13} />{lang === 'bn' ? 'বাংলা' : 'EN'}</button>
+          <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="hover:text-orange-200 font-semibold hidden sm:block cursor-pointer">{t.myOrders}</button>
           <a href={waLink(settings.whatsapp, 'Support needed')} target="_blank" rel="noreferrer" className="hover:text-orange-200 font-semibold">{t.support}</a>
         </div>
       </div>
 
       {/* header */}
-      <header className="text-white sticky top-0 z-30 shadow-lg" style={{ background: BROWN }}>
-        <div className="max-w-7xl mx-auto px-3 py-3 flex items-center gap-3">
-          <button onClick={() => setView('home')} className="shrink-0"><Logo /></button>
-          <div className="flex-1 max-w-2xl mx-auto relative hidden sm:block">
-            <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && setView('products')} placeholder={t.searchPh} className="w-full rounded-full pl-5 pr-14 py-3 text-sm text-slate-800 bg-white" style={{ boxShadow: 'none' }} />
-            <button onClick={() => setView('products')} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-white flex items-center justify-center" style={{ background: BROWN_D }}><Search size={18} /></button>
+      <header className="text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
+        <div className="max-w-7xl mx-auto px-3 py-2.5 sm:py-3 flex items-center gap-3">
+          <button onClick={() => setView('home')} className="shrink-0 cursor-pointer"><Logo /></button>
+          <div className="flex-1 max-w-2xl mx-auto relative hidden sm:flex items-center">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && setView('products')}
+              placeholder={t.searchPh}
+              className="w-full rounded-full pl-5 pr-14 py-2.5 sm:py-3 text-sm text-slate-800 bg-white shadow-xs focus:ring-2 focus:ring-amber-400"
+            />
+            <button
+              onClick={() => setView('products')}
+              className="absolute right-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition hover:opacity-90 shrink-0"
+              style={{ background: BROWN_D }}
+            >
+              <Search size={16} />
+            </button>
           </div>
           <div className="flex-1 sm:hidden" />
           {me ? (
             <div className="relative">
-              <button onClick={() => setAcctMenu(!acctMenu)} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2.5 text-sm font-bold hover:bg-white/10"><UserIcon size={16} />{me.name.split(' ')[0]}<ChevronDown size={14} /></button>
-              <button onClick={() => setAcctMenu(!acctMenu)} className="md:hidden p-2.5 border border-white/30 rounded-full"><UserIcon size={17} /></button>
+              <button onClick={() => setAcctMenu(!acctMenu)} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer">
+                {me.photoURL ? (
+                  <img src={me.photoURL} alt={me.name} className="w-6 h-6 rounded-full object-cover border border-white/40" referrerPolicy="no-referrer" />
+                ) : (
+                  <UserIcon size={16} />
+                )}
+                <span className="truncate max-w-[100px]">{me.name.split(' ')[0]}</span>
+                <ChevronDown size={14} />
+              </button>
+              <button onClick={() => setAcctMenu(!acctMenu)} className="md:hidden p-1.5 border border-white/30 rounded-full flex items-center justify-center cursor-pointer">
+                {me.photoURL ? (
+                  <img src={me.photoURL} alt={me.name} className="w-7 h-7 rounded-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <UserIcon size={17} />
+                )}
+              </button>
               {acctMenu && <div className="absolute right-0 mt-2 w-52 bg-white text-slate-700 rounded-2xl shadow-2xl overflow-hidden text-sm z-50">
-                <div className="px-4 py-2.5 border-b text-xs text-slate-400">{me.email}</div>
+                <div className="px-4 py-2.5 border-b text-xs text-slate-400 truncate">{me.email}</div>
                 {me.role === 'admin'
-                  ? <button onClick={() => { setAcctMenu(false); setView('admin'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2"><LayoutDashboard size={14} />{t.adminPanel}</button>
-                  : <><button onClick={() => { setAcctMenu(false); setView('dashboard'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2"><LayoutDashboard size={14} />{t.dashboard}</button>
-                    <button onClick={() => { setAcctMenu(false); setView('purchases'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2"><Download size={14} />{t.myPurchases}</button>
-                    <button onClick={() => { setAcctMenu(false); setView('orders'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2"><History size={14} />{t.orderHistory}</button></>}
-                <button onClick={logout} className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold flex items-center gap-2"><LogOut size={14} />{t.logout}</button>
+                  ? <button onClick={() => { setAcctMenu(false); setView('admin'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2 cursor-pointer"><LayoutDashboard size={14} />{t.adminPanel}</button>
+                  : <><button onClick={() => { setAcctMenu(false); setView('dashboard'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2 cursor-pointer"><LayoutDashboard size={14} />{t.dashboard}</button>
+                    <button onClick={() => { setAcctMenu(false); setView('purchases'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2 cursor-pointer"><Download size={14} />{t.myPurchases}</button>
+                    <button onClick={() => { setAcctMenu(false); setView('orders'); }} className="w-full text-left px-4 py-2.5 hover:bg-orange-50 font-semibold flex items-center gap-2 cursor-pointer"><History size={14} />{t.orderHistory}</button></>}
+                <button onClick={logout} className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold flex items-center gap-2 cursor-pointer"><LogOut size={14} />{t.logout}</button>
               </div>}
             </div>
-          ) : <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2.5 text-sm font-bold hover:bg-white/10"><UserIcon size={16} />{t.login}</button>}
-          <button onClick={() => notify('🔔')} className="p-2.5 hover:bg-white/10 rounded-full"><Bell size={20} /></button>
-          <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2.5 hover:bg-white/10 rounded-full"><Box size={20} /></button>
-          <button onClick={() => setView('cart')} className="p-2.5 hover:bg-white/10 rounded-full relative"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[11px] w-5 h-5 rounded-full flex items-center justify-center font-bold">{cart.length}</span>}</button>
+          ) : <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>}
+          <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full cursor-pointer hidden sm:block"><Box size={19} /></button>
+          <button onClick={() => setView('cart')} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
         </div>
-        <div className="sm:hidden px-3 pb-3 relative">
-          <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && setView('products')} placeholder={t.searchPh} className="w-full rounded-full pl-4 pr-12 py-2.5 text-sm text-slate-800 bg-white" />
-          <button onClick={() => setView('products')} className="absolute right-4 top-1/2 -translate-y-[70%] w-9 h-9 rounded-full text-white flex items-center justify-center" style={{ background: BROWN_D }}><Search size={16} /></button>
+        <div className="sm:hidden px-3 pb-2.5">
+          <div className="relative flex items-center w-full">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && setView('products')}
+              placeholder={t.searchPh}
+              className="w-full rounded-full pl-4 pr-11 py-2 text-xs text-slate-800 bg-white shadow-xs focus:ring-2 focus:ring-amber-400"
+            />
+            <button
+              onClick={() => setView('products')}
+              className="absolute right-1 w-7 h-7 rounded-full text-white flex items-center justify-center cursor-pointer transition hover:opacity-90 shrink-0"
+              style={{ background: BROWN_D }}
+            >
+              <Search size={13} />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* ============ HOME ============ */}
       {view === 'home' && <>
-        <div className="max-w-7xl mx-auto px-3 py-4 grid lg:grid-cols-[1fr_280px] gap-4">
-          <div className="relative overflow-hidden rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
+        <div className="max-w-7xl mx-auto px-3 py-3 sm:py-4 grid lg:grid-cols-[1fr_280px] gap-4">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
           <div className="blob w-80 h-80 bg-orange-500/40 -top-16 -left-16" />
           <div className="blob w-96 h-96 bg-amber-500/25 bottom-[-6rem] right-[8%]" style={{ animationDelay: '-4s' }} />
           <div className="grid-pattern absolute inset-0" />
-          <div className="relative grid lg:grid-cols-2 gap-8 items-center p-7 md:p-12 text-white">
+          <div className="relative grid lg:grid-cols-2 gap-6 sm:gap-8 items-center p-5 sm:p-8 md:p-12 text-white">
             <div className="fade-up">
-              <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[.18em] text-amber-200">✦ {lang === 'bn' ? 'প্রিমিয়াম ডিজিটাল স্টোর' : 'PREMIUM DIGITAL STORE'}</span>
-              <h1 className="font-display text-4xl md:text-6xl font-black leading-[1.08] mt-4">{lang === 'bn' ? (<>ডিজিটাল প্রোডাক্ট,<br /><span className="gold-text">ইনস্ট্যান্ট অ্যাক্সেস</span></>) : (<>Digital products,<br /><span className="gold-text">instant access</span></> )}</h1>
-              <p className="text-orange-100/80 text-sm md:text-base mt-4 max-w-md leading-relaxed">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই Google Drive অ্যাক্সেস — কোনো অপেক্ষা নেই, কোনো ডেলিভারি চার্জ নেই।' : 'Verified payment unlocks Google Drive access instantly — no waiting, no delivery fees.'}</p>
-              <div className="flex flex-wrap gap-2.5 mt-6">
-                <button onClick={() => setView('products')} className="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white font-black px-7 py-3.5 rounded-full text-sm shadow-lg shadow-orange-950/40 transition flex items-center gap-1.5">{t.shopNow}<ArrowRight size={16} /></button>
-                {!me && <button onClick={() => setAuthOpen('register')} className="glass px-7 py-3.5 rounded-full font-bold text-sm hover:bg-white/15 transition">{t.createAccount}</button>}
+              <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3 py-1 text-[10px] sm:text-[11px] font-bold tracking-[.18em] text-amber-200">✦ {lang === 'bn' ? 'প্রিমিয়াম ডিজিটাল স্টোর' : 'PREMIUM DIGITAL STORE'}</span>
+              <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.12] mt-3 sm:mt-4">{lang === 'bn' ? (<>ডিজিটাল প্রোডাক্ট,<br /><span className="gold-text">ইনস্ট্যান্ট অ্যাক্সেস</span></>) : (<>Digital products,<br /><span className="gold-text">instant access</span></> )}</h1>
+              <p className="text-orange-100/90 text-xs sm:text-sm md:text-base mt-2.5 sm:mt-4 max-w-md leading-relaxed">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই Google Drive অ্যাক্সেস — কোনো অপেক্ষা নেই, কোনো ডেলিভারি চার্জ নেই।' : 'Verified payment unlocks Google Drive access instantly — no waiting, no delivery fees.'}</p>
+              <div className="flex flex-wrap gap-2 sm:gap-2.5 mt-4 sm:mt-6">
+                <button onClick={() => setView('products')} className="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white font-black px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full text-xs sm:text-sm shadow-lg shadow-orange-950/40 transition flex items-center gap-1.5 cursor-pointer">{t.shopNow}<ArrowRight size={15} /></button>
+                {!me && <button onClick={() => setAuthOpen('register')} className="glass px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm hover:bg-white/15 transition cursor-pointer">{t.createAccount}</button>}
               </div>
-              <div className="flex items-center gap-4 mt-8">
-                <div className="flex -space-x-2.5">{['R', 'S', 'N', 'T'].map((c, i) => <span key={i} className="w-9 h-9 rounded-full border-2 border-[#3d1e07] flex items-center justify-center text-xs font-black text-white" style={{ background: ['#b45309', '#047857', '#1d4ed8', '#be123c'][i] }}>{c}</span>)}</div>
-                <div className="text-xs"><div className="flex items-center gap-1">{[1, 2, 3, 4, 5].map(s => <Star key={s} size={11} className="fill-amber-400 text-amber-400" />)}<b className="ml-1">4.9</b></div><span className="text-orange-100/70">{users.filter(u => u.role === 'customer').length * 1240}+ happy customers</span></div>
-                <div className="h-10 w-px bg-white/15" />
-                <div><div className="font-display font-black text-2xl">{activeProducts.length * 36}+</div><div className="text-[11px] text-orange-100/70">products sold</div></div>
+              <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-8 flex-wrap">
+                <div className="flex -space-x-2">{['R', 'S', 'N', 'T'].map((c, i) => <span key={i} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#3d1e07] flex items-center justify-center text-[10px] sm:text-xs font-black text-white" style={{ background: ['#b45309', '#047857', '#1d4ed8', '#be123c'][i] }}>{c}</span>)}</div>
+                <div className="text-[11px] sm:text-xs"><div className="flex items-center gap-1">{[1, 2, 3, 4, 5].map(s => <Star key={s} size={11} className="fill-amber-400 text-amber-400" />)}<b className="ml-1">4.9</b></div><span className="text-orange-100/70">{users.filter(u => u.role === 'customer').length * 1240}+ happy customers</span></div>
+                <div className="h-8 w-px bg-white/15 hidden sm:block" />
+                <div className="hidden sm:block"><div className="font-display font-black text-xl sm:text-2xl">{activeProducts.length * 36}+</div><div className="text-[10px] sm:text-[11px] text-orange-100/70">products sold</div></div>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative mt-2 lg:mt-0">
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
-                  <div className="float-slow"><img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-64 md:h-80 object-cover rounded-3xl shadow-2xl rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} /></div>
-                  <div className="absolute -left-2 md:-left-6 bottom-8 glass rounded-2xl px-4 py-3 float-slower shadow-xl">
-                    <div className="text-[10px] text-orange-200/80 font-bold tracking-wider">{t.grandTotal}</div>
-                    <div className="font-display font-black text-2xl text-white">{tk(eff(hero))}</div>
-                    <button onClick={() => goDetails(hero.id)} className="mt-1.5 bg-gradient-to-r from-orange-400 to-amber-500 text-[11px] font-black px-4 py-2 rounded-full shadow">{t.orderNow}</button>
+                  <div className="float-slow"><img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl rotate-1 sm:rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} /></div>
+                  <div className="absolute -left-1 sm:-left-4 bottom-4 sm:bottom-8 glass rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 float-slower shadow-xl">
+                    <div className="text-[9px] sm:text-[10px] text-orange-200/80 font-bold tracking-wider">{t.grandTotal}</div>
+                    <div className="font-display font-black text-lg sm:text-2xl text-white">{tk(eff(hero))}</div>
+                    <button onClick={() => goDetails(hero.id)} className="mt-1 bg-gradient-to-r from-orange-400 to-amber-500 text-[10px] sm:text-[11px] font-black px-3 sm:px-4 py-1.5 rounded-full shadow cursor-pointer">{t.orderNow}</button>
                   </div>
-                  <div className="absolute -right-1 md:-right-4 top-6 glass rounded-2xl px-3.5 py-2.5 flex items-center gap-2 float-slow shadow-xl" style={{ animationDelay: '-2.5s' }}>
-                    <BadgeCheck size={20} className="text-emerald-300 shrink-0" />
-                    <div className="text-[11px] font-bold text-white leading-tight">{t.verifiedPay}<br /><span className="text-orange-200/70 font-medium">{t.instantAccess}</span></div>
+                  <div className="absolute -right-1 sm:-right-4 top-4 sm:top-6 glass rounded-xl sm:rounded-2xl px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 flex items-center gap-1.5 sm:gap-2 float-slow shadow-xl" style={{ animationDelay: '-2.5s' }}>
+                    <BadgeCheck size={18} className="text-emerald-300 shrink-0" />
+                    <div className="text-[10px] sm:text-[11px] font-bold text-white leading-tight">{t.verifiedPay}<br /><span className="text-orange-200/70 font-medium">{t.instantAccess}</span></div>
                   </div>
                 </div>
               )}
               {slides.length > 1 && <>
-                <button onClick={() => setSlide((slide - 1 + slides.length) % slides.length)} className="absolute left-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white items-center justify-center text-slate-700 hidden md:flex"><ChevronLeft size={18} /></button>
-                <button onClick={() => setSlide((slide + 1) % slides.length)} className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white items-center justify-center text-slate-700 hidden md:flex"><ChevronRight size={18} /></button>
-                <div className="flex justify-center gap-1.5 mt-4">{slides.map((s, i) => <button key={s.id} onClick={() => setSlide(i)} className={`h-2 rounded-full transition-all ${i === slide ? 'w-7 bg-amber-400' : 'w-2 bg-white/40'}`} />)}</div>
+                <button onClick={() => setSlide((slide - 1 + slides.length) % slides.length)} className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white items-center justify-center text-slate-700 hidden md:flex cursor-pointer"><ChevronLeft size={16} /></button>
+                <button onClick={() => setSlide((slide + 1) % slides.length)} className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white items-center justify-center text-slate-700 hidden md:flex cursor-pointer"><ChevronRight size={16} /></button>
+                <div className="flex justify-center gap-1.5 mt-3">{slides.map((s, i) => <button key={s.id} onClick={() => setSlide(i)} className={`h-1.5 rounded-full transition-all cursor-pointer ${i === slide ? 'w-6 bg-amber-400' : 'w-1.5 bg-white/40'}`} />)}</div>
               </>}
             </div>
           </div>
         </div>
-          <div className="bg-white rounded-2xl p-3 grid gap-2 content-start shadow-sm">
+          <div className="bg-white rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 content-start shadow-xs">
             {trustItems.map(([Icon, label]) => (
-              <div key={label} className="flex items-center gap-3 bg-white border border-orange-100 hover:border-orange-300 hover:shadow-lg hover:shadow-orange-100 rounded-2xl px-4 py-3 transition cursor-default">
-                <span className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center shrink-0"><Icon size={18} style={{ color: BROWN }} /></span>
-                <span className="text-sm font-semibold text-slate-700">{label}</span>
+              <div key={label} className="flex items-center gap-2.5 bg-white border border-orange-100 hover:border-orange-300 rounded-xl px-3 py-2.5 transition cursor-default">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center shrink-0"><Icon size={16} style={{ color: BROWN }} /></span>
+                <span className="text-xs font-semibold text-slate-700 leading-tight">{label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-3 grid lg:grid-cols-[1fr_340px] gap-6 items-start">
+        <div className="max-w-7xl mx-auto px-3 grid lg:grid-cols-[1fr_340px] gap-4 sm:gap-6 items-start">
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display font-black text-lg md:text-xl text-slate-800 flex items-center gap-2 reveal"><LayoutGrid size={19} style={{ color: BROWN }} />{t.shopByCat}</h2>
-              <button onClick={() => { setCatFilter('All'); setView('products'); }} className="text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all" style={{ color: BROWN }}>{t.seeAll}<ChevronRight size={14} /></button>
+              <h2 className="font-display font-black text-base sm:text-xl text-slate-800 flex items-center gap-2 reveal"><LayoutGrid size={18} style={{ color: BROWN }} />{t.shopByCat}</h2>
+              <button onClick={() => { setCatFilter('All'); setView('products'); }} className="text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all cursor-pointer" style={{ color: BROWN }}>{t.seeAll}<ChevronRight size={14} /></button>
             </div>
-            <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2 stagger-in">
+            <div className="flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-2 stagger-in">
               {activeCats.map(c => (
-                <button key={c.id} onClick={() => { setCatFilter(c.id); setView('products'); }} className="flex flex-col items-center gap-2 shrink-0 group">
-                  {c.image ? <img src={c.image} alt={c.name} className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover ring-4 ring-orange-100 group-hover:ring-orange-300 transition" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(c.id, 200); }} />
-                    : <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-orange-200 to-amber-100 flex items-center justify-center ring-4 ring-orange-100"><Tag size={26} style={{ color: BROWN }} /></div>}
-                  <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{c.name}</span>
+                <button key={c.id} onClick={() => { setCatFilter(c.id); setView('products'); }} className="flex flex-col items-center gap-1.5 shrink-0 group cursor-pointer">
+                  {c.image ? <img src={c.image} alt={c.name} className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full object-cover ring-3 ring-orange-100 group-hover:ring-orange-300 transition" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(c.id, 200); }} />
+                    : <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-orange-200 to-amber-100 flex items-center justify-center ring-3 ring-orange-100"><Tag size={22} style={{ color: BROWN }} /></div>}
+                  <span className="text-[11px] sm:text-xs font-medium text-slate-700 whitespace-nowrap">{c.name}</span>
                 </button>
               ))}
             </div>
           </div>
-          <button onClick={() => setView('products')} className="relative rounded-2xl overflow-hidden text-left group reveal">
-            <img src={settings.promoImage || IMG('promo', 800)} alt="" className="w-full h-36 md:h-44 object-cover group-hover:scale-105 transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
+          <button onClick={() => setView('products')} className="relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
+            <img src={settings.promoImage || IMG('promo', 800)} alt="" className="w-full h-32 sm:h-40 md:h-44 object-cover group-hover:scale-105 transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
             <span className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[11px] font-black bg-white px-4 py-1.5 rounded-full whitespace-nowrap" style={{ color: BROWN }}>{settings.promoTitle} • {t.shopNow}</span>
+            <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 text-[10px] sm:text-[11px] font-black bg-white px-3.5 py-1 rounded-full whitespace-nowrap shadow" style={{ color: BROWN }}>{settings.promoTitle} • {t.shopNow}</span>
           </button>
         </div>
 
-        <main className="max-w-7xl mx-auto px-3 py-6">
-          <h2 className="font-display font-black text-xl md:text-2xl text-slate-800 mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-7 rounded-full" style={{ background: BROWN }} /><Zap size={20} style={{ color: BROWN }} />{t.newTrending}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 stagger-in">{activeProducts.slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
-          <h2 className="font-display font-black text-xl md:text-2xl text-slate-800 mt-10 mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-7 rounded-full" style={{ background: BROWN }} />{t.latestProducts}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 stagger-in">{[...activeProducts].reverse().slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
+        <main className="max-w-7xl mx-auto px-3 py-4 sm:py-6">
+          <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} /><Zap size={18} style={{ color: BROWN }} />{t.newTrending}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{activeProducts.slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
+          <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mt-8 sm:mt-10 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} />{t.latestProducts}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{[...activeProducts].reverse().slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
 
           <div className="mt-12 bg-white border border-orange-100 rounded-[1.75rem] p-6 md:p-10 reveal">
             <div className="text-center text-[11px] font-black tracking-[.25em] text-amber-600">✦ HOW IT WORKS ✦</div>
@@ -952,10 +1724,68 @@ export default function App() {
       </footer>
 
       {/* whatsapp float */}
-      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" className="fixed bottom-5 right-5 z-40 bg-[#25d366] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl float-wa" title="Chat">
+      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105" title="Chat">
         <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
-        <MessageCircle size={28} className="text-white relative" />
+        <MessageCircle size={26} className="text-white relative" />
       </a>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
+        <button
+          onClick={() => setView('home')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+        >
+          <Store size={19} className={view === 'home' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          <span className="text-[10px] leading-none">{lang === 'bn' ? 'হোম' : 'Home'}</span>
+        </button>
+
+        <button
+          onClick={() => { setCatFilter('All'); setView('products'); }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'products' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+        >
+          <Package size={19} className={view === 'products' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          <span className="text-[10px] leading-none">{lang === 'bn' ? 'প্রোডাক্ট' : 'Shop'}</span>
+        </button>
+
+        <button
+          onClick={() => setView('cart')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${view === 'cart' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+        >
+          <div className="relative">
+            <ShoppingCart size={19} className={view === 'cart' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+            {cart.length > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                {cart.length}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] leading-none">{lang === 'bn' ? 'কার্ট' : 'Cart'}</span>
+        </button>
+
+        <button
+          onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('purchases'); }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'purchases' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+        >
+          <Download size={19} className={view === 'purchases' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          <span className="text-[10px] leading-none">{lang === 'bn' ? 'লাইব্রেরি' : 'Library'}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (!me) { setAuthOpen('login'); return; }
+            if (me.role === 'admin') setView('admin');
+            else setView('dashboard');
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'dashboard' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+        >
+          {me?.role === 'admin' ? (
+            <LayoutDashboard size={19} className="text-slate-500" />
+          ) : (
+            <UserIcon size={19} className={view === 'dashboard' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          )}
+          <span className="text-[10px] leading-none">{me ? (me.role === 'admin' ? (lang === 'bn' ? 'অ্যাডমিন' : 'Admin') : (lang === 'bn' ? 'অ্যাকাউন্ট' : 'Account')) : (lang === 'bn' ? 'লগইন' : 'Login')}</span>
+        </button>
+      </nav>
 
       {/* order success (pending verification) */}
       {orderPlaced && (
@@ -977,8 +1807,32 @@ export default function App() {
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm fade-up" onClick={e => e.stopPropagation()}>
             <div className="flex justify-center"><div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-2xl" style={{ background: BROWN }}>M</div></div>
             <h3 className="font-black text-center mt-2 text-lg">{authOpen === 'login' ? t.welcomeBack : t.createAccount}</h3>
-            <p className="text-[11px] text-center text-slate-400">demo@demo.com / demo123</p>
+            <p className="text-[11px] text-center text-slate-400 mt-0.5">{authOpen === 'login' ? (lang === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Sign in to your account') : (lang === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create your free account')}</p>
             <div className="grid gap-2 mt-3 text-sm">
+              <button
+                type="button"
+                disabled={authLoading}
+                onClick={handleGoogleAuth}
+                className="w-full border border-slate-300 hover:border-slate-400 disabled:opacity-60 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-2xl flex items-center justify-center gap-2.5 transition-colors shadow-sm cursor-pointer disabled:cursor-not-allowed"
+              >
+                {authLoading ? (
+                  <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                )}
+                <span>{authLoading ? (lang === 'bn' ? 'সাইন-ইন হচ্ছে...' : 'Signing in...') : (lang === 'bn' ? 'গুগল দিয়ে প্রবেশ করুন' : 'Continue with Google')}</span>
+              </button>
+
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-medium">{lang === 'bn' ? 'অথবা ইমেইল দিয়ে' : 'or with email'}</span></div>
+              </div>
+
               {authOpen === 'register' && <input className="border rounded-xl px-3 py-2.5" placeholder={t.name} value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} />}
               <input className="border rounded-xl px-3 py-2.5" placeholder={t.email} value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} />
               <input type="password" className="border rounded-xl px-3 py-2.5" placeholder={t.password} value={authForm.pass} onChange={e => setAuthForm({ ...authForm, pass: e.target.value })} onKeyDown={e => e.key === 'Enter' && (authOpen === 'login' ? doLogin() : doRegister())} />

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { AcademicClass, AdmissionApplication, AttendanceRecord, ExamResult, FeePayment, FinancialTransaction, Grievance, Homework, Institution, MadrasaInfo, Notice, PrayerTimes, SalaryRecord, Student, Syllabus, Teacher } from '../types';
 import { db, firebaseEnabled } from './firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { safeStringify } from '../store';
 
 export interface DB {
   madrasa: MadrasaInfo;
@@ -133,7 +134,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<Ctx['syncStatus']>(firebaseEnabled ? 'synced-cloud' : 'synced-local');
 
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { setSyncStatus('error'); }
+    try { localStorage.setItem(KEY, safeStringify(data)); } catch { setSyncStatus('error'); }
   }, [data]);
 
   useEffect(() => {
@@ -157,10 +158,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const update = (patch: Partial<DB>) => setData(prev => ({ ...prev, ...patch }));
-  const reset = () => { const s = seed(); setData(s); localStorage.setItem(KEY, JSON.stringify(s)); };
-  const forceSync = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); setSyncStatus(firebaseEnabled ? 'synced-cloud' : 'synced-local'); } catch { setSyncStatus('error'); } };
+  const reset = () => { const s = seed(); setData(s); localStorage.setItem(KEY, safeStringify(s)); };
+  const forceSync = () => { try { localStorage.setItem(KEY, safeStringify(data)); setSyncStatus(firebaseEnabled ? 'synced-cloud' : 'synced-local'); } catch { setSyncStatus('error'); } };
   const exportJSON = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([safeStringify(data)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'madrasa-backup.json'; a.click();
   };
   const val = useMemo(() => ({ data, update, reset, syncStatus, forceSync, exportJSON }), [data, syncStatus]);
