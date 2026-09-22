@@ -308,7 +308,15 @@ export default function App() {
         createdAt: nowStr(),
       };
 
-      // Update local state immediately so user is registered & logged in without blocking
+      // Persist the authenticated profile before completing the login flow.
+      // This prevents a successful-looking login when Firestore is unavailable
+      // or its security rules reject the write.
+      if (!db) throw new Error('Firebase Firestore is not configured.');
+      await setDoc(doc(db, 'users', fbUser.uid), u, { merge: true });
+      if (isAdminUser) {
+        await setDoc(doc(db, 'admins', fbUser.uid), { id: fbUser.uid, email: fbUser.email, role: 'admin' }, { merge: true });
+      }
+
       setUsers(prev => [u, ...prev.filter(x => x.id !== u.id)]);
       localStorage.setItem('ks_session_v1', u.id);
       sessionStorage.setItem('ks_session_v1', u.id);
@@ -317,18 +325,6 @@ export default function App() {
       notify('✓ ' + (lang === 'bn' ? 'গুগল দিয়ে প্রবেশ সফল হয়েছে: ' : 'Google Sign-in successful: ') + u.name);
       consumePendingBuy(u.id);
       if (role === 'admin' && !pendingBuy) setView('admin');
-
-      // Sync user to Firestore in the background
-      if (db) {
-        setDoc(doc(db, 'users', fbUser.uid), u, { merge: true }).catch((err: unknown) => {
-          console.warn('Firestore user sync note:', err);
-        });
-        if (isAdminUser) {
-          setDoc(doc(db, 'admins', fbUser.uid), { id: fbUser.uid, email: fbUser.email, role: 'admin' }, { merge: true }).catch((err: unknown) => {
-            console.warn('Firestore admin sync note:', err);
-          });
-        }
-      }
     } catch (e: unknown) {
       const errObj = e as { code?: string; message?: string };
       const code = errObj?.code || '';
@@ -344,6 +340,8 @@ export default function App() {
         msg = lang === 'bn' ? 'নেটওয়ার্ক সমস্যা। ইন্টারনেট কানেকশন চেক করুন।' : 'Network error. Please check your internet connection.';
       } else if (code === 'auth/unauthorized-domain') {
         msg = lang === 'bn' ? 'অননুমোদিত ডোমেন। Firebase Console-এ Auth ডোমেন যোগ করুন।' : 'Unauthorized domain in Firebase Auth settings.';
+      } else if (code === 'permission-denied' || code === 'failed-precondition') {
+        msg = lang === 'bn' ? 'Firebase-এ user profile save করা যায়নি। Firestore database ও rules পরীক্ষা করুন।' : 'Could not save your profile to Firebase. Please check Firestore database and rules.';
       }
       setAuthErr(msg);
     } finally {
