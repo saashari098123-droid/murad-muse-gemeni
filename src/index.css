@@ -365,3 +365,75 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .mg-product-info button{height:26px!important;font-size:7px!important;margin-top:6px!important}
   .mg-product-image>span{font-size:6px!important;padding:3px 5px!important}
 }
+
+/* ===== Mobile header alignment + single supplied logo ===== */
+@media (max-width:639px){
+  .store-header{overflow:hidden!important}
+  .store-header>div:first-child{
+    width:100%!important;max-width:none!important;
+    min-height:66px!important;height:66px!important;
+    padding:9px 10px!important;gap:9px!important;
+    display:flex!important;align-items:center!important;
+    box-sizing:border-box!important;
+  }
+  .store-header>div:first-child>button:first-child{
+    flex:0 0 42px!important;width:42px!important;height:42px!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    margin:0!important;padding:0!important;
+  }
+  .store-header .brand-logo-icon{
+    width:42px!important;height:42px!important;
+    border-radius:11px!important;display:block!important;
+  }
+  .store-header .brand-wordmark{display:none!important}
+
+  .store-header .header-search{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;
+    order:initial!important;flex:1 1 auto!important;min-width:0!important;
+    width:auto!important;max-width:none!important;margin:0!important;
+  }
+  .store-header .header-search input{
+    width:100%!important;height:40px!important;
+    box-sizing:border-box!important;padding:0 38px 0 17px!important;
+    border-radius:999px!important;font-size:11px!important;
+    background:rgba(255,255,255,.13)!important;
+    border:1px solid rgba(255,255,255,.2)!important;
+    color:#fff!important;outline:none!important;
+  }
+  .store-header .header-search input::placeholder{color:rgba(255,255,255,.82)!important}
+  .store-header .header-search button{
+    right:4px!important;left:auto!important;top:50%!important;
+    transform:translateY(-50%)!important;width:31px!important;height:31px!important;
+    background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.14)!important;
+  }
+  .store-header .header-search button svg{width:15px!important;height:15px!important}
+
+  .store-header .mobile-header-actions{
+    flex:0 0 auto!important;display:flex!important;align-items:center!important;
+    gap:2px!important;margin:0!important;padding:0!important;
+  }
+  .store-header .mobile-header-actions .header-icon-btn{
+    width:31px!important;height:38px!important;padding:0!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    color:#fff!important;background:transparent!important;border:0!important;
+  }
+  .store-header .mobile-header-actions .header-icon-btn svg{width:19px!important;height:19px!important}
+  .store-header>.header-cart{
+    flex:0 0 34px!important;width:34px!important;height:38px!important;
+    padding:0!important;margin:0!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    color:#fff!important;
+  }
+  .store-header>.header-cart svg{width:22px!important;height:22px!important}
+  .store-header>.header-cart span{
+    top:0!important;right:-1px!important;
+    width:16px!important;height:16px!important;font-size:9px!important;
+  }
+
+  /* Hide the desktop account/order controls on phones so header never collides. */
+  .store-header>div:first-child>.relative,
+  .store-header>div:first-child>button:not(.header-cart):not(:first-child){display:none!important}
+
+  /* Make the mobile header breathe like the reference. */
+  .mg-mobile-home{padding-top:10px!important}
+}
