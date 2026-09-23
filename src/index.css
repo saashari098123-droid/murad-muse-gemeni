@@ -1149,3 +1149,59 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
     border-color: #0b3d9f !important;
   }
 }
+
+
+/* ===== Final mobile contrast normalization ===== */
+@media (max-width: 639px) {
+  .store-header,
+  .store-header * { outline: none !important; }
+  .store-header .header-search input {
+    border: 1px solid rgba(255,255,255,.22) !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  .store-header .header-search input:focus { border-color: rgba(255,255,255,.42) !important; box-shadow: none !important; }
+  .store-header .header-search button { background: #fff !important; color: #071a36 !important; }
+  .mobile-profile-trigger { border-color: rgba(255,255,255,.58) !important; box-shadow: none !important; }
+
+  /* Neutral page typography: no accidental blue labels on white cards. */
+  main .text-\[\#5a2e0d\],
+  main .text-\[\#7c2d12\],
+  main .text-orange-600,
+  main .text-amber-600,
+  main .text-amber-700,
+  .mg-mobile-section-head h2,
+  .mg-mobile-categories b,
+  .mg-product-info h3,
+  .mg-price { color: #111827 !important; }
+
+  /* Keep intentionally dark blue surfaces, but use black labels on their actions. */
+  .mobile-primary-action,
+  main button[style*="background"],
+  main a[style*="background"],
+  main .mg-product-info button,
+  main .mg-mobile-product button,
+  .mg-mobile-hero button,
+  .mg-mobile-promo button {
+    color: #050b16 !important;
+    -webkit-text-fill-color: #050b16 !important;
+    text-shadow: none !important;
+  }
+  .mobile-primary-action svg,
+  main button[style*="background"] svg,
+  main a[style*="background"] svg,
+  main .mg-product-info button svg,
+  main .mg-mobile-product button svg,
+  .mg-mobile-hero button svg,
+  .mg-mobile-promo button svg { color: #050b16 !important; }
+  .mobile-outline-action {
+    color: #111827 !important;
+    background: #fff !important;
+    border: 2px solid #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+  }
+  .mobile-outline-action svg { color: #111827 !important; }
+  .mobile-bottom-nav > button.mobile-nav-active,
+  .mobile-bottom-nav > button.mobile-nav-active svg,
+  .mobile-bottom-nav > button.mobile-nav-active > span { color: #111827 !important; }
+}
