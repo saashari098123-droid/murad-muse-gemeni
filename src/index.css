@@ -1026,42 +1026,6 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
 }
 
 
-/* ===== Language parity: desktop visual theme stays identical ===== */
-@media (min-width: 640px) {
-  .lang-en {
-    background: #f7f4ef !important;
-    color: #0f172a !important;
-  }
-  .lang-en .store-topbar { background: #3d1e07 !important; color: #fff !important; }
-  .lang-en .store-header { background: #5a2e0d !important; box-shadow: 0 4px 12px rgba(61,30,7,.22) !important; }
-  .lang-en .store-header .header-search input { height: auto; box-shadow: none; border: 0; }
-  .lang-en .store-header .header-search button { background: #3d1e07 !important; }
-  .lang-en .home-hero,
-  .lang-en .mesh-hero { background: linear-gradient(120deg, #1c0d02 20%, #5a2e0d 80%) !important; }
-  .lang-en .home-hero .blob { background: rgba(249,115,22,.34) !important; }
-  .lang-en .home-hero-copy h1 .gold-text { background: linear-gradient(90deg,#fde68a,#f59e0b,#fbbf24) !important; -webkit-background-clip: text !important; background-clip: text !important; color: transparent !important; }
-  .lang-en .home-hero-copy > div:first-of-type button { background: linear-gradient(to right, #fb923c, #f59e0b) !important; }
-  .lang-en .home-hero-copy > div:nth-child(2) button,
-  .lang-en .home-hero-copy button:nth-child(2) { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.14) !important; }
-  .lang-en .home-trust > div { border-color: #ffedd5 !important; }
-  .lang-en .home-trust > div > span:first-child { background: linear-gradient(to bottom right, #ffedd5, #fef3c7) !important; }
-  .lang-en .home-trust > div > span:first-child svg { color: #5a2e0d !important; }
-  .lang-en .home-category h2,
-  .lang-en main h2 { color: #1e293b !important; }
-  .lang-en .home-category h2 svg,
-  .lang-en main h2 svg { color: #5a2e0d !important; }
-  .lang-en .home-category button,
-  .lang-en .home-category > button { color: #5a2e0d !important; }
-  .lang-en .home-promo > span:last-child { background: #fff !important; color: #5a2e0d !important; }
-  .lang-en footer { background: #3d1e07 !important; color: rgba(255,237,213,.7) !important; }
-  .lang-en footer .text-white { color: #fff !important; }
-  .lang-en button[style*="background"],
-  .lang-en a[style*="background"] { background: #5a2e0d !important; }
-  .lang-en button[style*="color"] { color: #5a2e0d !important; }
-  .lang-en .mobile-bottom-nav { background: rgba(255,255,255,.95) !important; }
-}
-
-
 /* ===== Deeper mobile blue with dark action labels ===== */
 @media (max-width: 639px) {
   .store-header {
@@ -1103,4 +1067,49 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .mg-mobile-promo button {
     background: linear-gradient(90deg, #4d8de8, #6da6f5) !important;
   }
+}
+
+
+/* ===== Final mobile visual contract ===== */
+@media (max-width: 639px) {
+  .store-header { background: linear-gradient(135deg, #061a42 0%, #09285e 58%, #1249a8 100%) !important; }
+  .store-header .header-search input { border: 1px solid rgba(255,255,255,.18) !important; box-shadow: none !important; outline: none !important; }
+  .store-header .header-search input:focus { border-color: rgba(255,255,255,.3) !important; box-shadow: none !important; }
+
+  main h1, main h2, main h3, main h4, main p, main label,
+  main .mg-mobile-section-head h2,
+  main .mg-mobile-categories b,
+  main .mg-mobile-trust b,
+  main .mg-mobile-trust small,
+  main .mg-product-info h3,
+  main .mg-product-info p,
+  main .mg-price,
+  main .text-\[\#5a2e0d\], main .text-\[\#7c2d12\],
+  main .text-amber-600, main .text-amber-700 {
+    color: #111827 !important;
+  }
+  main .mg-mobile-hero h1,
+  main .mg-mobile-hero p,
+  main .mg-mobile-promo b,
+  main .mg-mobile-promo span { color: #fff !important; }
+  main .mg-mobile-hero button,
+  main .mg-mobile-promo button,
+  main .mobile-primary-action,
+  main button[style*="background"],
+  main a[style*="background"],
+  main .mg-product-info button,
+  main .mg-mobile-product button {
+    color: #071a36 !important;
+    background: linear-gradient(90deg, #4d8de8, #6da6f5) !important;
+    -webkit-text-fill-color: #071a36 !important;
+    text-shadow: none !important;
+  }
+  main .mg-mobile-hero button svg,
+  main .mg-mobile-promo button svg,
+  main .mobile-primary-action svg,
+  main button[style*="background"] svg,
+  main a[style*="background"] svg { color: #071a36 !important; }
+  main .mobile-outline-action { color: #0b3d9f !important; background: #fff !important; border-color: #0b3d9f !important; }
+  main button:focus, main a:focus { outline: none !important; box-shadow: none !important; }
+  main .border-\[\#5a2e0d\], main .border-\[\#7c2d12\] { border-color: #dbe4f0 !important; }
 }
