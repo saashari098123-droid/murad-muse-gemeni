@@ -76,11 +76,20 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
 
   .home-top-grid { padding-top: 12px; padding-bottom: 10px; gap: 10px; display: flex; flex-direction: column; }
   .home-hero { border-radius: 22px; box-shadow: 0 7px 20px rgba(90, 46, 13, .2); }
-  .home-hero > .relative.grid { display: block; padding: 10px; }
-  .home-hero-copy { display: none; }
-  .home-hero-visual { margin: 0; }
-  .home-hero-visual img { height: 158px; border-radius: 15px; transform: none; object-position: center; }
-  .mobile-hero-overlay { display: flex; }
+  .home-hero { background: linear-gradient(108deg, #3a2108 0%, #5a350d 39%, #75500e 68%, #a66b16 100%); }
+  .home-hero > .relative.grid { display: grid; grid-template-columns: 44% 56%; gap: 0; padding: 14px 0 12px 15px; min-height: 168px; align-items: center; }
+  .home-hero-copy { display: block; min-width: 0; position: relative; z-index: 2; padding-right: 5px; }
+  .home-hero-copy > span { padding: 4px 7px; font-size: 7px; letter-spacing: .08em; white-space: nowrap; }
+  .home-hero-copy h1 { font-size: 19px; line-height: 1.08; margin-top: 8px; }
+  .home-hero-copy p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 8px; line-height: 1.35; margin-top: 7px; }
+  .home-hero-copy > div:nth-of-type(1) { margin-top: 9px; }
+  .home-hero-copy > div:nth-of-type(1) button { padding: 6px 10px; font-size: 8px; }
+  .home-hero-copy > div:nth-of-type(1) button + button { display: none; }
+  .home-hero-copy > div:nth-of-type(2) { display: none; }
+  .home-hero-visual { margin: 0; min-width: 0; align-self: stretch; display: flex; align-items: center; margin-left: -5px; }
+  .home-hero-visual > div:first-child { width: 100%; }
+  .home-hero-visual img { height: 142px; border-radius: 18px 0 0 18px; transform: none; object-position: center; box-shadow: -22px 8px 25px rgba(42, 20, 3, .2); -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.8) 14%, #000 28%); mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.8) 14%, #000 28%); }
+  .mobile-hero-overlay { display: none; }
   .mobile-hero-overlay h2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
   .mobile-hero-badge { box-shadow: 0 3px 10px rgba(0, 0, 0, .18); }
   .home-hero-visual .glass { display: none; }
