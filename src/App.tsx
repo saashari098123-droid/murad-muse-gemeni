@@ -1356,9 +1356,9 @@ export default function App() {
             </button>
           </div>
           <div className="flex-1 sm:hidden" />
-          <div className="mobile-header-actions sm:hidden flex items-center gap-1.5">
-            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="header-icon-btn rounded-full hover:bg-white/10 cursor-pointer"><Globe size={19} /></button>
-            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="header-icon-btn rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
+          <div className="mobile-header-actions sm:hidden flex items-center gap-1">
+            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
+            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
           </div>
           {me ? (
             <div className="relative">
