@@ -95,6 +95,10 @@ export default function App() {
 
   const t = STR[lang];
 
+  useEffect(() => {
+    document.documentElement.lang = lang === 'en' ? 'en' : 'bn';
+  }, [lang]);
+
   // Live sync with Firebase Firestore if available, otherwise localStorage fallback
   useEffect(() => {
     if (!firebaseEnabled || !db) return;
@@ -1327,7 +1331,7 @@ export default function App() {
   const trustItems: [typeof Zap, string][] = [[Zap, t.instantAccess], [BadgeCheck, t.verifiedPay], [Headphones, t.support247], [Download, t.lifetimeLib], [ShieldCheck, t.securePay]];
 
   return (
-    <div className="min-h-screen bg-[#f7f4ef] pb-20 md:pb-0">
+    <div className={`min-h-screen bg-[#f7f4ef] pb-20 md:pb-0 lang-${lang}`}>
       {/* topbar */}
       <div className="store-topbar text-white text-xs md:text-sm" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
