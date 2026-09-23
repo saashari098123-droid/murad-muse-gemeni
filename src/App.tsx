@@ -49,7 +49,7 @@ export default function App() {
   const [cart, setCart] = useState<CartLine[]>(() => load('ks_cart_v1', [] as CartLine[]));
   const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('ks_session_v1') || sessionStorage.getItem('ks_session_v1'));
 
-  const [view, setView] = useState<View>('home');
+  const [view, setView] = useState<View>(() => window.location.pathname === '/products' ? 'products' : window.location.pathname.startsWith('/product/') ? 'details' : 'home');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('All');
@@ -254,6 +254,19 @@ export default function App() {
   useEffect(() => { if (!toast && !err) return; const id = setTimeout(() => { setToast(''); setErr(''); }, 2600); return () => clearTimeout(id); }, [toast, err]);
   useEffect(() => { setGal(0); setTab('desc'); }, [detailId]);
   useEffect(() => {
+    const syncUrl = () => {
+      const match = window.location.pathname.match(/^\/product\/([^/]+)/);
+      if (match) {
+        const found = products.find(p => p.slug === decodeURIComponent(match[1]));
+        if (found) { setDetailId(found.id); setView('details'); }
+      } else if (window.location.pathname === '/products') setView('products');
+      else if (window.location.pathname === '/') setView('home');
+    };
+    syncUrl();
+    window.addEventListener('popstate', syncUrl);
+    return () => window.removeEventListener('popstate', syncUrl);
+  }, [products]);
+  useEffect(() => {
     setCart(c => {
       const pruned = c.filter(l => products.some(p => p.id === l.productId && p.status === 'active'));
       return pruned.length === c.length ? c : pruned;
@@ -273,6 +286,30 @@ export default function App() {
   const activeProducts = products.filter(p => p.status === 'active');
   const catName = (id: string) => categories.find(c => c.id === id)?.name || '—';
   const detail = products.find(p => p.id === detailId) || null;
+  useEffect(() => {
+    const title = detail ? `${detail.name} | Murad Graphics` : 'Murad Graphics — Digital Products Store Bangladesh';
+    const description = detail ? `${detail.description} Buy from Murad Graphics with secure bKash, Nagad or Rocket payment. Current price ${tk(eff(detail))}.` : 'Buy premium digital products, themes, software, bundles and subscriptions from Murad Graphics in Bangladesh. Secure payment and verified delivery.';
+    document.title = title;
+    const setMeta = (selector: string, attr: 'name' | 'property', key: string, content: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute('content', content);
+    };
+    setMeta('meta[name="description"]', 'name', 'description', description);
+    setMeta('meta[property="og:title"]', 'property', 'og:title', title);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', description);
+    setMeta('meta[property="og:type"]', 'property', 'og:type', detail ? 'product' : 'website');
+    setMeta('meta[property="og:url"]', 'property', 'og:url', window.location.href);
+    if (detail) setMeta('meta[property="og:image"]', 'property', 'og:image', detail.previewImages[0] || IMG(detail.id, 700));
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    canonical.href = detail ? `${window.location.origin}/product/${detail.slug}` : `${window.location.origin}/`;
+    let schema = document.head.querySelector<HTMLScriptElement>('script[data-product-schema]');
+    if (detail) {
+      if (!schema) { schema = document.createElement('script'); schema.type = 'application/ld+json'; schema.dataset.productSchema = 'true'; document.head.appendChild(schema); }
+      schema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Product', name: detail.name, description: detail.description, image: detail.previewImages, sku: detail.id, brand: { '@type': 'Brand', name: 'Murad Graphics' }, offers: { '@type': 'Offer', url: `${window.location.origin}/product/${detail.slug}`, priceCurrency: 'BDT', price: eff(detail), availability: 'https://schema.org/InStock', seller: { '@type': 'Organization', name: 'Murad Graphics' } }, aggregateRating: detail.reviews.length ? { '@type': 'AggregateRating', ratingValue: detail.rating, reviewCount: detail.reviews.length } : undefined });
+    } else if (schema) schema.remove();
+  }, [detail]);
   useEffect(() => { if (view === 'details' && !detail) setView('products'); }, [view, detail]);
 
   // access rule: logged in + owns (paid purchase)
@@ -307,7 +344,7 @@ export default function App() {
   const notify = (m: string) => setToast(m);
   const fail = (m: string) => setErr(m);
   const copy = (txt: string, label: string) => { try { navigator.clipboard?.writeText(txt); } catch { /* na */ } setCopied(label); setTimeout(() => setCopied(''), 1500); };
-  const goDetails = (id: string) => { setDetailId(id); setView('details'); };
+  const goDetails = (id: string) => { const product = products.find(p => p.id === id); if (!product) return; window.history.pushState({}, '', `/product/${product.slug}`); setDetailId(id); setView('details'); };
 
   // ---------- auth ----------
   const handleGoogleAuth = async () => {
@@ -551,7 +588,7 @@ export default function App() {
           </div>
         </div>
         <div className="p-2.5 sm:p-3.5 flex flex-col flex-1">
-          <h3 className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug line-clamp-2 min-h-[2.4em] cursor-pointer hover:text-[#7c2d12]" onClick={() => goDetails(p.id)}>{p.name}</h3>
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug line-clamp-2 min-h-[2.4em] cursor-pointer hover:text-[#7c2d12]"><a href={`/product/${p.slug}`} onClick={e => { e.preventDefault(); goDetails(p.id); }}>{p.name}</a></h3>
           <div className="flex items-center gap-1 mt-1 text-[10px] sm:text-[11px] text-slate-400"><Star size={11} className="fill-amber-400 text-amber-400" />{p.rating} <span>({p.sold.toLocaleString()})</span></div>
           <div className="border-t border-slate-100 mt-2 pt-2 flex items-end justify-between gap-1">
             <div className="min-w-0 flex-1">

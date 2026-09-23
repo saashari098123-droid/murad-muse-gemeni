@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /checkout
+Disallow: /orders
+Disallow: /purchases
+Sitemap: https://murad-muse-gemeni.onrender.com/sitemap.xml
