@@ -1362,6 +1362,11 @@ export default function App() {
             </button>
           </div>
           <div className="flex-1 sm:hidden" />
+          <div className="mobile-header-actions sm:hidden flex items-center gap-1">
+            <button onClick={() => setView('products')} aria-label="Search products" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Search size={19} /></button>
+            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
+            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
+          </div>
           {me ? (
             <div className="relative">
               <button onClick={() => setAcctMenu(!acctMenu)} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer">
@@ -1392,7 +1397,7 @@ export default function App() {
             </div>
           ) : <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>}
           <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full cursor-pointer hidden sm:block"><Box size={19} /></button>
-          <button onClick={() => setView('cart')} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
+          <button onClick={() => setView('cart')} className="header-cart p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
         </div>
         <div className="sm:hidden px-3 pb-2.5">
           <div className="relative flex items-center w-full">
