@@ -1794,7 +1794,7 @@ export default function App() {
       {/* footer */}
       <footer className="text-orange-100/70 mt-10" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
-          <div><Logo /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
+          <div><img src="/murad-logo-full.svg" alt="Murad Graphics Digital Store" className="footer-brand-logo w-56 max-w-full h-auto" /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
             <div className="flex gap-2 mt-3">
               <a href={settings.facebook} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Facebook size={16} /></a>
               <a href={settings.youtube} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Youtube size={16} /></a>
@@ -1896,7 +1896,7 @@ export default function App() {
       {authOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setAuthOpen(null); setPendingBuy(null); }}>
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm fade-up" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center"><img src="/murad-logo-icon.svg" alt="Murad Graphics" className="w-12 h-12 rounded-2xl object-cover" /></div>
+            <div className="flex justify-center"><img src="/murad-logo-mark.svg" alt="Murad Graphics" className="w-12 h-12 rounded-2xl object-cover" /></div>
             <h3 className="font-black text-center mt-2 text-lg">{authOpen === 'login' ? t.welcomeBack : t.createAccount}</h3>
             <p className="text-[11px] text-center text-slate-400 mt-0.5">{authOpen === 'login' ? (lang === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Sign in to your account') : (lang === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create your free account')}</p>
             <div className="grid gap-2 mt-3 text-sm">
