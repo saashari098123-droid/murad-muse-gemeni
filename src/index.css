@@ -849,3 +849,31 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .mobile-bottom-nav > button.mobile-nav-active > span { color: #1e5bd7 !important; }
   .mobile-bottom-nav > button.mobile-nav-active > span { font-weight: 800 !important; }
 }
+
+
+/* ===== Final mobile blue + white storefront treatment ===== */
+@media (max-width: 639px) {
+  body, #root, #root > div, .min-h-screen { background: #f4f7fc !important; }
+  .store-header { background: linear-gradient(135deg, #061a42 0%, #0b2d69 60%, #1f52d4 100%) !important; }
+  .store-header .header-search input { background: rgba(255,255,255,.16) !important; border-color: rgba(255,255,255,.28) !important; }
+  .store-header .header-search button { background: #fff !important; color: #1747ba !important; border-color: #fff !important; box-shadow: 0 2px 8px rgba(0,0,0,.12) !important; }
+  .store-header .mobile-header-actions button:hover,
+  .store-header > .header-cart:hover { background: rgba(255,255,255,.14) !important; }
+  .mg-mobile-home { background: #f4f7fc !important; }
+  .mg-mobile-hero { background: linear-gradient(135deg, #06183d 0%, #092c70 54%, #194bd4 100%) !important; }
+  .mg-mobile-promo { background: linear-gradient(135deg, #1836d6 0%, #3f35f4 55%, #6539e8 100%) !important; }
+  .mg-mobile-section-head h2, .mg-mobile-section-head > button { color: #102b61 !important; }
+  .mg-mobile-section-head > div > svg { color: #1856d8 !important; }
+  .mg-mobile-categories b { color: #183360 !important; }
+  .mg-mobile-products, .mg-mobile-product, .mg-mobile-trust { background: #fff !important; }
+  .mg-mobile-product { border-color: #dfe8f6 !important; }
+  .mg-product-info h3, .mg-price { color: #102b61 !important; }
+  .mobile-bottom-nav { background: #fff !important; }
+  .mobile-bottom-nav > button.mobile-nav-active,
+  .mobile-bottom-nav > button.mobile-nav-active svg,
+  .mobile-bottom-nav > button.mobile-nav-active > span { color: #1e5bd7 !important; }
+  footer { background: linear-gradient(180deg, #061a42 0%, #0b2d69 100%) !important; color: #d9e8ff !important; }
+  footer .text-white { color: #fff !important; }
+  [style*="#5a2e0d"], [style*="#3d1e07"] { background: #1b58d4 !important; }
+  [style*="color: #5a2e0d"], [style*="color: #3d1e07"] { color: #1b58d4 !important; }
+}

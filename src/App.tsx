@@ -1888,26 +1888,26 @@ export default function App() {
       <nav className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setView('home')}
-          className={`mobile-nav-home flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'mobile-nav-active text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`mobile-nav-home flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'mobile-nav-active text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          <Store size={19} className={view === 'home' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          <Store size={19} className={view === 'home' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'হোম' : 'Home'}</span>
         </button>
 
         <button
           onClick={() => { setCatFilter('All'); setView('products'); }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'products' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'products' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          <Package size={19} className={view === 'products' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          <Package size={19} className={view === 'products' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'প্রোডাক্ট' : 'Shop'}</span>
         </button>
 
         <button
           onClick={() => setView('cart')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${view === 'cart' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${view === 'cart' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
         >
           <div className="relative">
-            <ShoppingCart size={19} className={view === 'cart' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+            <ShoppingCart size={19} className={view === 'cart' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
             {cart.length > 0 && (
               <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                 {cart.length}
@@ -1919,9 +1919,9 @@ export default function App() {
 
         <button
           onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('purchases'); }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'purchases' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'purchases' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          <Download size={19} className={view === 'purchases' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+          <Download size={19} className={view === 'purchases' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'লাইব্রেরি' : 'Library'}</span>
         </button>
 
@@ -1931,12 +1931,12 @@ export default function App() {
             if (me.role === 'admin') setView('admin');
             else setView('dashboard');
           }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'dashboard' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'dashboard' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
         >
           {me?.role === 'admin' ? (
             <LayoutDashboard size={19} className="text-slate-500" />
           ) : (
-            <UserIcon size={19} className={view === 'dashboard' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
+            <UserIcon size={19} className={view === 'dashboard' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
           )}
           <span className="text-[10px] leading-none">{me ? (me.role === 'admin' ? (lang === 'bn' ? 'অ্যাডমিন' : 'Admin') : (lang === 'bn' ? 'অ্যাকাউন্ট' : 'Account')) : (lang === 'bn' ? 'লগইন' : 'Login')}</span>
         </button>
