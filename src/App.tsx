@@ -22,8 +22,12 @@ const BROWN_D = '#3d1e07';
 
 function Logo() {
   return (
-    <div className="flex items-center justify-center min-w-0" aria-label="Murad Graphics">
+    <div className="brand-lockup flex items-center gap-2 min-w-0" aria-label="Murad Graphics">
       <img src="/murad-logo-icon.svg" alt="Murad Graphics" className="brand-logo-icon w-10 h-10 md:w-11 md:h-11 shrink-0 object-contain" />
+      <div className="brand-wordmark flex md:hidden flex-col items-start leading-none text-white">
+        <div className="font-display font-extrabold text-sm">Murad <span className="text-cyan-300">Graphics</span></div>
+        <div className="mt-1 text-[7px] tracking-[.28em] text-cyan-100/80">DIGITAL STORE</div>
+      </div>
     </div>
   );
 }
@@ -1357,8 +1361,8 @@ export default function App() {
           </div>
           <div className="flex-1 sm:hidden" />
           <div className="mobile-header-actions sm:hidden flex items-center gap-1">
-            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
-            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
+            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
+            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
           </div>
           {me ? (
             <div className="relative">
@@ -1445,10 +1449,13 @@ export default function App() {
             <button onClick={()=>{setCatFilter('All');setView('products')}}>{t.seeAll}<ChevronRight size={18}/></button>
           </div>
           <div className="mg-mobile-categories">
-            {activeCats.slice(0,6).map((c,i)=><button key={c.id} onClick={()=>{setCatFilter(c.id);setView('products')}}>
-              {c.image ? <img src={c.image} alt={c.name} onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(c.id,200)}}/> : <span className={`mg-cat-icon c${i}`}><Tag size={25}/></span>}
+            {activeCats.slice(0,6).map((c,i)=>{
+              const CatIcon = [LayoutGrid, Tag, Box, Store, Package, Globe][i] || Tag;
+              return <button key={c.id} onClick={()=>{setCatFilter(c.id);setView('products')}}>
+              {c.image && !c.image.includes('picsum.photos') ? <img src={c.image} alt={c.name} onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(c.id,200)}}/> : <span className={`mg-cat-icon c${i}`}><CatIcon size={25}/></span>}
               <b>{c.name}</b>
-            </button>)}
+            </button>;
+            })}
           </div>
 
           <div className="mg-mobile-section-head mg-trending-head">
@@ -1881,7 +1888,7 @@ export default function App() {
       <nav className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setView('home')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`mobile-nav-home flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'mobile-nav-active text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
         >
           <Store size={19} className={view === 'home' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'হোম' : 'Home'}</span>
