@@ -430,9 +430,7 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
     width:16px!important;height:16px!important;font-size:9px!important;
   }
 
-  /* Hide the desktop account/order controls on phones so header never collides. */
-  .store-header>div:first-child>.relative,
-  .store-header>div:first-child>button:not(.header-cart):not(:first-child){display:none!important}
+  /* Keep the mobile search bar visible; only desktop account controls are hidden by their own responsive classes. */
 
   /* Make the mobile header breathe like the reference. */
   .mg-mobile-home{padding-top:10px!important}
