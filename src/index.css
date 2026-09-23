@@ -1005,3 +1005,22 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .bg-\[\#faf4ec\], .bg-orange-50, .bg-orange-50\/40 { background: #f4f8ff !important; }
   .text-\[\#5a2e0d\], .text-\[\#7c2d12\], .text-amber-600, .text-amber-700 { color: #1b58d4 !important; }
 }
+
+
+/* ===== Mobile contrast and refresh-safe actions ===== */
+@media (max-width: 639px) {
+  .mobile-primary-action,
+  main button[style*="background"],
+  main a[style*="background"] {
+    color: #fff !important;
+    background: linear-gradient(90deg, #1b58d4, #3d4fe8) !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+  .mobile-outline-action {
+    color: #1b58d4 !important;
+    background: #fff !important;
+    border-color: #1b58d4 !important;
+    -webkit-text-fill-color: #1b58d4 !important;
+  }
+  .mobile-primary-action svg { color: #fff !important; }
+}

@@ -103,6 +103,14 @@ export default function App() {
   }, [lang]);
 
   useEffect(() => {
+    if (window.matchMedia('(max-width: 639px)').matches && window.location.pathname !== '/') {
+      window.history.replaceState({}, '', '/');
+      setDetailId(null);
+      setView('home');
+    }
+  }, []);
+
+  useEffect(() => {
     if (!window.location.pathname.startsWith('/product/')) return;
     const slug = decodeURIComponent(window.location.pathname.slice('/product/'.length));
     const product = products.find(p => p.slug === slug);
@@ -1675,8 +1683,8 @@ export default function App() {
                 <button onClick={() => openAccess(sessionId, detail.id)} className="w-full mt-5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black py-3.5 rounded-xl flex items-center justify-center gap-1.5 transition"><Download size={16} />{t.alreadyPurchased}</button>
               ) : (
                 <><div className="grid grid-cols-2 gap-2 mt-5">
-                  <button onClick={() => addCart(detail.id)} className="border-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 py-3 transition hover:bg-orange-50" style={{ borderColor: BROWN, color: BROWN }}><ShoppingCart size={17} />{t.addToCart}</button>
-                  <button onClick={() => buyNow(detail.id)} className="text-white text-sm font-black py-3 rounded-xl" style={{ background: BROWN }}>{t.buyNow}</button>
+                  <button onClick={() => addCart(detail.id)} className="mobile-outline-action border-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 py-3 transition hover:bg-orange-50" style={{ borderColor: BROWN, color: BROWN }}><ShoppingCart size={17} />{t.addToCart}</button>
+                  <button onClick={() => buyNow(detail.id)} className="mobile-primary-action text-white text-sm font-black py-3 rounded-xl" style={{ background: BROWN }}>{t.buyNow}</button>
                 </div></>
               )}
               <p className="text-[11px] text-slate-400 mt-2">🔒 {t.pendingNote}</p>
