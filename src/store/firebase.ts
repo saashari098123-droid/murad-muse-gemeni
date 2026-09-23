@@ -68,6 +68,37 @@ export async function uploadImage(file: File, path: string) {
   return getDownloadURL(snapshot.ref);
 }
 
+// Free-plan fallback: keep small, optimized preview images in Firestore rather
+// than requiring a Firebase Storage bucket. The app limits the result below
+// Firestore's 1 MiB document limit and uses the original file only in memory.
+export async function compressImageForFirestore(file: File) {
+  if (!file.type.startsWith('image/')) throw new Error('শুধু image file আপলোড করুন।');
+  if (file.size > 10 * 1024 * 1024) throw new Error('প্রতিটি image 10 MB-এর কম হতে হবে।');
+
+  const bitmap = await createImageBitmap(file);
+  const maxSide = 1200;
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  for (const quality of [0.78, 0.64, 0.5, 0.38]) {
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!blob) throw new Error('Image compress করা যায়নি।');
+    if (blob.size <= 700 * 1024) {
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Image পড়া যায়নি।'));
+        reader.readAsDataURL(blob);
+      });
+    }
+  }
+  throw new Error('Image ছোট করেও Firestore limit-এর মধ্যে আনা যায়নি। ছোট image দিন।');
+}
+
 export function authProviderOf(user: FirebaseUser) {
   return user.providerData.some(p => p.providerId === 'google.com') ? 'google' as const : 'password' as const;
 }

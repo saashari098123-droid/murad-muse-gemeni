@@ -13,7 +13,7 @@ import {
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
-import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, uploadImage, authProviderOf } from './store/firebase';
+import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
 import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -131,6 +131,19 @@ export default function App() {
       console.warn('Products listener:', err.message);
     });
 
+    // Free-plan image fallback: preview images live in separate public docs so
+    // product documents stay small and no Storage bucket is required.
+    const unsubProductImages = onSnapshot(collection(db, 'productImages'), snap => {
+      const images: Record<string, string[]> = {};
+      snap.forEach(d => {
+        const data = d.data() as { productId?: string; previewImages?: string[] };
+        if (data.productId && Array.isArray(data.previewImages)) images[data.productId] = data.previewImages.filter(Boolean);
+      });
+      setProducts(prev => prev.map(p => images[p.id]?.length ? { ...p, previewImages: images[p.id] } : p));
+    }, (err) => {
+      console.warn('Product image listener:', err.message);
+    });
+
     // Reviews are stored separately so customers can submit them without
     // gaining write access to the product catalog.
     const unsubReviews = onSnapshot(collection(db, 'reviews'), snap => {
@@ -240,6 +253,7 @@ export default function App() {
       unsubUsers();
       unsubCats();
       unsubProducts();
+      unsubProductImages();
       unsubReviews();
       unsubOrders();
       unsubPurchases();
@@ -591,8 +605,7 @@ export default function App() {
         const ownerId = isCat ? editingCat?.id : editing?.id;
         if (!ownerId) throw new Error('Please select an item before uploading an image.');
         if (!isCat && (editing?.previewImages.filter(Boolean).length || 0) >= 5) throw new Error('সর্বোচ্চ ৫টি preview image দেওয়া যাবে।');
-        const safeName = f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
-        const d = await uploadImage(f, `${isCat ? 'categories' : 'products'}/${ownerId}/${Date.now()}-${safeName}`);
+        const d = await compressImageForFirestore(f);
         if (isCat) setEditingCat(prev => (prev ? { ...prev, image: d } : prev));
         else setEditing(prev => {
           if (!prev) return prev;
@@ -711,10 +724,15 @@ export default function App() {
       : [...products, editing];
       if (db) {
         try {
-          // Persist the complete current catalog. This also migrates older
-          // local demo products when the first real product is saved.
+          // Persist the catalog without embedding large data URLs in product
+          // docs; preview images are stored in separate free-plan documents.
           const batch = writeBatch(db);
-          updated.forEach(product => batch.set(doc(db, 'products', product.id), product, { merge: true }));
+          updated.forEach(product => {
+            const hasDataImages = product.previewImages.some(src => src.startsWith('data:'));
+            const productForCloud = hasDataImages ? { ...product, previewImages: [] } : product;
+            batch.set(doc(db, 'products', product.id), productForCloud, { merge: true });
+            if (hasDataImages) batch.set(doc(db, 'productImages', product.id), { productId: product.id, previewImages: product.previewImages }, { merge: true });
+          });
           await batch.commit();
           localStorage.setItem('ks_products_seeded_v1', '1');
         } catch (e: unknown) {
@@ -749,7 +767,7 @@ export default function App() {
       if (!files || files.length === 0) return;
       setUploading(true);
     try {
-        const d = await uploadImage(files[0], `settings/promo-${Date.now()}-${files[0].name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-')}`);
+        const d = await compressImageForFirestore(files[0]);
         setSettings(prev => ({ ...prev, promoImage: d }));
         notify('✓ ' + (lang === 'bn' ? 'ব্যানার ইমেজ আপলোড হয়েছে' : 'Banner image uploaded'));
       } catch (e: unknown) {
