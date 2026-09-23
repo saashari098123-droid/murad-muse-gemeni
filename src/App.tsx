@@ -1419,6 +1419,67 @@ export default function App() {
 
       {/* ============ HOME ============ */}
       {view === 'home' && <>
+        {/* Reference-matched mobile home. Desktop/home logic remains untouched. */}
+        <section className="mg-mobile-home sm:hidden">
+          <div className="mg-mobile-hero">
+            <div className="mg-mobile-hero-copy">
+              <div className="mg-eyebrow">PREMIUM DIGITAL STORE</div>
+              <h1>Digital<br />Products,<br /><span>Instant Access</span></h1>
+              <p>Get high-quality digital products, templates, software and more — instantly after purchase.</p>
+              <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
+            </div>
+            <div className="mg-mobile-hero-art">
+              {hero && <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} onError={e => { const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG(hero.id); }} />}
+            </div>
+            {slides.length > 1 && <div className="mg-mobile-dots">{slides.slice(0,5).map((x,i)=><button key={x.id} onClick={()=>setSlide(i)} className={i===slide?'active':''} />)}</div>}
+          </div>
+
+          <div className="mg-mobile-trust">
+            {([[Zap,'Instant Access','Get your files instantly'],[ShieldCheck,'Verified Payment','Safe & secure'],[Headphones,'24/7 Support',"We're here 24/7"],[Download,'Lifetime Library','Access anytime']] as [typeof Zap,string,string][]).map(([Icon,title,sub]) =>
+              <div key={title}><span><Icon size={21}/></span><b>{title}</b><small>{sub}</small></div>
+            )}
+          </div>
+
+          <button className="mg-mobile-promo" onClick={() => setView('products')}>
+            <img src={settings.promoImage || IMG('promo', 1000)} alt="" onError={e=>{const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG('promo',1000);}} />
+            <span className="mg-promo-copy"><b>{settings.promoTitle || 'Mega Bundle Sale'}</b><small>Get Premium Digital Products<br />at Unbeatable Prices!</small><em>{t.shopNow} <ArrowRight size={14}/></em></span>
+          </button>
+
+          <div className="mg-mobile-section-head">
+            <div><LayoutGrid size={25}/><h2>{t.shopByCat}</h2></div>
+            <button onClick={()=>{setCatFilter('All');setView('products')}}>{t.seeAll}<ChevronRight size={18}/></button>
+          </div>
+          <div className="mg-mobile-categories">
+            {activeCats.slice(0,6).map((c,i)=><button key={c.id} onClick={()=>{setCatFilter(c.id);setView('products')}}>
+              {c.image ? <img src={c.image} alt={c.name} onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(c.id,200)}}/> : <span className={`mg-cat-icon c${i}`}><Tag size={25}/></span>}
+              <b>{c.name}</b>
+            </button>)}
+          </div>
+
+          <div className="mg-mobile-section-head mg-trending-head">
+            <div><span className="mg-fire">♦</span><h2>{t.newTrending}</h2></div>
+            <button onClick={()=>setView('products')}>{t.seeAll}<ChevronRight size={18}/></button>
+          </div>
+          <div className="mg-mobile-products">
+            {activeProducts.slice(0,4).map(p=>{
+              const owned=owns(sessionId,p.id);
+              return <article key={p.id} className="mg-mobile-product" onClick={()=>goDetails(p.id)}>
+                <div className="mg-product-image"><img src={p.previewImages[0] || IMG(p.id)} alt={p.name} onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(p.id)}}/>
+                  <span>{owned ? t.ownedBadge : t.digitalTag}</span>
+                </div>
+                <div className="mg-product-info">
+                  <h3>{p.name}</h3>
+                  <div className="mg-rating"><Star size={13} className="fill-amber-400 text-amber-400"/>{p.rating} <small>({p.sold.toLocaleString()})</small></div>
+                  <div className="mg-price">{tk(eff(p))} {offPct(p)>0 && <s>{tk(p.price)}</s>}</div>
+                  <button onClick={e=>{e.stopPropagation();owned?openAccess(sessionId,p.id):addCart(p.id)}}>{owned?<Download size={14}/>:<Download size={14}/>} {owned?t.download:t.instantAccess}</button>
+                </div>
+              </article>
+            })}
+          </div>
+        </section>
+
+        <div className="mg-desktop-home-only">
+
         <div className="home-top-grid max-w-7xl mx-auto px-3 py-3 sm:py-4 grid lg:grid-cols-[1fr_280px] gap-4">
           <div className="home-hero relative overflow-hidden rounded-2xl sm:rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
           <div className="blob w-80 h-80 bg-orange-500/40 -top-16 -left-16" />
@@ -1504,7 +1565,7 @@ export default function App() {
           </button>
         </div>
 
-        <main className="max-w-7xl mx-auto px-3 py-4 sm:py-6">
+        <main className="home-desktop-main max-w-7xl mx-auto px-3 py-4 sm:py-6">
           <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} /><Zap size={18} style={{ color: BROWN }} />{t.newTrending}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{activeProducts.slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
 
@@ -1543,6 +1604,7 @@ export default function App() {
             </div>
           </div>
         </main>
+        </div>
       </>}
 
       {/* ============ PRODUCTS ============ */}
