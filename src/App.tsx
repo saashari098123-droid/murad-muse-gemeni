@@ -1445,7 +1445,15 @@ export default function App() {
             <div className="home-hero-visual relative mt-2 lg:mt-0">
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
-                  <div className="float-slow"><img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl rotate-1 sm:rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} /></div>
+                  <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl">
+                    <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl rotate-1 sm:rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
+                    <div className="mobile-hero-overlay absolute inset-0 rounded-2xl p-4 flex flex-col justify-end items-start text-white">
+                      <span className="mobile-hero-badge inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#4a250d]">✦ {lang === 'bn' ? 'আজকের অফার' : 'TODAY\'S OFFER'}</span>
+                      <h2 className="mt-2 max-w-[72%] font-display text-lg font-black leading-tight drop-shadow-md">{hero.name}</h2>
+                      <p className="mt-1 max-w-[68%] text-[10px] font-medium leading-snug text-white/90">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই ইনস্ট্যান্ট অ্যাক্সেস' : 'Instant access after payment verification'}</p>
+                      <button onClick={() => goDetails(hero.id)} className="mt-2 rounded-full bg-white px-3.5 py-1.5 text-[10px] font-black text-[#5a2e0d] shadow-lg cursor-pointer transition active:scale-95">{lang === 'bn' ? 'এখনই দেখুন' : 'Explore now'} <ArrowRight size={11} className="inline" /></button>
+                    </div>
+                  </div>
                   <div className="absolute -left-1 sm:-left-4 bottom-4 sm:bottom-8 glass rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 float-slower shadow-xl">
                     <div className="text-[9px] sm:text-[10px] text-orange-200/80 font-bold tracking-wider">{t.grandTotal}</div>
                     <div className="font-display font-black text-lg sm:text-2xl text-white">{tk(eff(hero))}</div>
