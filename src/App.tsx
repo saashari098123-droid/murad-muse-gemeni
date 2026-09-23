@@ -22,12 +22,8 @@ const BROWN_D = '#3d1e07';
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <img src="/murad-logo-icon.svg" alt="Murad Graphics" className="brand-logo-icon w-9 h-9 md:w-11 md:h-11 shrink-0" />
-      <div className="leading-tight min-w-0 brand-wordmark">
-        <div className="font-display font-extrabold text-[15px] md:text-xl tracking-tight truncate text-white">Murad Graphics</div>
-        <div className="text-[7px] md:text-[10px] tracking-[.24em] text-cyan-100/80 font-semibold">DIGITAL STORE</div>
-      </div>
+    <div className="flex items-center justify-center min-w-0" aria-label="Murad Graphics">
+      <img src="/murad-logo-icon.svg" alt="Murad Graphics" className="brand-logo-icon w-10 h-10 md:w-11 md:h-11 shrink-0 object-contain" />
     </div>
   );
 }
@@ -1360,10 +1356,9 @@ export default function App() {
             </button>
           </div>
           <div className="flex-1 sm:hidden" />
-          <div className="mobile-header-actions sm:hidden flex items-center gap-1">
-            <button onClick={() => setView('products')} aria-label="Search products" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Search size={19} /></button>
-            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
-            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
+          <div className="mobile-header-actions sm:hidden flex items-center gap-1.5">
+            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="header-icon-btn rounded-full hover:bg-white/10 cursor-pointer"><Globe size={19} /></button>
+            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="header-icon-btn rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
           </div>
           {me ? (
             <div className="relative">
