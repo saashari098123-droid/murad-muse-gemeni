@@ -1113,3 +1113,39 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   main button:focus, main a:focus { outline: none !important; box-shadow: none !important; }
   main .border-\[\#5a2e0d\], main .border-\[\#7c2d12\] { border-color: #dbe4f0 !important; }
 }
+
+
+@media (max-width: 639px) {
+  main .mg-mobile-hero button,
+  main .mg-mobile-promo button,
+  main .mobile-primary-action {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+}
+
+
+/* Final readability override: white type on all blue mobile actions. */
+@media (max-width: 639px) {
+  main .mg-mobile-hero button,
+  main .mg-mobile-promo button,
+  main .mobile-primary-action,
+  main button[style*="background"],
+  main a[style*="background"],
+  main .mg-product-info button,
+  main .mg-mobile-product button {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+  main .mg-mobile-hero button svg,
+  main .mg-mobile-promo button svg,
+  main .mobile-primary-action svg,
+  main button[style*="background"] svg,
+  main a[style*="background"] svg { color: #fff !important; }
+  main .mobile-outline-action {
+    color: #0b3d9f !important;
+    -webkit-text-fill-color: #0b3d9f !important;
+    background: #fff !important;
+    border-color: #0b3d9f !important;
+  }
+}
