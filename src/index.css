@@ -224,3 +224,81 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .float-wa { right:14px !important; bottom:78px !important; }
   .mesh-hero { background:linear-gradient(135deg,#071a42,#0d3b8e 65%,#214fd1); }
 }
+
+/* ===== Exact supplied mobile reference layout ===== */
+.mg-mobile-home{background:#f5f8ff;min-height:100vh;padding:18px 18px 92px;color:#102653}
+.mg-mobile-hero{position:relative;min-height:348px;border-radius:28px;overflow:hidden;background:linear-gradient(135deg,#06183d 0%,#08285e 48%,#173fdb 100%);box-shadow:0 12px 28px rgba(19,50,111,.18);display:grid;grid-template-columns:47% 53%;align-items:center;padding:36px 34px 26px}
+.mg-mobile-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 45%,rgba(37,123,255,.55),transparent 34%),linear-gradient(90deg,rgba(3,15,43,.45),transparent 65%);pointer-events:none}
+.mg-mobile-hero-copy{position:relative;z-index:2}
+.mg-eyebrow{font:700 11px/1 'Space Grotesk',sans-serif;letter-spacing:.22em;color:#dce8ff;margin-bottom:15px}
+.mg-mobile-hero h1{font:800 38px/1.02 'Space Grotesk',sans-serif;color:#fff;margin:0;letter-spacing:-.035em}
+.mg-mobile-hero h1 span{background:linear-gradient(90deg,#10cfff,#5b4cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mg-mobile-hero p{font:500 12px/1.45 'Space Grotesk',sans-serif;color:#dce7ff;max-width:390px;margin:16px 0 20px}
+.mg-mobile-hero-copy button{border:0;border-radius:999px;background:linear-gradient(90deg,#0dc8ff,#5740ff);color:#fff;font:800 13px 'Space Grotesk',sans-serif;padding:11px 19px;display:inline-flex;align-items:center;gap:7px;box-shadow:0 8px 20px rgba(19,76,255,.3);cursor:pointer}
+.mg-mobile-hero-art{position:relative;z-index:2;display:flex;justify-content:center;align-items:center}
+.mg-mobile-hero-art img{width:100%;height:275px;object-fit:cover;border-radius:25px;box-shadow:0 15px 30px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.22)}
+.mg-mobile-dots{position:absolute;z-index:4;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:9px}
+.mg-mobile-dots button{width:8px;height:8px;border:0;border-radius:99px;background:#89a9e9;padding:0;cursor:pointer}
+.mg-mobile-dots button.active{width:21px;background:#fff}
+
+.mg-mobile-trust{margin-top:18px;background:#fff;border-radius:25px;box-shadow:0 6px 22px rgba(21,47,91,.06);display:grid;grid-template-columns:repeat(4,1fr);padding:18px 10px}
+.mg-mobile-trust>div{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 12px;border-right:1px solid #e4eaf4}
+.mg-mobile-trust>div:last-child{border-right:0}
+.mg-mobile-trust span{width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:9px;background:#e7f0ff;color:#1256e6}
+.mg-mobile-trust>div:nth-child(2) span{background:#eeeaff;color:#4531dd}
+.mg-mobile-trust>div:nth-child(3) span{background:#dcf8ea;color:#08a267}
+.mg-mobile-trust>div:nth-child(4) span{background:#ffead7;color:#f36b16}
+.mg-mobile-trust b{font:800 12px/1.2 'Space Grotesk',sans-serif;color:#112653}
+.mg-mobile-trust small{font:500 10px/1.3 'Space Grotesk',sans-serif;color:#58709c;margin-top:5px}
+
+.mg-mobile-promo{position:relative;display:block;width:100%;height:150px;border:0;padding:0;margin-top:18px;border-radius:24px;overflow:hidden;cursor:pointer;box-shadow:0 8px 22px rgba(24,55,135,.14);background:#263cff}
+.mg-mobile-promo img{width:100%;height:100%;object-fit:cover}
+.mg-mobile-promo:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(16,36,181,.95) 0%,rgba(56,45,239,.7) 48%,rgba(24,44,228,.05) 100%)}
+.mg-promo-copy{position:absolute;z-index:2;left:34px;top:25px;text-align:left;color:#fff;font-family:'Space Grotesk',sans-serif;display:flex;flex-direction:column;align-items:flex-start}
+.mg-promo-copy b{font-size:25px;line-height:1.1}
+.mg-promo-copy small{font-size:11px;line-height:1.45;margin-top:7px}
+.mg-promo-copy em{font-style:normal;background:linear-gradient(90deg,#387aff,#573bff);padding:8px 14px;border-radius:999px;font-size:10px;font-weight:800;display:flex;align-items:center;gap:5px;margin-top:10px}
+
+.mg-mobile-section-head{display:flex;align-items:center;justify-content:space-between;margin:24px 5px 12px}
+.mg-mobile-section-head>div{display:flex;align-items:center;gap:12px}
+.mg-mobile-section-head h2{font:800 21px/1 'Space Grotesk',sans-serif;color:#122a5b;margin:0}
+.mg-mobile-section-head>div>svg{color:#0d3fae}
+.mg-mobile-section-head>button{border:0;background:none;color:#173c78;font:700 11px 'Space Grotesk',sans-serif;display:flex;align-items:center;gap:3px;cursor:pointer}
+.mg-mobile-categories{display:grid;grid-template-columns:repeat(6,1fr);gap:12px 8px}
+.mg-mobile-categories button{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;min-width:0}
+.mg-mobile-categories img,.mg-cat-icon{width:68px;height:68px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center}
+.mg-cat-icon{background:#dfeaff;color:#1354dc}
+.mg-cat-icon.c1{background:#e8e1ff;color:#4934dc}.mg-cat-icon.c2{background:#d8fae9;color:#08a267}.mg-cat-icon.c3{background:#ffdff0;color:#df2e79}.mg-cat-icon.c4{background:#ffe9d1;color:#ee7617}.mg-cat-icon.c5{background:#d7f8ee;color:#0a9d7c}
+.mg-mobile-categories b{font:700 10px/1.1 'Space Grotesk',sans-serif;color:#152b57;white-space:nowrap}
+
+.mg-trending-head{margin-top:28px}
+.mg-trending-head .mg-fire{font-size:27px;line-height:1;color:#ff3f4e;transform:rotate(45deg);display:inline-block}
+.mg-mobile-products{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mg-mobile-product{background:#fff;border-radius:18px;overflow:hidden;border:1px solid #e8eef8;box-shadow:0 5px 18px rgba(19,46,93,.07);cursor:pointer}
+.mg-product-image{position:relative;height:122px}
+.mg-product-image img{width:100%;height:100%;object-fit:cover}
+.mg-product-image>span{position:absolute;left:8px;top:8px;background:#f72585;color:#fff;border-radius:8px;padding:4px 7px;font:800 8px 'Space Grotesk',sans-serif}
+.mg-product-info{padding:10px 11px 11px}
+.mg-product-info h3{font:800 12px/1.25 'Space Grotesk',sans-serif;color:#132a5b;margin:0;min-height:30px}
+.mg-rating{display:flex;align-items:center;gap:4px;color:#46648e;font:600 9px 'Space Grotesk',sans-serif;margin-top:6px}
+.mg-rating small{font-size:8px;color:#6e82a0}
+.mg-price{font:800 17px 'Space Grotesk',sans-serif;color:#071d50;margin-top:5px}
+.mg-price s{font:500 9px;color:#8a9ab4;margin-left:4px}
+.mg-product-info button{margin-top:8px;width:100%;height:30px;border:0;border-radius:999px;background:linear-gradient(90deg,#3158ff,#593cff);color:#fff;font:700 9px 'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+
+@media (max-width:639px){
+  .mg-desktop-home-only{display:none!important}
+  .store-header{background:linear-gradient(135deg,#061a42,#0b2d69 65%,#163d8e)!important;border-radius:0 0 16px 16px;box-shadow:0 7px 22px rgba(5,25,65,.22)!important}
+  .store-header>div:first-child{padding:13px 18px;min-height:96px;gap:12px}
+  .store-header .brand-logo-icon{width:72px;height:72px;border-radius:18px}
+  .store-header .brand-wordmark>div:first-child{font-size:24px;line-height:.9}
+  .store-header .brand-wordmark>div:last-child{font-size:9px;letter-spacing:.3em;margin-top:6px}
+  .store-header .header-search{display:flex!important;order:3;position:absolute;left:360px;right:250px;top:30px}
+  .store-header .header-search input{height:60px;font-size:17px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:#fff;padding-left:56px}
+  .store-header .header-search input::placeholder{color:#dce7ff}
+  .store-header .header-search button{width:48px;height:48px;left:5px;right:auto;background:transparent!important}
+  .store-header .mobile-header-actions{display:flex;order:4;gap:5px;margin-left:auto}
+  .store-header .mobile-header-actions button{padding:7px;color:#fff}
+  .store-header .header-cart{display:block!important;padding:8px}
+  .store-header>.mobile-secondary-search{display:none!important}
+}
