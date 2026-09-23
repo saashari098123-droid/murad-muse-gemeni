@@ -56,7 +56,10 @@ export default function App() {
   const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('ks_session_v1') || sessionStorage.getItem('ks_session_v1'));
 
   const [view, setView] = useState<View>(() => window.location.pathname === '/products' ? 'products' : window.location.pathname.startsWith('/product/') ? 'details' : 'home');
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(() => {
+    const slug = window.location.pathname.startsWith('/product/') ? decodeURIComponent(window.location.pathname.slice('/product/'.length)) : '';
+    return slug ? products.find(p => p.slug === slug)?.id || null : null;
+  });
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('All');
   const [maxPrice, setMaxPrice] = useState('');
@@ -98,6 +101,17 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = lang === 'en' ? 'en' : 'bn';
   }, [lang]);
+
+  useEffect(() => {
+    if (!window.location.pathname.startsWith('/product/')) return;
+    const slug = decodeURIComponent(window.location.pathname.slice('/product/'.length));
+    const product = products.find(p => p.slug === slug);
+    if (product) setDetailId(product.id);
+    else if (products.length) {
+      window.history.replaceState({}, '', '/');
+      setView('home');
+    }
+  }, [products]);
 
   // Live sync with Firebase Firestore if available, otherwise localStorage fallback
   useEffect(() => {
@@ -1396,7 +1410,10 @@ export default function App() {
                 <button onClick={logout} className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold flex items-center gap-2 cursor-pointer"><LogOut size={14} />{t.logout}</button>
               </div>}
             </div>
-          ) : <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>}
+          ) : <>
+            <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>
+            <button onClick={() => setAuthOpen('login')} aria-label="Open account" className="mobile-profile-trigger md:hidden"><UserIcon size={19} /></button>
+          </>}
           <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full cursor-pointer hidden sm:block"><Box size={19} /></button>
           <button onClick={() => setView('cart')} className="header-cart p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
         </div>

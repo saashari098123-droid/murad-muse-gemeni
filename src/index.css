@@ -1096,3 +1096,52 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
 .lang-en button[style*="background"],
 .lang-en a[style*="background"] { background: linear-gradient(90deg, #165bd9, #3f43e8) !important; }
 .lang-en button[style*="color"] { color: #1b58d4 !important; }
+
+
+/* ===== Final mobile header lockup and inner-page cleanup ===== */
+@media (max-width: 639px) {
+  .store-header .brand-lockup {
+    flex: 0 0 49px !important;
+    width: 49px !important;
+    min-width: 49px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1px !important;
+  }
+  .store-header .brand-logo-icon { width: 34px !important; height: 34px !important; border-radius: 9px !important; }
+  .store-header .brand-wordmark { display: flex !important; align-items: center !important; text-align: center !important; }
+  .store-header .brand-wordmark > div:first-child { font-size: 6px !important; line-height: 1 !important; letter-spacing: -.04em !important; white-space: nowrap !important; }
+  .store-header .brand-wordmark > div:last-child { display: none !important; }
+  .store-header .header-search { flex: 1 1 auto !important; min-width: 0 !important; }
+  .store-header .mobile-header-actions { flex: 0 0 52px !important; width: 52px !important; }
+  .store-header > .header-cart { flex-basis: 27px !important; width: 27px !important; }
+  .mobile-profile-trigger {
+    display: flex !important;
+    flex: 0 0 27px !important;
+    width: 27px !important;
+    height: 34px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    color: #fff !important;
+    background: transparent !important;
+    border: 0 !important;
+  }
+  .mobile-profile-trigger svg { width: 18px !important; height: 18px !important; }
+  .store-header > div:first-child { gap: 6px !important; padding-left: 12px !important; padding-right: 10px !important; }
+
+  /* Legacy brown borders, orange tabs, cream access cards, and inline brown actions. */
+  main [style*="border-color: #5a2e0d"],
+  main [style*="border-color: rgb(90, 46, 13)"],
+  main [style*="border-color: #3d1e07"],
+  main [style*="border-color: rgb(61, 30, 7)"] { border-color: #1b58d4 !important; }
+  main .bg-\[\#faf4ec\], main .bg-orange-50, main .bg-orange-50\/40,
+  main .bg-amber-50, main .bg-amber-100 { background: #f4f8ff !important; }
+  main .border-orange-100, main .border-orange-200, main .border-amber-200 { border-color: #dce8f8 !important; }
+  main .text-orange-600, main .text-amber-600, main .text-amber-700 { color: #1b58d4 !important; }
+  main button[style*="border"], main a[style*="border"] { border-color: #1b58d4 !important; }
+  main button[style*="background"], main a[style*="background"] { background: linear-gradient(90deg, #1b58d4, #3d4fe8) !important; }
+  main .text-\[\#5a2e0d\], main .text-\[\#7c2d12\] { color: #1b58d4 !important; }
+  .mobile-bottom-nav > button:last-child svg { color: #1b58d4 !important; }
+}
