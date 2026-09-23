@@ -14,7 +14,7 @@ import {
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
 import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, uploadImage, authProviderOf } from './store/firebase';
-import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
@@ -151,27 +151,30 @@ export default function App() {
       console.warn('Reviews listener:', err.message);
     });
 
-    // Listen to orders
-    const unsubOrders = onSnapshot(collection(db, 'orders'), snap => {
-      if (!snap.empty) {
+    // Customer reads must be scoped to their own uid. A collection-wide query
+    // violates the Firestore rules because it could include another customer's data.
+    let unsubOrders = () => {};
+    let unsubPurchases = () => {};
+    const subscribeOrderData = (uid: string, isAdmin: boolean) => {
+      unsubOrders();
+      unsubPurchases();
+      const orderSource = isAdmin ? collection(db, 'orders') : query(collection(db, 'orders'), where('userId', '==', uid));
+      const purchaseSource = isAdmin ? collection(db, 'purchases') : query(collection(db, 'purchases'), where('userId', '==', uid));
+      unsubOrders = onSnapshot(orderSource, snap => {
         const cloudOrders: Order[] = [];
         snap.forEach(d => cloudOrders.push(d.data() as Order));
-        setOrders(cloudOrders);
-      }
-    }, (err) => {
-      console.warn('Orders listener:', err.message);
-    });
-
-    // Listen to purchases
-    const unsubPurchases = onSnapshot(collection(db, 'purchases'), snap => {
-      if (!snap.empty) {
+        setOrders(prev => isAdmin ? cloudOrders : [...prev.filter(o => o.userId !== uid), ...cloudOrders]);
+      }, (err) => {
+        console.warn('Orders listener:', err.message);
+      });
+      unsubPurchases = onSnapshot(purchaseSource, snap => {
         const cloudPurchases: Purchase[] = [];
         snap.forEach(d => cloudPurchases.push(d.data() as Purchase));
-        setPurchases(cloudPurchases);
-      }
-    }, (err) => {
-      console.warn('Purchases listener:', err.message);
-    });
+        setPurchases(prev => isAdmin ? cloudPurchases : [...prev.filter(p => p.userId !== uid), ...cloudPurchases]);
+      }, (err) => {
+        console.warn('Purchases listener:', err.message);
+      });
+    };
 
     // Listen to settings
     const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), snap => {
@@ -190,6 +193,7 @@ export default function App() {
       if (fbUser) {
         const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
         const role = isAdminUser ? 'admin' : 'customer';
+        subscribeOrderData(fbUser.uid, isAdminUser);
         const userDoc: User = {
           id: fbUser.uid,
           name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
@@ -222,6 +226,8 @@ export default function App() {
         sessionStorage.setItem('ks_session_v1', fbUser.uid);
         setSessionId(fbUser.uid);
       } else {
+        unsubOrders();
+        unsubPurchases();
         localStorage.removeItem('ks_session_v1');
         sessionStorage.removeItem('ks_session_v1');
         setSessionId(null);
