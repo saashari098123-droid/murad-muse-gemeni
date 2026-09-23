@@ -1393,7 +1393,7 @@ export default function App() {
                 <span className="truncate max-w-[100px]">{me.name.split(' ')[0]}</span>
                 <ChevronDown size={14} />
               </button>
-              <button onClick={() => setAcctMenu(!acctMenu)} className="md:hidden p-1.5 border border-white/30 rounded-full flex items-center justify-center cursor-pointer">
+              <button onClick={() => setAcctMenu(!acctMenu)} aria-label="Open account menu" className="mobile-profile-trigger md:hidden">
                 {me.photoURL ? (
                   <img src={me.photoURL} alt={me.name} className="w-7 h-7 rounded-full object-cover" referrerPolicy="no-referrer" />
                 ) : (

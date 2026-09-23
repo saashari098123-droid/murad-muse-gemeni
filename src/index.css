@@ -1145,3 +1145,44 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   main .text-\[\#5a2e0d\], main .text-\[\#7c2d12\] { color: #1b58d4 !important; }
   .mobile-bottom-nav > button:last-child svg { color: #1b58d4 !important; }
 }
+
+
+/* ===== Final mobile header spacing and action contrast ===== */
+@media (max-width: 639px) {
+  .store-header .brand-lockup { flex-basis: 44px !important; width: 44px !important; min-width: 44px !important; }
+  .store-header .brand-logo-icon { width: 32px !important; height: 32px !important; }
+  .store-header .brand-wordmark > div:first-child { font-size: 5.5px !important; }
+  .store-header .header-search { flex: 1 1 auto !important; min-width: 0 !important; }
+  .store-header .mobile-header-actions { flex-basis: 48px !important; width: 48px !important; gap: 0 !important; }
+  .store-header .mobile-header-actions button,
+  .store-header .mobile-header-actions .header-icon-btn { width: 22px !important; }
+  .store-header > .header-cart { flex-basis: 26px !important; width: 26px !important; }
+  .mobile-profile-trigger {
+    display: flex !important;
+    flex: 0 0 31px !important;
+    width: 31px !important;
+    height: 34px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255,255,255,.6) !important;
+    border-radius: 999px !important;
+    color: #fff !important;
+    background: rgba(255,255,255,.13) !important;
+  }
+  .mobile-profile-trigger svg { width: 19px !important; height: 19px !important; stroke-width: 2.2 !important; }
+  .mobile-profile-trigger img { width: 27px !important; height: 27px !important; border-radius: 999px !important; object-fit: cover !important; }
+
+  /* White, high-contrast labels on all blue action buttons. */
+  main button[style*="background"],
+  main a[style*="background"],
+  main button.bg-\[\#5a2e0d\],
+  main button.bg-gradient-to-r,
+  main .mg-product-info button,
+  main .mg-mobile-product button { color: #fff !important; text-shadow: 0 1px 1px rgba(3, 24, 75, .2); }
+  main button[style*="background"], main a[style*="background"] { background: linear-gradient(90deg, #1b58d4, #3d4fe8) !important; }
+  main button[style*="border-color"] { color: #1b58d4 !important; background: #fff !important; }
+  main button[style*="border-color"] svg { color: #1b58d4 !important; }
+  .bg-\[\#faf4ec\], .bg-orange-50, .bg-orange-50\/40 { background: #f4f8ff !important; }
+  .text-\[\#5a2e0d\], .text-\[\#7c2d12\], .text-amber-600, .text-amber-700 { color: #1b58d4 !important; }
+}
