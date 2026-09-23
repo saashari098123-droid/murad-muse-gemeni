@@ -1,5 +1,5 @@
 export type Role = 'customer' | 'admin';
-export type User = { id: string; name: string; email: string; pass?: string; role: Role; createdAt: string; photoURL?: string; authProvider?: 'password' | 'google' };
+export type User = { id: string; name: string; email: string; role: Role; createdAt: string; photoURL?: string; authProvider?: 'password' | 'google' };
 export type Category = { id: string; name: string; slug: string; image: string; status: 'active' | 'hidden' };
 export type Review = { id?: string; productId?: string; userId?: string; purchaseId?: string; name: string; rating: number; text: string; date: string; verified?: boolean };
 export type Product = {
@@ -58,27 +58,6 @@ export const offPct = (p: Product) => (p.discountPrice && p.discountPrice < p.pr
 export const waLink = (num: string, msg: string) => `https://wa.me/${num.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
 export const IMG = (seed: string, w = 600) => `https://picsum.photos/seed/${seed}/${w}/600`;
 
-export const fileToResizedDataUrl = (file: File, maxDim = 900, quality = 0.82): Promise<string> => new Promise((resolve, reject) => {
-  if (!file.type.startsWith('image/')) { reject(new Error('শুধু image file (JPG/PNG) দিন।')); return; }
-  const url = URL.createObjectURL(file);
-  const img = new Image();
-  img.onload = () => {
-    try {
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
-      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      const ctx = cv.getContext('2d');
-      if (!ctx) throw new Error('এই browser-এ image process সম্ভব নয়।');
-      ctx.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(cv.toDataURL('image/jpeg', quality));
-    } catch (e) { URL.revokeObjectURL(url); reject(e instanceof Error ? e : new Error('Image process failed')); }
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image পড়া যায়নি।')); };
-  img.src = url;
-});
-
 // ---------- seeds (digital products: DB holds links, files live on Drive) ----------
 export const SEED_SETTINGS: Settings = {
   storeName: 'Murad Graphics',
@@ -116,7 +95,7 @@ export const SEED_PRODUCTS: Product[] = [
 ];
 
 export const SEED_USERS: User[] = [
-  { id: 'u-admin', name: 'Murad Admin', email: 'admin@muradgraphics.store', pass: 'murad123', role: 'admin', createdAt: nowStr() },
+  // Admin access is granted only from Firebase Auth + the Firestore admins collection.
 ];
 
 export const SEED_ORDERS: Order[] = [];

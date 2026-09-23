@@ -9,12 +9,12 @@ import {
 } from 'lucide-react';
 import { STR, type Lang } from './i18n';
 import {
-  load, save, tk, slugify, uid, nowStr, eff, offPct, waLink, IMG, fileToResizedDataUrl,
+  load, save, tk, slugify, uid, nowStr, eff, offPct, waLink, IMG,
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
-import { db, auth, loginWithGoogle, logoutFirebase, firebaseEnabled } from './store/firebase';
-import { collection, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, uploadImage, authProviderOf } from './store/firebase';
+import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
@@ -38,7 +38,7 @@ const payBadge = (s: string) => s === 'Paid' ? 'bg-emerald-100 text-emerald-700'
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => load('ks_lang', 'bn' as Lang));
-  const [users, setUsers] = useState<User[]>(() => load('ks_users_v2', SEED_USERS));
+  const [users, setUsers] = useState<User[]>(() => load<Array<User & { pass?: string }>>('ks_users_v2', SEED_USERS).map(({ pass: _legacyPassword, ...user }) => user));
   const [categories, setCategories] = useState<Category[]>(() => load('ks_cats_v2', SEED_CATS));
   const [products, setProducts] = useState<Product[]>(() => load('ks_products_v2', SEED_PRODUCTS));
   const [orders, setOrders] = useState<Order[]>(() => load('ks_orders_v2', SEED_ORDERS));
@@ -59,7 +59,7 @@ export default function App() {
   const [gal, setGal] = useState(0);
   const [tab, setTab] = useState<'desc' | 'rev'>('desc');
   const [authOpen, setAuthOpen] = useState<'login' | 'register' | null>(null);
-  const [authForm, setAuthForm] = useState({ name: '', email: '', pass: '' });
+  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authErr, setAuthErr] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [toast, setToast] = useState('');
@@ -84,7 +84,6 @@ export default function App() {
   const [couponDraft, setCouponDraft] = useState<string>(() => Object.entries(load('ks_settings_v2', SEED_SETTINGS).coupons || {}).map(([k, v]) => `${k}=${v}`).join(', '));
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
-  const [adminPassForm, setAdminPassForm] = useState({ currentPass: '', newPass: '', confirmPass: '' });
   const [passUpdating, setPassUpdating] = useState(false);
   const [passMsg, setPassMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -189,7 +188,7 @@ export default function App() {
     // Auth state changed listener
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        const isAdminUser = fbUser.email === 'saashari098123@gmail.com' || fbUser.email === 'admin@muradgraphics.store';
+        const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
         const role = isAdminUser ? 'admin' : 'customer';
         const userDoc: User = {
           id: fbUser.uid,
@@ -197,20 +196,22 @@ export default function App() {
           email: fbUser.email || '',
           role,
           photoURL: fbUser.photoURL || undefined,
-          authProvider: 'google',
+          authProvider: authProviderOf(fbUser),
           createdAt: nowStr(),
         };
 
         // sync user to firestore
         try {
           if (db) {
-            await setDoc(doc(db, 'users', fbUser.uid), userDoc, { merge: true });
-            if (isAdminUser) {
-              await setDoc(doc(db, 'admins', fbUser.uid), { id: fbUser.uid, email: fbUser.email, role: 'admin' }, { merge: true });
-            }
+            await setDoc(doc(db, 'users', fbUser.uid), { ...userDoc, pass: deleteField() }, { merge: true });
           }
         } catch {
-          // offline or permission
+          await logoutFirebase().catch(() => {});
+          localStorage.removeItem('ks_session_v1');
+          sessionStorage.removeItem('ks_session_v1');
+          setSessionId(null);
+          setAuthErr(lang === 'bn' ? 'Firebase-এ profile save করা যায়নি। আবার চেষ্টা করুন।' : 'Could not save your Firebase profile. Please try again.');
+          return;
         }
 
         setUsers(prev => {
@@ -220,6 +221,10 @@ export default function App() {
         localStorage.setItem('ks_session_v1', fbUser.uid);
         sessionStorage.setItem('ks_session_v1', fbUser.uid);
         setSessionId(fbUser.uid);
+      } else {
+        localStorage.removeItem('ks_session_v1');
+        sessionStorage.removeItem('ks_session_v1');
+        setSessionId(null);
       }
     });
 
@@ -355,7 +360,7 @@ export default function App() {
       if (!fbUser) throw new Error('No user returned from Google sign-in');
 
       const userEmail = (fbUser.email || '').toLowerCase();
-      const isAdminUser = userEmail === 'saashari098123@gmail.com' || userEmail === 'admin@muradgraphics.store';
+      const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
       const role = isAdminUser ? 'admin' : 'customer';
       const u: User = {
         id: fbUser.uid,
@@ -363,7 +368,7 @@ export default function App() {
         email: fbUser.email || '',
         role,
         photoURL: fbUser.photoURL || undefined,
-        authProvider: 'google',
+        authProvider: authProviderOf(fbUser),
         createdAt: nowStr(),
       };
 
@@ -371,11 +376,7 @@ export default function App() {
       // This prevents a successful-looking login when Firestore is unavailable
       // or its security rules reject the write.
       if (!db) throw new Error('Firebase Firestore is not configured.');
-      await setDoc(doc(db, 'users', fbUser.uid), u, { merge: true });
-      if (isAdminUser) {
-        await setDoc(doc(db, 'admins', fbUser.uid), { id: fbUser.uid, email: fbUser.email, role: 'admin' }, { merge: true });
-      }
-
+      await setDoc(doc(db, 'users', fbUser.uid), { ...u, pass: deleteField() }, { merge: true });
       setUsers(prev => [u, ...prev.filter(x => x.id !== u.id)]);
       localStorage.setItem('ks_session_v1', u.id);
       sessionStorage.setItem('ks_session_v1', u.id);
@@ -411,34 +412,29 @@ export default function App() {
   const doRegister = async () => {
     setAuthErr('');
     try {
-      if (!authForm.name.trim() || !authForm.email.trim() || !authForm.pass) throw new Error(lang === 'bn' ? 'নাম, ইমেইল ও পাসওয়ার্ড দিন।' : 'Name, email and password required.');
+      if (!authForm.name.trim() || !authForm.email.trim() || !authForm.password) throw new Error(lang === 'bn' ? 'নাম, ইমেইল ও পাসওয়ার্ড দিন।' : 'Name, email and password required.');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(authForm.email)) throw new Error(lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email.');
-      if (users.some(u => u.email.toLowerCase() === authForm.email.toLowerCase())) throw new Error(lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'Account exists — please login.');
-      const isAdminUser = authForm.email.toLowerCase() === 'admin@muradgraphics.store' || authForm.email.toLowerCase() === 'saashari098123@gmail.com';
-      const role = isAdminUser ? 'admin' : 'customer';
-      const u: User = { id: uid('u'), name: authForm.name.trim(), email: authForm.email.trim(), pass: authForm.pass, role, createdAt: nowStr(), authProvider: 'password' };
-      if (db) {
-        await setDoc(doc(db, 'users', u.id), u).catch(() => {});
-        if (isAdminUser) {
-          await setDoc(doc(db, 'admins', u.id), { id: u.id, email: u.email, role: 'admin' }).catch(() => {});
-        }
-      }
-      setUsers([...users, u]);
-      localStorage.setItem('ks_session_v1', u.id);
-      sessionStorage.setItem('ks_session_v1', u.id);
-      setSessionId(u.id);
-      setAuthOpen(null); notify('✓ ' + u.name); consumePendingBuy(u.id);
-    } catch (e: unknown) { setAuthErr(e instanceof Error ? e.message : 'Failed'); }
+      if (authForm.password.length < 6) throw new Error(lang === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.');
+      if (!firebaseEnabled) throw new Error('Firebase Authentication is not configured.');
+      const fbUser = await registerWithEmail(authForm.email.trim(), authForm.password, authForm.name);
+      setAuthOpen(null);
+      notify('✓ ' + (fbUser.displayName || fbUser.email || 'Account created'));
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
+      setAuthErr(code === 'auth/email-already-in-use' ? (lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'Account exists — please login.') : e instanceof Error ? e.message : 'Registration failed');
+    }
   };
-  const doLogin = () => {
+  const doLogin = async () => {
     setAuthErr('');
-    const u = users.find(x => x.email.toLowerCase() === authForm.email.toLowerCase() && x.pass === authForm.pass);
-    if (!u) { setAuthErr(lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড। (demo@demo.com / demo123)' : 'Wrong email/password. (demo@demo.com / demo123)'); return; }
-    localStorage.setItem('ks_session_v1', u.id);
-    sessionStorage.setItem('ks_session_v1', u.id);
-    setSessionId(u.id);
-    setAuthOpen(null); notify('✓ ' + u.name); consumePendingBuy(u.id);
-    if (u.role === 'admin' && !pendingBuy) setView('admin');
+    try {
+      if (!firebaseEnabled) throw new Error('Firebase Authentication is not configured.');
+      const fbUser = await loginWithEmail(authForm.email.trim(), authForm.password);
+      setAuthOpen(null);
+      notify('✓ ' + (fbUser.displayName || fbUser.email || 'Login successful'));
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
+      setAuthErr(code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password' ? (lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড।' : 'Wrong email or password.') : e instanceof Error ? e.message : 'Login failed');
+    }
   };
   const logout = async () => {
     try { await logoutFirebase(); } catch { /* ignore */ }
@@ -469,7 +465,7 @@ export default function App() {
   };
 
   // ---------- checkout → Pending → admin verify → purchase ----------
-  const placeOrder = () => {
+  const placeOrder = async () => {
     try {
       if (!me) throw new Error(t.loginRequired);
       if (cartDetailed.length === 0) throw new Error(t.cartEmpty);
@@ -484,39 +480,47 @@ export default function App() {
         subtotal, discount: couponDisc, total, coupon: appliedCoupon,
         paymentMethod: payMethod, paymentStatus: 'Pending', orderStatus: 'Awaiting Verification', trxId: trxId.trim(), createdAt: nowStr(),
       };
-      setOrders([order, ...orders]);
       const paymentItem = { id: uid('pay'), orderId: oid, userId: me.id, amount: total, transactionId: trxId.trim(), method: payMethod, status: 'Pending' as const, createdAt: nowStr() };
+      if (!db) throw new Error('Firebase Firestore is not configured. Order was not submitted.');
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'orders', oid), order);
+      batch.set(doc(db, 'payments', paymentItem.id), paymentItem);
+      await batch.commit();
+      setOrders([order, ...orders]);
       setPayments([paymentItem, ...payments]);
-      if (db) {
-        setDoc(doc(db, 'orders', oid), order).catch(() => {});
-        setDoc(doc(db, 'payments', paymentItem.id), paymentItem).catch(() => {});
-      }
       setOrderPlaced(order); setCart([]); setAppliedCoupon(''); setCouponInput(''); setTrxId('');
     } catch (e: unknown) { fail(e instanceof Error ? e.message : 'Failed'); }
   };
 
-  const verifyPayment = (orderId: string, ok: boolean) => {
+  const verifyPayment = async (orderId: string, ok: boolean) => {
     const o = orders.find(x => x.id === orderId); if (!o) return;
     const st = ok ? 'Paid' : 'Failed';
     const updatedStatus = ok ? 'Completed' : 'Payment Failed';
-    setOrders(orders.map(x => x.id === orderId ? { ...x, paymentStatus: st as Order['paymentStatus'], orderStatus: updatedStatus as Order['orderStatus'] } : x));
-    setPayments(payments.map(p => p.orderId === orderId ? { ...p, status: st as Payment['status'] } : p));
-    if (db) {
-      updateDoc(doc(db, 'orders', orderId), { paymentStatus: st, orderStatus: updatedStatus }).catch(() => {});
-    }
-    if (ok) {
+    try {
+      if (!db) throw new Error('Firebase Firestore is not configured.');
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'orders', orderId), { paymentStatus: st, orderStatus: updatedStatus });
       const fresh: Purchase[] = [];
-      o.items.forEach(it => {
-        if (!purchases.some(p => p.userId === o.userId && p.productId === it.productId && p.accessStatus === 'active')) {
-          const pu: Purchase = { id: `${o.userId}_${it.productId}`, userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() };
-          fresh.push(pu);
-          if (db) setDoc(doc(db, 'purchases', pu.id), pu).catch(() => {});
-        }
-      });
-      setPurchases([...fresh, ...purchases]);
-      setProducts(products.map(p => o.items.some(i => i.productId === p.id) ? { ...p, sold: p.sold + 1 } : p));
-      notify('✓ ' + t.saved);
-    } else fail(t.failed);
+      if (ok) {
+        o.items.forEach(it => {
+          if (!purchases.some(p => p.userId === o.userId && p.productId === it.productId && p.accessStatus === 'active')) {
+            const pu: Purchase = { id: `${o.userId}_${it.productId}`, userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() };
+            fresh.push(pu);
+            batch.set(doc(db, 'purchases', pu.id), pu);
+          }
+        });
+      }
+      await batch.commit();
+      setOrders(orders.map(x => x.id === orderId ? { ...x, paymentStatus: st as Order['paymentStatus'], orderStatus: updatedStatus as Order['orderStatus'] } : x));
+      setPayments(payments.map(p => p.orderId === orderId ? { ...p, status: st as Payment['status'] } : p));
+      if (ok) {
+        setPurchases([...fresh, ...purchases]);
+        setProducts(products.map(p => o.items.some(i => i.productId === p.id) ? { ...p, sold: p.sold + 1 } : p));
+        notify('✓ ' + t.saved);
+      } else fail(t.failed);
+    } catch (e: unknown) {
+      fail(e instanceof Error ? e.message : 'Could not update payment.');
+    }
   };
 
   const openAccess = (uid_: string | null, pid: string) => {
@@ -553,7 +557,10 @@ export default function App() {
     setUploading(true);
     try {
       for (const f of Array.from(files).slice(0, 5)) {
-        const d = await fileToResizedDataUrl(f);
+        const ownerId = isCat ? editingCat?.id : editing?.id;
+        if (!ownerId) throw new Error('Please select an item before uploading an image.');
+        const safeName = f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
+        const d = await uploadImage(f, `${isCat ? 'categories' : 'products'}/${ownerId}/${Date.now()}-${safeName}`);
         if (isCat) setEditingCat(prev => (prev ? { ...prev, image: d } : prev));
         else setEditing(prev => {
           if (!prev) return prev;
@@ -703,8 +710,8 @@ export default function App() {
     const handlePromoImageUpload = async (files: FileList | null) => {
       if (!files || files.length === 0) return;
       setUploading(true);
-      try {
-        const d = await fileToResizedDataUrl(files[0], 900);
+    try {
+        const d = await uploadImage(files[0], `settings/promo-${Date.now()}-${files[0].name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-')}`);
         setSettings(prev => ({ ...prev, promoImage: d }));
         notify('✓ ' + (lang === 'bn' ? 'ব্যানার ইমেজ আপলোড হয়েছে' : 'Banner image uploaded'));
       } catch (e: unknown) {
@@ -756,33 +763,10 @@ export default function App() {
       e.preventDefault();
       setPassMsg(null);
       if (!me) return;
-
-      if (me.authProvider !== 'google' && me.pass && adminPassForm.currentPass !== me.pass) {
-        setPassMsg({ type: 'err', text: lang === 'bn' ? 'বর্তমান পাসওয়ার্ড সঠিক নয়।' : 'Current password is incorrect.' });
-        return;
-      }
-      if (!adminPassForm.newPass || adminPassForm.newPass.length < 6) {
-        setPassMsg({ type: 'err', text: lang === 'bn' ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'New password must be at least 6 characters.' });
-        return;
-      }
-      if (adminPassForm.newPass !== adminPassForm.confirmPass) {
-        setPassMsg({ type: 'err', text: lang === 'bn' ? 'নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না।' : 'New passwords do not match.' });
-        return;
-      }
-
       setPassUpdating(true);
       try {
-        const updatedUsers = users.map(u => u.id === me.id ? { ...u, pass: adminPassForm.newPass } : u);
-        setUsers(updatedUsers);
-        save('ks_users_v2', updatedUsers);
-
-        if (db) {
-          await setDoc(doc(db, 'users', me.id), { pass: adminPassForm.newPass }, { merge: true });
-        }
-
-        setPassMsg({ type: 'ok', text: lang === 'bn' ? '✓ অ্যাডমিন পাসওয়ার্ড সফলভাবে আপডেট ও সংরক্ষিত হয়েছে!' : '✓ Admin password successfully updated!' });
-        setAdminPassForm({ currentPass: '', newPass: '', confirmPass: '' });
-        notify(lang === 'bn' ? '✓ পাসওয়ার্ড পরিবর্তন সম্পন্ন হয়েছে' : '✓ Password updated successfully');
+        await resetPassword(me.email);
+        setPassMsg({ type: 'ok', text: lang === 'bn' ? '✓ পাসওয়ার্ড reset link ইমেইলে পাঠানো হয়েছে।' : '✓ Password reset link sent to your email.' });
       } catch (err: unknown) {
         setPassMsg({ type: 'err', text: err instanceof Error ? err.message : 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে' });
       } finally {
@@ -1214,58 +1198,16 @@ export default function App() {
                     )}
                   </div>
 
-                  <form onSubmit={handleUpdateAdminPassword} className="grid md:grid-cols-3 gap-3 mt-4">
-                    {me.authProvider !== 'google' && me.pass && (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          {lang === 'bn' ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}
-                        </label>
-                        <input
-                          type="password"
-                          required
-                          value={adminPassForm.currentPass}
-                          onChange={e => setAdminPassForm(prev => ({ ...prev, currentPass: e.target.value }))}
-                          placeholder="••••••••"
-                          className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-[#5a2e0d] focus:border-transparent outline-hidden"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {lang === 'bn' ? 'নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)' : 'New Password (min 6 chars)'}
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        minLength={6}
-                        value={adminPassForm.newPass}
-                        onChange={e => setAdminPassForm(prev => ({ ...prev, newPass: e.target.value }))}
-                        placeholder="••••••••"
-                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-[#5a2e0d] focus:border-transparent outline-hidden"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {lang === 'bn' ? 'নতুন পাসওয়ার্ড কনফার্ম করুন' : 'Confirm New Password'}
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        minLength={6}
-                        value={adminPassForm.confirmPass}
-                        onChange={e => setAdminPassForm(prev => ({ ...prev, confirmPass: e.target.value }))}
-                        placeholder="••••••••"
-                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-[#5a2e0d] focus:border-transparent outline-hidden"
-                      />
-                    </div>
-                    <div className="md:col-span-3 flex items-center gap-3 pt-1 flex-wrap">
+                  <form onSubmit={handleUpdateAdminPassword} className="grid gap-3 mt-4">
+                    <p className="text-xs text-slate-600">{lang === 'bn' ? 'নিরাপত্তার জন্য নতুন পাসওয়ার্ড সরাসরি এখানে রাখা হয় না। Firebase আপনার ইমেইলে একটি secure reset link পাঠাবে।' : 'For security, passwords are never stored in this app. Firebase will send a secure reset link to your email.'}</p>
+                    <div className="flex items-center gap-3 pt-1 flex-wrap">
                       <button
                         type="submit"
                         disabled={passUpdating}
                         className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer disabled:opacity-50"
                       >
                         <Key size={14} />
-                        {passUpdating ? (lang === 'bn' ? 'আপডেট হচ্ছে...' : 'Updating...') : (lang === 'bn' ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Update Password')}
+                        {passUpdating ? (lang === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending...') : (lang === 'bn' ? 'Password reset link পাঠান' : 'Send password reset link')}
                       </button>
                       {passMsg && (
                         <span className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${passMsg.type === 'ok' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
@@ -1908,7 +1850,8 @@ export default function App() {
 
               {authOpen === 'register' && <input className="border rounded-xl px-3 py-2.5" placeholder={t.name} value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} />}
               <input className="border rounded-xl px-3 py-2.5" placeholder={t.email} value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} />
-              <input type="password" className="border rounded-xl px-3 py-2.5" placeholder={t.password} value={authForm.pass} onChange={e => setAuthForm({ ...authForm, pass: e.target.value })} onKeyDown={e => e.key === 'Enter' && (authOpen === 'login' ? doLogin() : doRegister())} />
+              <input type="password" className="border rounded-xl px-3 py-2.5" placeholder={t.password} value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} onKeyDown={e => e.key === 'Enter' && (authOpen === 'login' ? doLogin() : doRegister())} />
+              {authOpen === 'login' && <button type="button" onClick={async () => { try { if (!authForm.email.trim()) throw new Error(lang === 'bn' ? 'আগে ইমেইল লিখুন।' : 'Enter your email first.'); await resetPassword(authForm.email.trim()); setAuthErr(lang === 'bn' ? 'Password reset link ইমেইলে পাঠানো হয়েছে।' : 'Password reset link sent to your email.'); } catch (e: unknown) { setAuthErr(e instanceof Error ? e.message : 'Could not send reset link.'); } }} className="text-right text-xs font-semibold text-slate-500 hover:text-[#5a2e0d]">{lang === 'bn' ? 'পাসওয়ার্ড ভুলে গেছেন?' : 'Forgot password?'}</button>}
               {authErr && <p className="text-xs text-rose-600 flex items-center gap-1"><AlertCircle size={13} />{authErr}</p>}
               <button onClick={authOpen === 'login' ? doLogin : doRegister} className="text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5" style={{ background: BROWN }}><LogIn size={15} />{authOpen === 'login' ? t.login : t.register}</button>
               <button onClick={() => { setAuthErr(''); setAuthOpen(authOpen === 'login' ? 'register' : 'login'); }} className="text-xs font-bold" style={{ color: BROWN }}>{authOpen === 'login' ? t.newHere : t.haveAccount}</button>
