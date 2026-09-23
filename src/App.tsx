@@ -163,14 +163,16 @@ export default function App() {
       unsubOrders = onSnapshot(orderSource, snap => {
         const cloudOrders: Order[] = [];
         snap.forEach(d => cloudOrders.push(d.data() as Order));
-        setOrders(prev => isAdmin ? cloudOrders : [...prev.filter(o => o.userId !== uid), ...cloudOrders]);
+        // The authorized Firestore snapshot is the source of truth. Replacing
+        // local cached orders prevents an old Pending value from reappearing.
+        setOrders(cloudOrders);
       }, (err) => {
         console.warn('Orders listener:', err.message);
       });
       unsubPurchases = onSnapshot(purchaseSource, snap => {
         const cloudPurchases: Purchase[] = [];
         snap.forEach(d => cloudPurchases.push(d.data() as Purchase));
-        setPurchases(prev => isAdmin ? cloudPurchases : [...prev.filter(p => p.userId !== uid), ...cloudPurchases]);
+        setPurchases(cloudPurchases);
       }, (err) => {
         console.warn('Purchases listener:', err.message);
       });
@@ -270,8 +272,9 @@ export default function App() {
       if (match) {
         const found = products.find(p => p.slug === decodeURIComponent(match[1]));
         if (found) { setDetailId(found.id); setView('details'); }
-      } else if (window.location.pathname === '/products') setView('products');
-      else if (window.location.pathname === '/') setView('home');
+      } else if (window.location.pathname === '/products') { setDetailId(null); setView('products'); }
+      else if (window.location.pathname === '/') { setDetailId(null); setView('home'); }
+      else { setDetailId(null); setView('home'); }
     };
     syncUrl();
     window.addEventListener('popstate', syncUrl);
@@ -1499,7 +1502,10 @@ export default function App() {
       {/* ============ DETAILS ============ */}
       {view === 'details' && detail && (
         <main className="max-w-7xl mx-auto px-3 py-4">
-          <div className="text-xs text-slate-500 mb-3 flex items-center gap-1.5"><button onClick={() => setView('home')} className="hover:text-[#7c2d12]">{t.home}</button><ChevronRight size={12} /><span className="text-slate-800 font-medium truncate">{detail.name}</span></div>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 min-w-0"><button onClick={() => { window.history.pushState({}, '', '/products'); setDetailId(null); setView('products'); }} className="hover:text-[#7c2d12] flex items-center gap-1 shrink-0"><ArrowLeft size={13} />{t.products}</button><ChevronRight size={12} /><span className="text-slate-800 font-medium truncate">{detail.name}</span></div>
+            <button onClick={() => { window.history.pushState({}, '', '/'); setDetailId(null); setView('home'); }} className="text-xs font-bold text-[#5a2e0d] border border-orange-200 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0"><Store size={13} />{t.home}</button>
+          </div>
           <div className="grid lg:grid-cols-[380px_1fr_300px] gap-4 items-start">
             <div>
               <div className="relative bg-white rounded-2xl overflow-hidden border">
