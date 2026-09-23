@@ -1,10 +1,10 @@
 export type Lang = 'bn' | 'en';
 
 const en = {
-  welcome: 'Welcome to Murad Graphics!',
+  welcome: 'Welcome to Murad Graphics — your premium digital store.',
   trackOrder: 'Track Order',
   support: 'Support',
-  searchPh: 'Search products…',
+  searchPh: 'Search digital products…',
   home: 'Home',
   products: 'Products',
   myOrders: 'My Orders',
@@ -161,7 +161,7 @@ const en = {
   totalPurchased: 'Purchased',
   totalSpent: 'Total Spent',
   ownedBadge: 'OWNED',
-  digitalTag: 'DIGITAL',
+  digitalTag: 'DIGITAL PRODUCT',
   howTitle: 'Get your product in 4 steps',
   s1T: 'Browse', s1D: 'Pick any digital product',
   s2T: 'Pay', s2D: 'bKash / Nagad / Rocket + TrxID',

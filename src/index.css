@@ -1019,3 +1019,80 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .store-header .brand-wordmark > div:first-child { font-size: 11px !important; letter-spacing: -.03em !important; }
   .store-header .brand-wordmark > div:last-child { font-size: 4.5px !important; letter-spacing: .16em !important; }
 }
+
+
+/* ===== Premium English storefront styling ===== */
+.lang-en {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  background: #f4f7fc !important;
+  color: #102653 !important;
+  letter-spacing: -.005em;
+}
+.lang-en .font-display,
+.lang-en button,
+.lang-en input,
+.lang-en select,
+.lang-en textarea { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.lang-en .font-display { font-family: "Space Grotesk", Inter, sans-serif !important; letter-spacing: -.025em; }
+.lang-en .store-topbar { background: linear-gradient(90deg, #061a42, #123e91) !important; color: #dceaff !important; }
+.lang-en .store-topbar button,
+.lang-en .store-topbar a { color: #fff !important; }
+.lang-en .store-header { background: linear-gradient(135deg, #061a42 0%, #0b2d69 58%, #2053d6 100%) !important; box-shadow: 0 8px 24px rgba(8, 35, 91, .2) !important; }
+.lang-en .header-search input { border: 1px solid #dbe6f7; box-shadow: 0 8px 22px rgba(15, 48, 110, .12); }
+.lang-en .header-search button { background: linear-gradient(135deg, #165bd9, #2d7dff) !important; }
+.lang-en .home-desktop-main,
+.lang-en main.max-w-7xl { color: #102653; }
+.lang-en .home-hero-copy h1 { letter-spacing: -.045em; }
+.lang-en .home-hero-copy h1 .gold-text { background: linear-gradient(90deg, #31dcff, #6870ff); -webkit-background-clip: text; background-clip: text; }
+.lang-en .home-hero-copy > div:first-of-type button,
+.lang-en .home-promo > span:last-child { background: linear-gradient(90deg, #13cfff, #4b42ed) !important; color: #fff !important; }
+.lang-en .home-category h2,
+.lang-en main h2 { color: #102b61 !important; }
+.lang-en .home-category h2 svg,
+.lang-en main h2 svg { color: #1d5ddd !important; }
+.lang-en .home-category button,
+.lang-en .home-category > button { color: #1749a8 !important; }
+.lang-en .home-trust > div { border-color: #dfe8f5; background: #fff; }
+.lang-en .home-trust > div > span:first-child { background: linear-gradient(135deg, #e7f3ff, #eef0ff); }
+.lang-en .mg-mobile-section-head h2 { letter-spacing: -.035em; }
+.lang-en .mg-mobile-product button,
+.lang-en .mg-product-info button { background: linear-gradient(90deg, #2165df, #4d42ef) !important; }
+.lang-en .mg-mobile-promo { box-shadow: 0 10px 24px rgba(38, 62, 190, .18); }
+.lang-en .mg-product-info h3 { letter-spacing: -.02em; }
+.lang-en footer { background: linear-gradient(180deg, #061a42, #0d347d) !important; color: #d9e8ff !important; }
+.lang-en footer .text-white { color: #fff !important; }
+.lang-en [style*="#5a2e0d"],
+.lang-en [style*="#3d1e07"] { background: #1b58d4 !important; }
+.lang-en [style*="color: #5a2e0d"],
+.lang-en [style*="color: #3d1e07"] { color: #1b58d4 !important; }
+.lang-en .mobile-bottom-nav { background: rgba(255,255,255,.98) !important; }
+
+@media (min-width: 640px) {
+  .lang-en .store-header > div:first-child { padding-top: 15px; padding-bottom: 15px; }
+  .lang-en .store-header .header-search input { height: 46px; font-size: 13px; }
+  .lang-en .home-top-grid { padding-top: 18px; }
+  .lang-en .home-category-row { margin-top: 4px; }
+  .lang-en .home-desktop-main > h2 { letter-spacing: -.04em; }
+}
+
+@media (max-width: 639px) {
+  .lang-en .store-header { height: 70px !important; }
+  .lang-en .store-header .brand-wordmark > div:first-child { font-family: "Space Grotesk", Inter, sans-serif !important; font-weight: 700; letter-spacing: -.04em; }
+  .lang-en .store-header .header-search input { font-size: 10px !important; letter-spacing: -.01em; }
+  .lang-en .mg-mobile-hero h1 { font-family: "Space Grotesk", Inter, sans-serif !important; font-size: 23px !important; letter-spacing: -.055em !important; }
+  .lang-en .mg-mobile-hero p { font-size: 7.4px !important; }
+  .lang-en .mg-mobile-hero-copy button,
+  .lang-en .mg-promo-copy em { font-family: "Space Grotesk", Inter, sans-serif !important; font-weight: 700 !important; letter-spacing: -.01em; }
+  .lang-en .mg-mobile-section-head h2 { font-size: 15px !important; font-weight: 800 !important; }
+  .lang-en .mg-mobile-section-head > button { font-weight: 700 !important; }
+  .lang-en .mg-mobile-categories b { font-size: 7.2px !important; font-weight: 700 !important; }
+  .lang-en .mg-product-info h3 { font-size: 9.2px !important; font-weight: 750 !important; }
+  .lang-en .mg-product-info button { font-size: 7.2px !important; }
+  .lang-en .mobile-bottom-nav > button > span { font-family: "Space Grotesk", Inter, sans-serif !important; letter-spacing: -.02em; }
+}
+
+
+/* Keep English-mode actions consistently blue even when legacy inline styles are present. */
+.lang-en button[style*="background"],
+.lang-en a[style*="background"] { background: linear-gradient(90deg, #165bd9, #3f43e8) !important; }
+.lang-en button[style*="color"] { color: #1b58d4 !important; }
