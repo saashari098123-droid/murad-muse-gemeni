@@ -1060,3 +1060,47 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .lang-en button[style*="color"] { color: #5a2e0d !important; }
   .lang-en .mobile-bottom-nav { background: rgba(255,255,255,.95) !important; }
 }
+
+
+/* ===== Deeper mobile blue with dark action labels ===== */
+@media (max-width: 639px) {
+  .store-header {
+    background: linear-gradient(135deg, #061a42 0%, #09285e 58%, #1249a8 100%) !important;
+  }
+  .mobile-primary-action,
+  main button[style*="background"],
+  main a[style*="background"],
+  main .mg-product-info button,
+  main .mg-mobile-product button,
+  .mg-mobile-hero button,
+  .mg-mobile-promo button {
+    color: #071a36 !important;
+    background: linear-gradient(90deg, #0b3d9f, #1858c6) !important;
+    -webkit-text-fill-color: #071a36 !important;
+    text-shadow: none !important;
+  }
+  .mobile-primary-action svg,
+  main button[style*="background"] svg,
+  main a[style*="background"] svg,
+  main .mg-product-info button svg,
+  main .mg-mobile-product button svg,
+  .mg-mobile-hero button svg,
+  .mg-mobile-promo button svg { color: #071a36 !important; }
+  .mobile-outline-action { color: #0b3d9f !important; border-color: #0b3d9f !important; }
+  .mobile-bottom-nav > button.mobile-nav-active,
+  .mobile-bottom-nav > button.mobile-nav-active svg,
+  .mobile-bottom-nav > button.mobile-nav-active > span { color: #0b3d9f !important; }
+}
+
+
+@media (max-width: 639px) {
+  .mobile-primary-action,
+  main button[style*="background"],
+  main a[style*="background"],
+  main .mg-product-info button,
+  main .mg-mobile-product button,
+  .mg-mobile-hero button,
+  .mg-mobile-promo button {
+    background: linear-gradient(90deg, #4d8de8, #6da6f5) !important;
+  }
+}
