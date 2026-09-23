@@ -1509,8 +1509,6 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-3 py-4 sm:py-6">
           <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} /><Zap size={18} style={{ color: BROWN }} />{t.newTrending}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{activeProducts.slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
-          <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mt-8 sm:mt-10 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} />{t.latestProducts}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{[...activeProducts].reverse().slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
 
           <div className="mt-12 bg-white border border-orange-100 rounded-[1.75rem] p-6 md:p-10 reveal">
             <div className="text-center text-[11px] font-black tracking-[.25em] text-amber-600">✦ HOW IT WORKS ✦</div>
