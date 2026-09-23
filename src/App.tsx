@@ -34,6 +34,14 @@ function Logo() {
   );
 }
 
+function WhatsAppLogo({ size = 26 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.149-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.1-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.075c.149.198 2.095 3.2 5.076 4.487.71.306 1.263.489 1.694.626.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982 1-3.648-.235-.374a9.866 9.866 0 01-1.511-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.886 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.89c0 2.096.547 4.142 1.588 5.945L.057 24l6.304-1.654a11.88 11.88 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.471-8.413" />
+    </svg>
+  );
+}
+
 const payBadge = (s: string) => s === 'Paid' ? 'bg-emerald-100 text-emerald-700' : s === 'Failed' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
 
 export default function App() {
@@ -1323,7 +1331,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f7f4ef] pb-20 md:pb-0">
       {/* topbar */}
-      <div className="text-white text-xs md:text-sm" style={{ background: BROWN_D }}>
+      <div className="store-topbar text-white text-xs md:text-sm" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
           <span className="font-medium truncate min-w-0">{lang === 'bn' ? settings.announcement.replace('Welcome to Murad Graphics!', 'মুরাদ গ্রাফিক্সে স্বাগতম!') : settings.announcement}</span>
           <div className="flex-1" />
@@ -1334,7 +1342,7 @@ export default function App() {
       </div>
 
       {/* header */}
-      <header className="text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
+      <header className="store-header text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
         <div className="max-w-7xl mx-auto px-3 py-2.5 sm:py-3 flex items-center gap-3">
           <button onClick={() => setView('home')} className="shrink-0 cursor-pointer"><Logo /></button>
           <div className="flex-1 max-w-2xl mx-auto relative hidden sm:flex items-center">
@@ -1408,13 +1416,13 @@ export default function App() {
 
       {/* ============ HOME ============ */}
       {view === 'home' && <>
-        <div className="max-w-7xl mx-auto px-3 py-3 sm:py-4 grid lg:grid-cols-[1fr_280px] gap-4">
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
+        <div className="home-top-grid max-w-7xl mx-auto px-3 py-3 sm:py-4 grid lg:grid-cols-[1fr_280px] gap-4">
+          <div className="home-hero relative overflow-hidden rounded-2xl sm:rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
           <div className="blob w-80 h-80 bg-orange-500/40 -top-16 -left-16" />
           <div className="blob w-96 h-96 bg-amber-500/25 bottom-[-6rem] right-[8%]" style={{ animationDelay: '-4s' }} />
           <div className="grid-pattern absolute inset-0" />
           <div className="relative grid lg:grid-cols-2 gap-6 sm:gap-8 items-center p-5 sm:p-8 md:p-12 text-white">
-            <div className="fade-up">
+            <div className="home-hero-copy fade-up">
               <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3 py-1 text-[10px] sm:text-[11px] font-bold tracking-[.18em] text-amber-200">✦ {lang === 'bn' ? 'প্রিমিয়াম ডিজিটাল স্টোর' : 'PREMIUM DIGITAL STORE'}</span>
               <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.12] mt-3 sm:mt-4">{lang === 'bn' ? (<>ডিজিটাল প্রোডাক্ট,<br /><span className="gold-text">ইনস্ট্যান্ট অ্যাক্সেস</span></>) : (<>Digital products,<br /><span className="gold-text">instant access</span></> )}</h1>
               <p className="text-orange-100/90 text-xs sm:text-sm md:text-base mt-2.5 sm:mt-4 max-w-md leading-relaxed">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই Google Drive অ্যাক্সেস — কোনো অপেক্ষা নেই, কোনো ডেলিভারি চার্জ নেই।' : 'Verified payment unlocks Google Drive access instantly — no waiting, no delivery fees.'}</p>
@@ -1429,7 +1437,7 @@ export default function App() {
                 <div className="hidden sm:block"><div className="font-display font-black text-xl sm:text-2xl">{activeProducts.length * 36}+</div><div className="text-[10px] sm:text-[11px] text-orange-100/70">products sold</div></div>
               </div>
             </div>
-            <div className="relative mt-2 lg:mt-0">
+            <div className="home-hero-visual relative mt-2 lg:mt-0">
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
                   <div className="float-slow"><img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl rotate-1 sm:rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} /></div>
@@ -1452,7 +1460,7 @@ export default function App() {
             </div>
           </div>
         </div>
-          <div className="bg-white rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 content-start shadow-xs">
+          <div className="home-trust bg-white rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 content-start shadow-xs">
             {trustItems.map(([Icon, label]) => (
               <div key={label} className="flex items-center gap-2.5 bg-white border border-orange-100 hover:border-orange-300 rounded-xl px-3 py-2.5 transition cursor-default">
                 <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center shrink-0"><Icon size={16} style={{ color: BROWN }} /></span>
@@ -1462,9 +1470,9 @@ export default function App() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-3 grid lg:grid-cols-[1fr_340px] gap-4 sm:gap-6 items-start">
+        <div className="home-category-row max-w-7xl mx-auto px-3 grid lg:grid-cols-[1fr_340px] gap-4 sm:gap-6 items-start">
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="home-category flex items-center justify-between mb-3">
               <h2 className="font-display font-black text-base sm:text-xl text-slate-800 flex items-center gap-2 reveal"><LayoutGrid size={18} style={{ color: BROWN }} />{t.shopByCat}</h2>
               <button onClick={() => { setCatFilter('All'); setView('products'); }} className="text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all cursor-pointer" style={{ color: BROWN }}>{t.seeAll}<ChevronRight size={14} /></button>
             </div>
@@ -1478,7 +1486,7 @@ export default function App() {
               ))}
             </div>
           </div>
-          <button onClick={() => setView('products')} className="relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
+          <button onClick={() => setView('products')} className="home-promo relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
             <img src={settings.promoImage || IMG('promo', 800)} alt="" className="w-full h-32 sm:h-40 md:h-44 object-cover group-hover:scale-105 transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
             <span className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 text-[10px] sm:text-[11px] font-black bg-white px-3.5 py-1 rounded-full whitespace-nowrap shadow" style={{ color: BROWN }}>{settings.promoTitle} • {t.shopNow}</span>
@@ -1798,13 +1806,13 @@ export default function App() {
       </footer>
 
       {/* whatsapp float */}
-      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105" title="Chat">
+      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105" title="Chat on WhatsApp">
         <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
-        <MessageCircle size={26} className="text-white relative" />
+        <WhatsAppLogo size={27} />
       </a>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
+      <nav className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setView('home')}
           className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
