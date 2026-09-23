@@ -305,7 +305,7 @@ export default function App() {
     setMeta('meta[property="og:description"]', 'property', 'og:description', description);
     setMeta('meta[property="og:type"]', 'property', 'og:type', detail ? 'product' : 'website');
     setMeta('meta[property="og:url"]', 'property', 'og:url', window.location.href);
-    if (detail) setMeta('meta[property="og:image"]', 'property', 'og:image', detail.previewImages[0] || IMG(detail.id, 700));
+    setMeta('meta[property="og:image"]', 'property', 'og:image', detail?.previewImages[0] || `${window.location.origin}/og-image.png`);
     let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
     canonical.href = detail ? `${window.location.origin}/product/${detail.slug}` : `${window.location.origin}/`;

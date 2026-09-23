@@ -3,36 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script>
-  // Ensure window.fetch is safe from strict read-only getter collisions in sandboxed iframes
-  (function() {
-    try {
-      var origFetch = window.fetch ? window.fetch.bind(window) : null;
-      var currentFetch = origFetch;
-
-      // Ensure fetch on window can be both read and assigned without throwing
-      try {
-        Object.defineProperty(window, 'fetch', {
-          get: function() { return currentFetch; },
-          set: function(fn) { currentFetch = fn; },
-          configurable: true,
-          enumerable: true
-        });
-      } catch (e1) {
-        try {
-          if (window.Window && window.Window.prototype) {
-            Object.defineProperty(window.Window.prototype, 'fetch', {
-              get: function() { return currentFetch; },
-              set: function(fn) { currentFetch = fn; },
-              configurable: true,
-              enumerable: true
-            });
-          }
-        } catch (e2) {}
-      }
-    } catch (e) {}
-  })();
-</script>
 <title>Murad Graphics — Digital Store Bangladesh</title>
 <meta name="description" content="Murad Graphics - Premium digital products: themes, software, bundles, subscriptions. Pay with bKash/Nagad, get instant Drive access after verification." />
 <meta name="robots" content="index,follow,max-image-preview:large" />
@@ -41,8 +11,12 @@
 <meta property="og:title" content="Murad Graphics — Digital Store Bangladesh" />
 <meta property="og:description" content="Premium digital products, themes, software, bundles and subscriptions in Bangladesh." />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://murad-muse-gemeni.onrender.com/" />
-<link rel="canonical" href="https://murad-muse-gemeni.onrender.com/" />
+<meta property="og:url" content="__SITE_URL__/" />
+<meta property="og:image" content="__SITE_URL__/og-image.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<link rel="canonical" href="__SITE_URL__/" />
 <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">

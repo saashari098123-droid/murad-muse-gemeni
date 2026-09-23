@@ -15,12 +15,12 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import configJson from '../../firebase-applet-config.json';
 
 const firebaseConfig = {
-  apiKey: configJson.apiKey || import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: configJson.authDomain || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: configJson.projectId || import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: configJson.storageBucket || import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: configJson.messagingSenderId || import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: configJson.appId || import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || configJson.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || configJson.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || configJson.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || configJson.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || configJson.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || configJson.appId,
 };
 
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5a2e0d"/><stop offset="1" stop-color="#c47b3c"/></linearGradient></defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1030" cy="100" r="220" fill="#fff" opacity=".08"/><circle cx="120" cy="560" r="300" fill="#fff" opacity=".06"/>
+  <text x="90" y="250" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="800">Murad Graphics</text>
+  <text x="95" y="340" fill="#fff" opacity=".9" font-family="Arial, sans-serif" font-size="38">Premium Digital Products Bangladesh</text>
+  <rect x="95" y="410" width="260" height="8" rx="4" fill="#f5d0a8"/>
+</svg>
