@@ -532,3 +532,46 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
     color:#fff!important;
   }
 }
+
+
+/* ===== Full mobile Home page blue theme ===== */
+@media (max-width:639px){
+  .mg-mobile-home{
+    background:linear-gradient(180deg,#061a42 0%,#0b2d69 48%,#123f96 100%)!important;
+    color:#fff!important;
+  }
+  .mg-mobile-trust{
+    background:linear-gradient(135deg,#0b2d69 0%,#123f96 100%)!important;
+    border:1px solid rgba(255,255,255,.12)!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.16)!important;
+  }
+  .mg-mobile-trust>div{border-right-color:rgba(255,255,255,.14)!important}
+  .mg-mobile-trust b{color:#fff!important}
+  .mg-mobile-trust small{color:#c9dcff!important}
+  .mg-mobile-trust span{background:rgba(75,190,255,.16)!important;color:#55d7ff!important}
+  .mg-mobile-trust>div:nth-child(2) span{background:rgba(112,91,255,.18)!important;color:#a99cff!important}
+  .mg-mobile-trust>div:nth-child(3) span{background:rgba(0,210,145,.16)!important;color:#4ce0b1!important}
+  .mg-mobile-trust>div:nth-child(4) span{background:rgba(255,145,65,.16)!important;color:#ffad72!important}
+
+  .mg-mobile-section-head h2{color:#fff!important}
+  .mg-mobile-section-head>div>svg{color:#59d8ff!important}
+  .mg-mobile-section-head>button{color:#d8e7ff!important}
+  .mg-mobile-categories b{color:#e4efff!important}
+  .mg-cat-icon{background:rgba(72,150,255,.2)!important;color:#66d9ff!important}
+  .mg-cat-icon.c1{background:rgba(112,91,255,.2)!important;color:#b0a4ff!important}
+  .mg-cat-icon.c2{background:rgba(0,210,145,.18)!important;color:#4ce0b1!important}
+  .mg-cat-icon.c3{background:rgba(255,74,145,.18)!important;color:#ff8fc0!important}
+  .mg-cat-icon.c4{background:rgba(255,145,65,.18)!important;color:#ffb276!important}
+  .mg-cat-icon.c5{background:rgba(0,200,170,.18)!important;color:#62e4d0!important}
+
+  .mg-mobile-product{
+    background:linear-gradient(145deg,#103675 0%,#0b2a63 100%)!important;
+    border-color:rgba(255,255,255,.12)!important;
+    box-shadow:0 7px 20px rgba(0,0,0,.18)!important;
+  }
+  .mg-product-info h3{color:#fff!important}
+  .mg-rating{color:#c7d9f8!important}
+  .mg-rating small{color:#9fb6dc!important}
+  .mg-price{color:#fff!important}
+  .mg-price s{color:#91a7c9!important}
+}
