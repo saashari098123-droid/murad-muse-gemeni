@@ -22,13 +22,11 @@ const BROWN_D = '#3d1e07';
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-white text-xl font-display relative overflow-hidden shrink-0">
-        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full"><path d="M18 72 L38 28 L50 52 L62 28 L82 72" stroke="white" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" /><circle cx="78" cy="26" r="8" fill="#fb923c" /></svg>
-      </div>
-      <div className="leading-tight min-w-0">
-        <div className="font-display font-extrabold text-base md:text-xl text-white tracking-tight truncate">Murad Graphics</div>
-        <div className="text-[8px] md:text-[10px] tracking-[.25em] text-orange-200/70 font-semibold">DIGITAL STORE</div>
+    <div className="flex items-center gap-2 min-w-0">
+      <img src="/murad-logo-icon.svg" alt="Murad Graphics" className="brand-logo-icon w-9 h-9 md:w-11 md:h-11 shrink-0" />
+      <div className="leading-tight min-w-0 brand-wordmark">
+        <div className="font-display font-extrabold text-[15px] md:text-xl tracking-tight truncate text-white">Murad Graphics</div>
+        <div className="text-[7px] md:text-[10px] tracking-[.24em] text-cyan-100/80 font-semibold">DIGITAL STORE</div>
       </div>
     </div>
   );
@@ -1345,17 +1343,17 @@ export default function App() {
       <header className="store-header text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
         <div className="max-w-7xl mx-auto px-3 py-2.5 sm:py-3 flex items-center gap-3">
           <button onClick={() => setView('home')} className="shrink-0 cursor-pointer"><Logo /></button>
-          <div className="flex-1 max-w-2xl mx-auto relative hidden sm:flex items-center">
+          <div className="header-search flex-1 max-w-2xl mx-auto relative flex items-center">
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && setView('products')}
               placeholder={t.searchPh}
-              className="w-full rounded-full pl-5 pr-14 py-2.5 sm:py-3 text-sm text-slate-800 bg-white shadow-xs focus:ring-2 focus:ring-amber-400"
+              className="w-full rounded-full pl-4 pr-12 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 bg-white shadow-xs focus:ring-2 focus:ring-cyan-400"
             />
             <button
               onClick={() => setView('products')}
-              className="absolute right-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition hover:opacity-90 shrink-0"
+              className="absolute right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition hover:opacity-90 shrink-0"
               style={{ background: BROWN_D }}
             >
               <Search size={16} />
@@ -1399,7 +1397,7 @@ export default function App() {
           <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full cursor-pointer hidden sm:block"><Box size={19} /></button>
           <button onClick={() => setView('cart')} className="header-cart p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
         </div>
-        <div className="sm:hidden px-3 pb-2.5">
+        <div className="mobile-secondary-search hidden px-3 pb-2.5">
           <div className="relative flex items-center w-full">
             <input
               value={search}
@@ -1796,7 +1794,7 @@ export default function App() {
       {/* footer */}
       <footer className="text-orange-100/70 mt-10" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
-          <div><Logo /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
+          <div><img src="/murad-logo-full.svg" alt="Murad Graphics Digital Store" className="footer-brand-logo w-56 max-w-full h-auto" /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
             <div className="flex gap-2 mt-3">
               <a href={settings.facebook} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Facebook size={16} /></a>
               <a href={settings.youtube} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Youtube size={16} /></a>
@@ -1898,7 +1896,7 @@ export default function App() {
       {authOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setAuthOpen(null); setPendingBuy(null); }}>
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm fade-up" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center"><div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-2xl" style={{ background: BROWN }}>M</div></div>
+            <div className="flex justify-center"><img src="/murad-logo-mark.svg" alt="Murad Graphics" className="w-12 h-12 rounded-2xl object-cover" /></div>
             <h3 className="font-black text-center mt-2 text-lg">{authOpen === 'login' ? t.welcomeBack : t.createAccount}</h3>
             <p className="text-[11px] text-center text-slate-400 mt-0.5">{authOpen === 'login' ? (lang === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Sign in to your account') : (lang === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create your free account')}</p>
             <div className="grid gap-2 mt-3 text-sm">
