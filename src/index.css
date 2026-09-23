@@ -302,3 +302,66 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .store-header .header-cart{display:block!important;padding:8px}
   .store-header>.mobile-secondary-search{display:none!important}
 }
+
+/* Responsive sizing for actual phones */
+@media (max-width:639px){
+  .store-header>div:first-child{min-height:72px!important;padding:10px 10px!important;gap:7px!important}
+  .store-header .brand-logo-icon{width:42px!important;height:42px!important;border-radius:12px!important}
+  .store-header .brand-wordmark>div:first-child{font-size:17px!important;line-height:.95!important}
+  .store-header .brand-wordmark>div:last-child{font-size:6px!important;letter-spacing:.23em!important;margin-top:4px!important}
+  .store-header .header-search{position:static!important;order:initial!important;display:flex!important;flex:1!important;min-width:70px!important;margin:0!important}
+  .store-header .header-search input{height:38px!important;font-size:10px!important;padding-left:14px!important;padding-right:34px!important;background:rgba(255,255,255,.13)!important;border-radius:999px!important}
+  .store-header .header-search button{left:auto!important;right:3px!important;width:31px!important;height:31px!important}
+  .store-header .mobile-header-actions{order:initial!important;margin-left:0!important;gap:0!important}
+  .store-header .mobile-header-actions button{padding:5px!important}
+  .store-header .mobile-header-actions button:first-child{display:none!important}
+  .store-header .mobile-header-actions svg{width:17px!important;height:17px!important}
+  .store-header .header-cart{display:block!important;padding:6px!important}
+  .store-header .header-cart svg{width:20px!important;height:20px!important}
+
+  .mg-mobile-home{padding:10px 10px 82px!important}
+  .mg-mobile-hero{min-height:235px!important;border-radius:20px!important;padding:18px 15px 18px!important;grid-template-columns:49% 51%!important}
+  .mg-eyebrow{font-size:7px!important;letter-spacing:.15em!important;margin-bottom:9px!important}
+  .mg-mobile-hero h1{font-size:22px!important}
+  .mg-mobile-hero p{font-size:7px!important;line-height:1.35!important;margin:9px 0 11px!important}
+  .mg-mobile-hero-copy button{font-size:8px!important;padding:7px 10px!important}
+  .mg-mobile-hero-art img{height:185px!important;border-radius:16px!important}
+  .mg-mobile-dots{bottom:9px!important;gap:6px!important}
+  .mg-mobile-dots button{width:6px!important;height:6px!important}
+  .mg-mobile-dots button.active{width:16px!important}
+
+  .mg-mobile-trust{margin-top:10px!important;border-radius:18px!important;padding:9px 3px!important}
+  .mg-mobile-trust>div{padding:0 3px!important}
+  .mg-mobile-trust span{width:34px!important;height:34px!important;border-radius:11px!important;margin-bottom:5px!important}
+  .mg-mobile-trust span svg{width:16px!important;height:16px!important}
+  .mg-mobile-trust b{font-size:8px!important}
+  .mg-mobile-trust small{font-size:6.5px!important}
+
+  .mg-mobile-promo{height:104px!important;margin-top:10px!important;border-radius:16px!important}
+  .mg-promo-copy{left:18px!important;top:18px!important}
+  .mg-promo-copy b{font-size:16px!important}
+  .mg-promo-copy small{font-size:7px!important;margin-top:4px!important}
+  .mg-promo-copy em{font-size:7px!important;padding:5px 9px!important;margin-top:5px!important}
+
+  .mg-mobile-section-head{margin:15px 3px 9px!important}
+  .mg-mobile-section-head h2{font-size:15px!important}
+  .mg-mobile-section-head>div{gap:7px!important}
+  .mg-mobile-section-head>div>svg{width:20px!important;height:20px!important}
+  .mg-mobile-section-head>button{font-size:8px!important}
+  .mg-mobile-categories{display:flex!important;overflow-x:auto!important;gap:17px!important;padding:0 2px 4px!important;scrollbar-width:none!important}
+  .mg-mobile-categories::-webkit-scrollbar{display:none}
+  .mg-mobile-categories button{flex:0 0 64px!important}
+  .mg-mobile-categories img,.mg-cat-icon{width:58px!important;height:58px!important}
+  .mg-mobile-categories b{font-size:7px!important}
+
+  .mg-trending-head{margin-top:17px!important}
+  .mg-trending-head .mg-fire{font-size:20px!important}
+  .mg-mobile-products{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .mg-product-image{height:100px!important}
+  .mg-product-info{padding:8px!important}
+  .mg-product-info h3{font-size:9px!important;min-height:23px!important}
+  .mg-rating{font-size:7px!important;margin-top:4px!important}
+  .mg-price{font-size:13px!important}
+  .mg-product-info button{height:26px!important;font-size:7px!important;margin-top:6px!important}
+  .mg-product-image>span{font-size:6px!important;padding:3px 5px!important}
+}
