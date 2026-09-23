@@ -300,6 +300,25 @@ export default function App() {
   const activeProducts = products.filter(p => p.status === 'active');
   const catName = (id: string) => categories.find(c => c.id === id)?.name || '—';
   const detail = products.find(p => p.id === detailId) || null;
+  // The original demo catalog started in localStorage. Once Firebase has a
+  // product document, the listener replaces the local catalog, so migrate the
+  // existing local/demo catalog once before treating Firestore as canonical.
+  useEffect(() => {
+    if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_products_seeded_v1') || products.length === 0) return;
+    let cancelled = false;
+    const migrateProducts = async () => {
+      try {
+        const batch = writeBatch(db);
+        products.forEach(product => batch.set(doc(db, 'products', product.id), product, { merge: true }));
+        await batch.commit();
+        if (!cancelled) localStorage.setItem('ks_products_seeded_v1', '1');
+      } catch (error) {
+        console.warn('Product catalog migration failed:', error);
+      }
+    };
+    void migrateProducts();
+    return () => { cancelled = true; };
+  }, [me?.id, me?.role]);
   useEffect(() => {
     const title = detail ? `${detail.name} | Murad Graphics` : 'Murad Graphics — Digital Products Store Bangladesh';
     const description = detail ? `${detail.description} Buy from Murad Graphics with secure bKash, Nagad or Rocket payment. Current price ${tk(eff(detail))}.` : 'Buy premium digital products, themes, software, bundles and subscriptions from Murad Graphics in Bangladesh. Secure payment and verified delivery.';
@@ -565,9 +584,13 @@ export default function App() {
     if (!files || files.length === 0) return;
     setUploading(true);
     try {
-      for (const f of Array.from(files).slice(0, 5)) {
+      const selectedFiles = Array.from(files).slice(0, isCat ? 1 : 5);
+      for (const f of selectedFiles) {
+        if (!f.type.startsWith('image/')) throw new Error('শুধু image file আপলোড করুন।');
+        if (f.size > 5 * 1024 * 1024) throw new Error('প্রতিটি image 5 MB-এর কম হতে হবে।');
         const ownerId = isCat ? editingCat?.id : editing?.id;
         if (!ownerId) throw new Error('Please select an item before uploading an image.');
+        if (!isCat && (editing?.previewImages.filter(Boolean).length || 0) >= 5) throw new Error('সর্বোচ্চ ৫টি preview image দেওয়া যাবে।');
         const safeName = f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
         const d = await uploadImage(f, `${isCat ? 'categories' : 'products'}/${ownerId}/${Date.now()}-${safeName}`);
         if (isCat) setEditingCat(prev => (prev ? { ...prev, image: d } : prev));
@@ -580,7 +603,7 @@ export default function App() {
       }
       notify('✓ ' + t.saved);
     } catch (e: unknown) { fail(e instanceof Error ? e.message : 'Upload failed'); }
-    setUploading(false);
+    finally { setUploading(false); }
   };
 
   const payNumbers: [string, string, string][] = [['bKash', settings.bkash, '#e2136e'], ['Nagad', settings.nagad, '#f6921e'], ['Rocket', settings.rocket, '#8c3494'], ['Binance', settings.binance, '#111827']];
@@ -683,17 +706,23 @@ export default function App() {
       if (!editing) return;
       if (!editing.name.trim()) { fail(lang === 'bn' ? 'প্রোডাক্টের নাম দিন' : 'Name required'); return; }
       if (!editing.googleDriveLink.trim()) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
-      const updated = products.find(x => x.id === editing.id)
-        ? products.map(x => x.id === editing.id ? editing : x)
-        : [...products, editing];
-      setProducts(updated);
+    const updated = products.find(x => x.id === editing.id)
+      ? products.map(x => x.id === editing.id ? editing : x)
+      : [...products, editing];
       if (db) {
         try {
-          await setDoc(doc(db, 'products', editing.id), editing, { merge: true });
-        } catch {
-          // fallback
+          // Persist the complete current catalog. This also migrates older
+          // local demo products when the first real product is saved.
+          const batch = writeBatch(db);
+          updated.forEach(product => batch.set(doc(db, 'products', product.id), product, { merge: true }));
+          await batch.commit();
+          localStorage.setItem('ks_products_seeded_v1', '1');
+        } catch (e: unknown) {
+          fail(e instanceof Error ? e.message : (lang === 'bn' ? 'Product save হয়নি। Firebase rules পরীক্ষা করুন।' : 'Could not save product. Check Firebase rules.'));
+          return;
         }
       }
+      setProducts(updated);
       setEditing(null);
       notify('✓ ' + t.saved);
     };
