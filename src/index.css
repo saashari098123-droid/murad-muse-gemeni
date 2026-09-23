@@ -575,3 +575,22 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .mg-price{color:#fff!important}
   .mg-price s{color:#91a7c9!important}
 }
+
+
+/* ===== Mobile footer: blue to match the Home page ===== */
+@media (max-width:639px){
+  footer{
+    margin-top:0!important;
+    background:linear-gradient(180deg,#061a42 0%,#0b2d69 55%,#123f96 100%)!important;
+    color:#cfe0ff!important;
+  }
+  footer .text-orange-100\/70{color:#cfe0ff!important}
+  footer .border-white\/10{border-color:rgba(255,255,255,.14)!important}
+  footer a, footer button{color:#cfe0ff}
+  footer a:hover, footer button:hover{color:#fff!important}
+  footer .bg-white\/10{background:rgba(255,255,255,.10)!important}
+  footer .bg-white\/10:hover{background:rgba(255,255,255,.18)!important}
+  footer .text-white{color:#fff!important}
+  footer>div:first-child{padding-top:38px!important;padding-bottom:34px!important}
+  footer>div:last-child{background:rgba(3,18,49,.18)!important}
+}
