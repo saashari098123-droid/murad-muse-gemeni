@@ -437,3 +437,64 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   /* Make the mobile header breathe like the reference. */
   .mg-mobile-home{padding-top:10px!important}
 }
+
+/* Restore the original mobile header button arrangement */
+@media (max-width:639px){
+  .store-header .mobile-header-actions{
+    display:flex!important;
+    align-items:center!important;
+    gap:0!important;
+    margin-left:0!important;
+    flex:0 0 auto!important;
+  }
+  .store-header .mobile-header-actions button{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:32px!important;
+    height:38px!important;
+    padding:5px!important;
+    color:#fff!important;
+    background:transparent!important;
+    border:0!important;
+  }
+  .store-header .mobile-header-actions button:first-child{
+    display:flex!important;
+  }
+  .store-header .mobile-header-actions svg{
+    width:18px!important;
+    height:18px!important;
+  }
+  .store-header .header-search{
+    flex:1 1 auto!important;
+    min-width:0!important;
+  }
+  .store-header .header-search input{
+    height:38px!important;
+    padding-left:14px!important;
+    padding-right:40px!important;
+  }
+  .store-header .header-search button{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    right:3px!important;
+    left:auto!important;
+    width:31px!important;
+    height:31px!important;
+    padding:0!important;
+  }
+  .store-header>.header-cart{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 36px!important;
+    width:36px!important;
+    height:38px!important;
+    padding:6px!important;
+  }
+  .store-header>.header-cart svg{
+    width:21px!important;
+    height:21px!important;
+  }
+}
