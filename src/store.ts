@@ -1,7 +1,7 @@
 export type Role = 'customer' | 'admin';
 export type User = { id: string; name: string; email: string; pass?: string; role: Role; createdAt: string; photoURL?: string; authProvider?: 'password' | 'google' };
 export type Category = { id: string; name: string; slug: string; image: string; status: 'active' | 'hidden' };
-export type Review = { name: string; rating: number; text: string; date: string };
+export type Review = { id?: string; productId?: string; userId?: string; purchaseId?: string; name: string; rating: number; text: string; date: string; verified?: boolean };
 export type Product = {
   id: string; name: string; slug: string; description: string;
   price: number; discountPrice?: number; categoryId: string;

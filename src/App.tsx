@@ -11,7 +11,7 @@ import { STR, type Lang } from './i18n';
 import {
   load, save, tk, slugify, uid, nowStr, eff, offPct, waLink, IMG, fileToResizedDataUrl,
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
-  type User, type Category, type Product, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
+  type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
 import { db, auth, loginWithGoogle, logoutFirebase, firebaseEnabled } from './store/firebase';
 import { collection, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -43,6 +43,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>(() => load('ks_products_v2', SEED_PRODUCTS));
   const [orders, setOrders] = useState<Order[]>(() => load('ks_orders_v2', SEED_ORDERS));
   const [purchases, setPurchases] = useState<Purchase[]>(() => load('ks_purchases_v2', SEED_PURCHASES));
+  const [cloudReviews, setCloudReviews] = useState<Record<string, Review[]>>({});
   const [payments, setPayments] = useState<Payment[]>(() => load('ks_payments_v2', [] as Payment[]));
   const [settings, setSettings] = useState<Settings>(() => load('ks_settings_v2', SEED_SETTINGS));
   const [cart, setCart] = useState<CartLine[]>(() => load('ks_cart_v1', [] as CartLine[]));
@@ -131,6 +132,26 @@ export default function App() {
       console.warn('Products listener:', err.message);
     });
 
+    // Reviews are stored separately so customers can submit them without
+    // gaining write access to the product catalog.
+    const unsubReviews = onSnapshot(collection(db, 'reviews'), snap => {
+      const grouped: Record<string, Review[]> = {};
+      snap.forEach(d => {
+        const review = d.data() as Review;
+        if (!review.productId || review.rating < 1 || review.rating > 5) return;
+        (grouped[review.productId] ||= []).push(review);
+      });
+      setCloudReviews(grouped);
+      if (!snap.empty) {
+        setProducts(prev => prev.map(p => {
+          const reviews = grouped[p.id] || [];
+          return reviews.length ? { ...p, reviews, rating: Number((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)) } : p;
+        }));
+      }
+    }, (err) => {
+      console.warn('Reviews listener:', err.message);
+    });
+
     // Listen to orders
     const unsubOrders = onSnapshot(collection(db, 'orders'), snap => {
       if (!snap.empty) {
@@ -206,6 +227,7 @@ export default function App() {
       unsubUsers();
       unsubCats();
       unsubProducts();
+      unsubReviews();
       unsubOrders();
       unsubPurchases();
       unsubSettings();
@@ -449,7 +471,7 @@ export default function App() {
       const fresh: Purchase[] = [];
       o.items.forEach(it => {
         if (!purchases.some(p => p.userId === o.userId && p.productId === it.productId && p.accessStatus === 'active')) {
-          const pu: Purchase = { id: uid('pu'), userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() };
+          const pu: Purchase = { id: `${o.userId}_${it.productId}`, userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() };
           fresh.push(pu);
           if (db) setDoc(doc(db, 'purchases', pu.id), pu).catch(() => {});
         }
@@ -468,11 +490,25 @@ export default function App() {
     window.open(prod.googleDriveLink, '_blank');
   };
 
-  const addReview = () => {
+  const addReview = async () => {
     if (!me) { fail(t.pleaseLogin); return; }
     if (!revName.trim() || !revText.trim() || !detail) { fail(t.fillReview); return; }
-    setProducts(products.map(p => p.id === detail.id ? { ...p, reviews: [...p.reviews, { name: revName.trim(), rating: revStars, text: revText.trim(), date: nowStr() }] } : p));
-    setRevName(''); setRevText(''); setRevStars(5); notify('✓ ' + t.reviewAdded);
+    if (!owns(me.id, detail.id)) { fail(lang === 'bn' ? 'শুধু কেনা পণ্যের verified buyer rating দিতে পারবেন।' : 'Only verified buyers can review this product.'); return; }
+    const existing = (cloudReviews[detail.id] || detail.reviews || []).find(r => r.userId === me.id);
+    if (existing) { fail(lang === 'bn' ? 'এই পণ্যে আপনার rating আগে থেকেই দেওয়া আছে।' : 'You have already rated this product.'); return; }
+    const purchaseId = `${me.id}_${detail.id}`;
+    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: true };
+    try {
+      if (!db) throw new Error('Firebase Firestore is not configured.');
+      await setDoc(doc(db, 'reviews', review.id || `${detail.id}_${me.id}`), review);
+      const nextReviews = [...(cloudReviews[detail.id] || detail.reviews || []), review];
+      const nextRating = Number((nextReviews.reduce((sum, r) => sum + r.rating, 0) / nextReviews.length).toFixed(1));
+      setCloudReviews(prev => ({ ...prev, [detail.id]: nextReviews }));
+      setProducts(prev => prev.map(p => p.id === detail.id ? { ...p, reviews: nextReviews, rating: nextRating } : p));
+      setRevName(''); setRevText(''); setRevStars(5); notify('✓ ' + t.reviewAdded);
+    } catch (e: unknown) {
+      fail(e instanceof Error ? e.message : (lang === 'bn' ? 'Rating save হয়নি। আবার চেষ্টা করুন।' : 'Could not save rating. Please try again.'));
+    }
   };
 
   const handleFiles = async (files: FileList | null, isCat: boolean) => {
@@ -1542,17 +1578,19 @@ export default function App() {
               ) : (
                 <div className="max-w-2xl">
                   {detail.reviews.length === 0 ? <p className="text-sm text-slate-500">{t.noReviews}</p> : detail.reviews.map((r, i) => (
-                    <div key={i} className="border-b py-3 text-sm"><div className="flex items-center gap-2"><b>{r.name}</b><span className="flex">{[1, 2, 3, 4, 5].map(s => <Star key={s} size={12} className={s <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />)}</span><span className="text-xs text-slate-400">{r.date}</span></div><p className="text-slate-600 mt-1">{r.text}</p></div>
+                    <div key={r.id || `${r.userId || 'review'}-${i}`} className="border-b py-3 text-sm"><div className="flex items-center gap-2"><b>{r.name}</b><span className="flex">{[1, 2, 3, 4, 5].map(s => <Star key={s} size={12} className={s <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />)}</span>{r.verified && <span className="text-[10px] text-emerald-600 font-bold">✓ Verified Buyer</span>}<span className="text-xs text-slate-400">{r.date}</span></div><p className="text-slate-600 mt-1">{r.text}</p></div>
                   ))}
-                  <h4 className="font-bold text-sm mt-4">{t.writeReview}</h4>
-                  <div className="grid gap-2 mt-2 text-sm">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <input value={revName} onChange={e => setRevName(e.target.value)} placeholder={t.yourName} className="flex-1 min-w-[140px] border rounded-xl px-3 py-2" />
-                      <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map(s => <button key={s} onClick={() => setRevStars(s)}><Star size={20} className={s <= revStars ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} /></button>)}</div>
+                  {me && owns(me.id, detail.id) ? (cloudReviews[detail.id] || detail.reviews).some(r => r.userId === me.id) ? <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl p-3 mt-4">{lang === 'bn' ? 'আপনার verified rating সংরক্ষিত আছে।' : 'Your verified rating is already saved.'}</p> : <>
+                    <h4 className="font-bold text-sm mt-4">{t.writeReview}</h4>
+                    <div className="grid gap-2 mt-2 text-sm">
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <input value={revName} onChange={e => setRevName(e.target.value)} placeholder={t.yourName} className="flex-1 min-w-[140px] border rounded-xl px-3 py-2" />
+                        <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map(s => <button key={s} onClick={() => setRevStars(s)}><Star size={20} className={s <= revStars ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} /></button>)}</div>
+                      </div>
+                      <textarea value={revText} onChange={e => setRevText(e.target.value)} placeholder={t.yourReview} rows={3} className="border rounded-xl px-3 py-2" />
+                      <button onClick={addReview} className="text-white font-bold py-2.5 rounded-xl w-fit px-8" style={{ background: BROWN }}>{t.submit}</button>
                     </div>
-                    <textarea value={revText} onChange={e => setRevText(e.target.value)} placeholder={t.yourReview} rows={3} className="border rounded-xl px-3 py-2" />
-                    <button onClick={addReview} className="text-white font-bold py-2.5 rounded-xl w-fit px-8" style={{ background: BROWN }}>{t.submit}</button>
-                  </div>
+                  </> : <p className="text-sm text-slate-500 bg-slate-50 rounded-xl p-3 mt-4">{lang === 'bn' ? 'Rating দিতে এই পণ্যটি আগে কিনে account-এ login করুন।' : 'Purchase and sign in to rate this product.'}</p>}
                 </div>
               )}
             </div>
