@@ -1302,7 +1302,7 @@ export default function App() {
                         <div className="font-bold text-xs mb-1.5">🖼️ Preview Images ({editing.previewImages.filter(Boolean).length}/5)</div>
                         <div className="flex gap-1.5 flex-wrap mb-2">
                           {editing.previewImages.map((src, i) => src ? (
-                            <div key={i} className="relative"><img src={src} alt="" className="w-16 h-16 rounded-lg object-contain bg-slate-50 border" />
+                            <div key={i} className="relative"><img src={src} alt="" className="w-16 h-16 rounded-lg object-cover bg-slate-50 border" />
                               <button onClick={() => setEditing({ ...editing, previewImages: editing.previewImages.filter((_, j) => j !== i) })} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer"><X size={11} /></button></div>
                           ) : null)}
                         </div>

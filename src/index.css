@@ -1252,9 +1252,9 @@ html[lang="bn"] .font-display,
 }
 
 
-/* ===== Global image integrity: show the complete image without cropping ===== */
-img {
-  object-fit: contain !important;
+/* ===== Content images fill their boxes; brand marks keep their proportions ===== */
+img:not(.brand-logo-icon):not([src*="murad-logo"]) {
+  object-fit: cover !important;
   object-position: center !important;
 }
 
@@ -1426,7 +1426,7 @@ img {
     width: 100% !important;
     height: 175px !important;
     min-height: 175px !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
     object-position: center !important;
     background: #fff7ed !important;
   }
@@ -1441,7 +1441,7 @@ img {
   }
   .mg-desktop-home-only .hero-image-full {
     height: 220px !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
     object-position: center !important;
     transform: none !important;
   }
@@ -1455,7 +1455,7 @@ img {
   }
   .mg-desktop-home-only .promo-image-full {
     height: 175px !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
     object-position: center !important;
     transform: none !important;
   }
