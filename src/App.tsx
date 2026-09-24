@@ -13,12 +13,24 @@ import {
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
-import { db, auth, loginWithGoogle, resolveGoogleRedirect, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
+import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
 import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
 const BROWN_D = '#3d1e07';
+
+function viewFromPath(pathname: string): { view: View; slug?: string } {
+  if (pathname === '/products') return { view: 'products' };
+  if (pathname === '/cart') return { view: 'cart' };
+  if (pathname === '/checkout') return { view: 'checkout' };
+  if (pathname === '/orders') return { view: 'orders' };
+  if (pathname === '/purchases') return { view: 'purchases' };
+  if (pathname === '/dashboard') return { view: 'dashboard' };
+  if (pathname === '/admin') return { view: 'admin' };
+  if (pathname.startsWith('/product/')) return { view: 'details', slug: decodeURIComponent(pathname.slice('/product/'.length)) };
+  return { view: 'home' };
+}
 
 function Logo() {
   return (
@@ -55,9 +67,9 @@ export default function App() {
   const [cart, setCart] = useState<CartLine[]>(() => load('ks_cart_v1', [] as CartLine[]));
   const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('ks_session_v1') || sessionStorage.getItem('ks_session_v1'));
 
-  const [view, setView] = useState<View>(() => window.location.pathname === '/products' ? 'products' : window.location.pathname.startsWith('/product/') ? 'details' : 'home');
+  const [view, setView] = useState<View>(() => viewFromPath(window.location.pathname).view);
   const [detailId, setDetailId] = useState<string | null>(() => {
-    const slug = window.location.pathname.startsWith('/product/') ? decodeURIComponent(window.location.pathname.slice('/product/'.length)) : '';
+    const slug = viewFromPath(window.location.pathname).slug || '';
     return slug ? products.find(p => p.slug === slug)?.id || null : null;
   });
   const [search, setSearch] = useState('');
@@ -105,14 +117,6 @@ export default function App() {
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     if (themeMeta) themeMeta.setAttribute('content', window.matchMedia('(max-width: 639px)').matches ? '#061a42' : '#5a2e0d');
   }, [lang]);
-
-  useEffect(() => {
-    if (window.matchMedia('(max-width: 639px)').matches && window.location.pathname !== '/') {
-      window.history.replaceState({}, '', '/');
-      setDetailId(null);
-      setView('home');
-    }
-  }, []);
 
   useEffect(() => {
     if (!window.location.pathname.startsWith('/product/')) return;
@@ -341,18 +345,26 @@ export default function App() {
   useEffect(() => { setGal(0); setTab('desc'); }, [detailId]);
   useEffect(() => {
     const syncUrl = () => {
-      const match = window.location.pathname.match(/^\/product\/([^/]+)/);
-      if (match) {
-        const found = products.find(p => p.slug === decodeURIComponent(match[1]));
-        if (found) { setDetailId(found.id); setView('details'); }
-      } else if (window.location.pathname === '/products') { setDetailId(null); setView('products'); }
-      else if (window.location.pathname === '/') { setDetailId(null); setView('home'); }
-      else { setDetailId(null); setView('home'); }
+      const route = viewFromPath(window.location.pathname);
+      if (route.view === 'details') {
+        const found = products.find(p => p.slug === route.slug);
+        if (found) {
+          setDetailId(found.id);
+          setView('details');
+        } else if (products.length > 0) {
+          setDetailId(null);
+          setView('products');
+        }
+        return;
+      }
+      setDetailId(null);
+      setView(route.view);
     };
     syncUrl();
     window.addEventListener('popstate', syncUrl);
     return () => window.removeEventListener('popstate', syncUrl);
   }, [products]);
+
   useEffect(() => {
     setCart(c => {
       const pruned = c.filter(l => products.some(p => p.id === l.productId && p.status === 'active'));
@@ -373,6 +385,17 @@ export default function App() {
   const activeProducts = products.filter(p => p.status === 'active');
   const catName = (id: string) => categories.find(c => c.id === id)?.name || '—';
   const detail = products.find(p => p.id === detailId) || null;
+  useEffect(() => {
+    let target: string | null = null;
+    if (view === 'details') {
+      if (!detail) return;
+      target = `/product/${detail.slug}`;
+    } else {
+      target = `/${view === 'home' ? '' : view}`;
+    }
+    if (window.location.pathname !== target) window.history.replaceState({}, '', target);
+  }, [view, detailId, detail?.slug, detail]);
+
   // The original demo catalog started in localStorage. Once Firebase has a
   // product document, the listener replaces the local catalog, so migrate the
   // existing local/demo catalog once before treating Firestore as canonical.
@@ -457,9 +480,6 @@ export default function App() {
     setAuthErr('');
     setAuthLoading(true);
     try {
-      if (authOpen) {
-        sessionStorage.setItem('mg_google_auth_mode', authOpen);
-      }
       const fbUser = await loginWithGoogle();
       if (!fbUser) {
         return;
