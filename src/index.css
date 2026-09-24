@@ -8,7 +8,7 @@ html, body {
   width: 100%;
 }
 html { scroll-behavior: smooth; }
-body { font-family: 'Noto Serif Bengali', 'Hind Siliguri', Inter, sans-serif; background: #f7f4ef; color: #0f172a; }
+body { font-family: Inter, 'Hind Siliguri', 'Noto Serif Bengali', sans-serif; background: #f7f4ef; color: #0f172a; }
 .font-display { font-family: 'Space Grotesk', 'Noto Serif Bengali', 'Hind Siliguri', sans-serif; }
 
 .glass { background: rgba(255,255,255,.08); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.14); }
@@ -826,382 +826,145 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .float-wa svg { width: 24px !important; height: 24px !important; }
 }
 
-@media (min-width: 640px) {
-  .mg-mobile-home { display: none !important; }
-}
 
 
-/* Final phone-size refinements */
+/* ===== Consolidated mobile design system ===== */
 @media (max-width: 639px) {
-  .store-header .brand-lockup { flex: 0 0 132px !important; width: 132px !important; min-width: 132px !important; gap: 6px !important; }
-  .store-header .brand-logo-icon { width: 38px !important; height: 38px !important; border-radius: 10px !important; }
-  .store-header .brand-wordmark > div:first-child { font-size: 12px !important; }
-  .store-header .brand-wordmark > div:last-child { font-size: 5px !important; letter-spacing: .18em !important; }
-  .mg-mobile-trust { min-height: 70px !important; }
-  .mg-mobile-promo { margin-top: 9px !important; }
-  .mg-mobile-categories img, .mg-cat-icon { width: 48px !important; height: 48px !important; }
-  .mg-trending-head { margin-top: 10px !important; }
-}
-
-
-@media (max-width: 639px) {
-  .mobile-bottom-nav > button.mobile-nav-active svg,
-  .mobile-bottom-nav > button.mobile-nav-active > span { color: #1e5bd7 !important; }
-  .mobile-bottom-nav > button.mobile-nav-active > span { font-weight: 800 !important; }
-}
-
-
-/* ===== Final mobile blue + white storefront treatment ===== */
-@media (max-width: 639px) {
-  body, #root, #root > div, .min-h-screen { background: #f4f7fc !important; }
-  .store-header { background: linear-gradient(135deg, #061a42 0%, #0b2d69 60%, #1f52d4 100%) !important; }
-  .store-header .header-search input { background: rgba(255,255,255,.16) !important; border-color: rgba(255,255,255,.28) !important; }
-  .store-header .header-search button { background: #fff !important; color: #1747ba !important; border-color: #fff !important; box-shadow: 0 2px 8px rgba(0,0,0,.12) !important; }
-  .store-header .mobile-header-actions button:hover,
-  .store-header > .header-cart:hover { background: rgba(255,255,255,.14) !important; }
-  .mg-mobile-home { background: #f4f7fc !important; }
-  .mg-mobile-hero { background: linear-gradient(135deg, #06183d 0%, #092c70 54%, #194bd4 100%) !important; }
-  .mg-mobile-promo { background: linear-gradient(135deg, #1836d6 0%, #3f35f4 55%, #6539e8 100%) !important; }
-  .mg-mobile-section-head h2, .mg-mobile-section-head > button { color: #102b61 !important; }
-  .mg-mobile-section-head > div > svg { color: #1856d8 !important; }
-  .mg-mobile-categories b { color: #183360 !important; }
-  .mg-mobile-products, .mg-mobile-product, .mg-mobile-trust { background: #fff !important; }
-  .mg-mobile-product { border-color: #dfe8f6 !important; }
-  .mg-product-info h3, .mg-price { color: #102b61 !important; }
-  .mobile-bottom-nav { background: #fff !important; }
-  .mobile-bottom-nav > button.mobile-nav-active,
-  .mobile-bottom-nav > button.mobile-nav-active svg,
-  .mobile-bottom-nav > button.mobile-nav-active > span { color: #1e5bd7 !important; }
-  footer { background: linear-gradient(180deg, #061a42 0%, #0b2d69 100%) !important; color: #d9e8ff !important; }
-  footer .text-white { color: #fff !important; }
-  [style*="#5a2e0d"], [style*="#3d1e07"] { background: #1b58d4 !important; }
-  [style*="color: #5a2e0d"], [style*="color: #3d1e07"] { color: #1b58d4 !important; }
-}
-
-
-/* ===== Mobile all-route blue-white system + desktop palette guard ===== */
-@media (max-width: 639px) {
-  body, #root, #root > div, .min-h-screen, main, section { background-color: #f4f7fc !important; color: #102b61 !important; }
-  .store-header, .mobile-bottom-nav { color: #fff !important; }
-  .store-header { background: linear-gradient(135deg, #061a42 0%, #0b2d69 58%, #2458dd 100%) !important; }
-  footer { background: linear-gradient(180deg, #061a42 0%, #0b2d69 100%) !important; }
-  [style*="#5a2e0d"], [style*="#3d1e07"],
-  [style*="rgb(90, 46, 13)"], [style*="rgb(61, 30, 7)"] {
-    background: #1b58d4 !important;
+  :root {
+    --mg-navy: #061a42;
+    --mg-blue: #0b3d9f;
+    --mg-action: #4d8de8;
+    --mg-page: #f3f6fb;
+    --mg-card: #ffffff;
+    --mg-text: #111827;
+    --mg-muted: #64748b;
+    --mg-border: #dbe4f0;
   }
-  [style*="color: #5a2e0d"], [style*="color: #3d1e07"],
-  [style*="color: rgb(90, 46, 13)"], [style*="color: rgb(61, 30, 7)"] {
-    color: #1b58d4 !important;
-  }
-  .store-header > div:first-child {
-    padding-left: 14px !important;
-    padding-right: 12px !important;
-    gap: 7px !important;
-  }
-  .store-header .brand-lockup { flex: 0 0 126px !important; width: 126px !important; min-width: 126px !important; gap: 6px !important; }
-  .store-header .brand-logo-icon { width: 38px !important; height: 38px !important; }
-  .store-header .brand-wordmark > div:first-child { font-size: 12px !important; }
-  .store-header .header-search { flex: 1 1 auto !important; min-width: 0 !important; }
-  .store-header .header-search input { height: 38px !important; font-size: 10px !important; padding-left: 13px !important; padding-right: 35px !important; }
-  .store-header .header-search button { width: 29px !important; height: 29px !important; right: 3px !important; }
-  .store-header .mobile-header-actions { flex: 0 0 52px !important; width: 52px !important; display: flex !important; justify-content: space-between !important; }
-  .store-header .mobile-header-actions button,
-  .store-header .mobile-header-actions .header-icon-btn { width: 24px !important; height: 34px !important; padding: 0 !important; }
-  .store-header .mobile-header-actions svg { width: 17px !important; height: 17px !important; }
-  .store-header > .header-cart { flex: 0 0 28px !important; width: 28px !important; height: 34px !important; padding: 0 !important; }
-  .store-header > .header-cart svg { width: 20px !important; height: 20px !important; }
-  .store-header > .header-cart span { right: -3px !important; top: -2px !important; }
-  .mg-mobile-home { background: #f4f7fc !important; }
-  .mg-mobile-trust, .mg-mobile-product { background: #fff !important; }
-  .mg-mobile-section-head h2, .mg-mobile-categories b, .mg-product-info h3, .mg-price { color: #102b61 !important; }
-  .mobile-bottom-nav { background: #fff !important; color: #75839a !important; }
-}
 
-/* ===== Final mobile header lockup and inner-page cleanup ===== */
-@media (max-width: 639px) {
-  .store-header .brand-lockup {
-    flex: 0 0 49px !important;
-    width: 49px !important;
-    min-width: 49px !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 1px !important;
+  body, #root, #root > div { background: var(--mg-page) !important; color: var(--mg-text) !important; }
+  .store-header {
+    background: linear-gradient(135deg, var(--mg-navy), #0a2b63 58%, #1249a8) !important;
+    box-shadow: 0 6px 18px rgba(6,26,66,.22) !important;
   }
-  .store-header .brand-logo-icon { width: 34px !important; height: 34px !important; border-radius: 9px !important; }
-  .store-header .brand-wordmark { display: flex !important; align-items: center !important; text-align: center !important; }
-  .store-header .brand-wordmark > div:first-child { font-size: 6px !important; line-height: 1 !important; letter-spacing: -.04em !important; white-space: nowrap !important; }
+  .store-header > div:first-child { min-height: 70px !important; padding: 9px 10px !important; gap: 6px !important; }
+  .store-header .brand-lockup { flex: 0 0 47px !important; width: 47px !important; min-width: 47px !important; flex-direction: column !important; gap: 1px !important; }
+  .store-header .brand-logo-icon { width: 32px !important; height: 32px !important; border-radius: 9px !important; }
+  .store-header .brand-wordmark { display: flex !important; text-align: center !important; }
+  .store-header .brand-wordmark > div:first-child { font-size: 5.5px !important; line-height: 1 !important; white-space: nowrap !important; }
   .store-header .brand-wordmark > div:last-child { display: none !important; }
   .store-header .header-search { flex: 1 1 auto !important; min-width: 0 !important; }
-  .store-header .mobile-header-actions { flex: 0 0 52px !important; width: 52px !important; }
-  .store-header > .header-cart { flex-basis: 27px !important; width: 27px !important; }
-  .mobile-profile-trigger {
-    display: flex !important;
-    flex: 0 0 27px !important;
-    width: 27px !important;
-    height: 34px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    color: #fff !important;
-    background: transparent !important;
-    border: 0 !important;
-  }
-  .mobile-profile-trigger svg { width: 18px !important; height: 18px !important; }
-  .store-header > div:first-child { gap: 6px !important; padding-left: 12px !important; padding-right: 10px !important; }
+  .store-header .header-search input { height: 38px !important; padding: 0 38px 0 13px !important; font-size: 10px !important; border: 1px solid rgba(255,255,255,.22) !important; background: rgba(255,255,255,.13) !important; box-shadow: none !important; outline: none !important; }
+  .store-header .header-search input:focus { border-color: rgba(255,255,255,.4) !important; box-shadow: none !important; }
+  .store-header .header-search button { width: 30px !important; height: 30px !important; right: 3px !important; background: #fff !important; color: var(--mg-navy) !important; }
+  .store-header .mobile-header-actions { flex: 0 0 45px !important; width: 45px !important; gap: 0 !important; }
+  .store-header .mobile-header-actions button { width: 22px !important; padding: 0 !important; color: #fff !important; }
+  .store-header .mobile-header-actions svg { width: 17px !important; height: 17px !important; }
+  .store-header > .header-cart { flex: 0 0 26px !important; width: 26px !important; padding: 0 !important; color: #fff !important; }
+  .store-header > .header-cart svg { width: 20px !important; height: 20px !important; }
+  .mobile-profile-trigger { width: 29px !important; height: 32px !important; border: 1px solid rgba(255,255,255,.55) !important; border-radius: 999px !important; background: rgba(255,255,255,.12) !important; color: #fff !important; box-shadow: none !important; }
+  .mobile-profile-trigger img { width: 25px !important; height: 25px !important; border-radius: 999px !important; }
 
-  /* Legacy brown borders, orange tabs, cream access cards, and inline brown actions. */
-  main [style*="border-color: #5a2e0d"],
-  main [style*="border-color: rgb(90, 46, 13)"],
-  main [style*="border-color: #3d1e07"],
-  main [style*="border-color: rgb(61, 30, 7)"] { border-color: #1b58d4 !important; }
-  main .bg-\[\#faf4ec\], main .bg-orange-50, main .bg-orange-50\/40,
-  main .bg-amber-50, main .bg-amber-100 { background: #f4f8ff !important; }
-  main .border-orange-100, main .border-orange-200, main .border-amber-200 { border-color: #dce8f8 !important; }
-  main .text-orange-600, main .text-amber-600, main .text-amber-700 { color: #1b58d4 !important; }
-  main button[style*="border"], main a[style*="border"] { border-color: #1b58d4 !important; }
-  main button[style*="background"], main a[style*="background"] { background: linear-gradient(90deg, #1b58d4, #3d4fe8) !important; }
-  main .text-\[\#5a2e0d\], main .text-\[\#7c2d12\] { color: #1b58d4 !important; }
-  .mobile-bottom-nav > button:last-child svg { color: #1b58d4 !important; }
-}
+  .mg-mobile-home { padding: 10px 10px 86px !important; background: var(--mg-page) !important; color: var(--mg-text) !important; }
+  .mg-mobile-hero { min-height: 235px !important; border-radius: 20px !important; padding: 18px 15px !important; background: linear-gradient(135deg, #06183d, #08285e 48%, #173fdb) !important; }
+  .mg-mobile-hero h1, .mg-mobile-hero p, .mg-mobile-hero .mg-eyebrow, .mg-mobile-hero-art * { color: #fff !important; }
+  .mg-mobile-hero h1 { font-size: 22px !important; line-height: 1.04 !important; }
+  .mg-mobile-hero p { font-size: 7.5px !important; line-height: 1.35 !important; }
+  .mg-mobile-hero button, .mg-mobile-promo button { background: linear-gradient(90deg, var(--mg-action), #73a6ee) !important; color: #071a36 !important; -webkit-text-fill-color: #071a36 !important; text-shadow: none !important; }
+  .mg-mobile-hero button svg, .mg-mobile-promo button svg { color: #071a36 !important; }
+  .mg-mobile-dots button { background: rgba(255,255,255,.55) !important; border: 0 !important; }
+  .mg-mobile-dots button.active { background: #fff !important; }
 
+  .mg-mobile-trust { background: var(--mg-card) !important; border: 1px solid var(--mg-border) !important; box-shadow: 0 4px 14px rgba(16,36,73,.06) !important; }
+  .mg-mobile-trust > div { background: var(--mg-card) !important; border-color: var(--mg-border) !important; }
+  .mg-mobile-trust span { background: #eaf2ff !important; }
+  .mg-mobile-trust span svg { color: var(--mg-blue) !important; }
+  .mg-mobile-trust b, .mg-mobile-trust small { color: var(--mg-text) !important; }
+  .mg-mobile-trust b { font-size: 8px !important; }
+  .mg-mobile-trust small { font-size: 6.5px !important; color: var(--mg-muted) !important; }
 
-/* ===== Final mobile header spacing and action contrast ===== */
-@media (max-width: 639px) {
-  .store-header .brand-lockup { flex-basis: 44px !important; width: 44px !important; min-width: 44px !important; }
-  .store-header .brand-logo-icon { width: 32px !important; height: 32px !important; }
-  .store-header .brand-wordmark > div:first-child { font-size: 5.5px !important; }
-  .store-header .header-search { flex: 1 1 auto !important; min-width: 0 !important; }
-  .store-header .mobile-header-actions { flex-basis: 48px !important; width: 48px !important; gap: 0 !important; }
-  .store-header .mobile-header-actions button,
-  .store-header .mobile-header-actions .header-icon-btn { width: 22px !important; }
-  .store-header > .header-cart { flex-basis: 26px !important; width: 26px !important; }
-  .mobile-profile-trigger {
-    display: flex !important;
-    flex: 0 0 31px !important;
-    width: 31px !important;
-    height: 34px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    border: 1px solid rgba(255,255,255,.6) !important;
-    border-radius: 999px !important;
-    color: #fff !important;
-    background: rgba(255,255,255,.13) !important;
-  }
-  .mobile-profile-trigger svg { width: 19px !important; height: 19px !important; stroke-width: 2.2 !important; }
-  .mobile-profile-trigger img { width: 27px !important; height: 27px !important; border-radius: 999px !important; object-fit: cover !important; }
+  .mg-mobile-promo { height: 104px !important; border-radius: 16px !important; }
+  .mg-promo-copy b, .mg-promo-copy small { color: #fff !important; }
+  .mg-promo-copy em { background: rgba(255,255,255,.92) !important; color: var(--mg-blue) !important; }
+  .mg-mobile-section-head { margin: 15px 3px 9px !important; }
+  .mg-mobile-section-head h2, .mg-mobile-section-head button { color: var(--mg-text) !important; }
+  .mg-mobile-section-head > div > svg { color: var(--mg-blue) !important; }
+  .mg-mobile-section-head button { font-size: 9px !important; }
+  .mg-mobile-categories { gap: 15px !important; }
+  .mg-mobile-categories img, .mg-mobile-categories .mg-cat-icon { background: #eaf2ff !important; box-shadow: none !important; }
+  .mg-mobile-categories .mg-cat-icon svg { color: var(--mg-blue) !important; }
+  .mg-mobile-categories b { color: var(--mg-text) !important; font-size: 8px !important; }
 
-  /* White, high-contrast labels on all blue action buttons. */
-  main button[style*="background"],
-  main a[style*="background"],
-  main button.bg-\[\#5a2e0d\],
-  main button.bg-gradient-to-r,
-  main .mg-product-info button,
-  main .mg-mobile-product button { color: #fff !important; text-shadow: 0 1px 1px rgba(3, 24, 75, .2); }
-  main button[style*="background"], main a[style*="background"] { background: linear-gradient(90deg, #1b58d4, #3d4fe8) !important; }
-  main button[style*="border-color"] { color: #1b58d4 !important; background: #fff !important; }
-  main button[style*="border-color"] svg { color: #1b58d4 !important; }
-  .bg-\[\#faf4ec\], .bg-orange-50, .bg-orange-50\/40 { background: #f4f8ff !important; }
-  .text-\[\#5a2e0d\], .text-\[\#7c2d12\], .text-amber-600, .text-amber-700 { color: #1b58d4 !important; }
-}
+  .mg-mobile-products { gap: 9px !important; }
+  .mg-product-image { height: 94px !important; }
+  .mg-product-info { padding: 8px !important; background: #fff !important; }
+  .mg-product-info h3, .mg-product-info p, .mg-product-info .mg-price { color: var(--mg-text) !important; }
+  .mg-product-info h3 { font-size: 9.5px !important; min-height: 25px !important; }
+  .mg-rating { color: var(--mg-muted) !important; }
+  .mg-product-info button { background: linear-gradient(90deg, var(--mg-action), #73a6ee) !important; color: #071a36 !important; -webkit-text-fill-color: #071a36 !important; height: 27px !important; font-size: 7.5px !important; }
+  .mg-product-info button svg { color: #071a36 !important; }
 
+  main { color: var(--mg-text) !important; }
+  main h1, main h2, main h3, main h4, main p, main label, main .text-slate-800, main .text-slate-700 { color: var(--mg-text) !important; }
+  main .text-slate-400, main .text-slate-500, main .text-slate-600 { color: var(--mg-muted) !important; }
+  main .bg-orange-50, main .bg-orange-50\/40, main .bg-amber-50, main .bg-\[\#faf4ec\] { background: #f5f8fd !important; }
+  main .border-orange-100, main .border-orange-200, main .border-amber-200 { border-color: var(--mg-border) !important; }
+  main button[style*="background"], main a[style*="background"], main .mobile-primary-action { background: linear-gradient(90deg, var(--mg-action), #73a6ee) !important; color: #071a36 !important; -webkit-text-fill-color: #071a36 !important; text-shadow: none !important; }
+  main button[style*="background"] svg, main a[style*="background"] svg, main .mobile-primary-action svg { color: #071a36 !important; }
+  main .mobile-outline-action { background: #fff !important; color: var(--mg-text) !important; border: 2px solid var(--mg-blue) !important; -webkit-text-fill-color: var(--mg-text) !important; }
+  main .mobile-outline-action svg { color: var(--mg-blue) !important; }
+  main button:focus, main a:focus, main input:focus, main select:focus { outline: none !important; box-shadow: none !important; }
 
-/* ===== Mobile contrast and refresh-safe actions ===== */
-@media (max-width: 639px) {
-  .mobile-primary-action,
-  main button[style*="background"],
-  main a[style*="background"] {
-    color: #fff !important;
-    background: linear-gradient(90deg, #1b58d4, #3d4fe8) !important;
-    -webkit-text-fill-color: #fff !important;
-  }
-  .mobile-outline-action {
-    color: #1b58d4 !important;
-    background: #fff !important;
-    border-color: #1b58d4 !important;
-    -webkit-text-fill-color: #1b58d4 !important;
-  }
-  .mobile-primary-action svg { color: #fff !important; }
-}
-
-
-/* ===== Deeper mobile blue with dark action labels ===== */
-@media (max-width: 639px) {
-  .store-header {
-    background: linear-gradient(135deg, #061a42 0%, #09285e 58%, #1249a8 100%) !important;
-  }
-  .mobile-primary-action,
-  main button[style*="background"],
-  main a[style*="background"],
-  main .mg-product-info button,
-  main .mg-mobile-product button,
-  .mg-mobile-hero button,
-  .mg-mobile-promo button {
-    color: #071a36 !important;
-    background: linear-gradient(90deg, #0b3d9f, #1858c6) !important;
-    -webkit-text-fill-color: #071a36 !important;
-    text-shadow: none !important;
-  }
-  .mobile-primary-action svg,
-  main button[style*="background"] svg,
-  main a[style*="background"] svg,
-  main .mg-product-info button svg,
-  main .mg-mobile-product button svg,
-  .mg-mobile-hero button svg,
-  .mg-mobile-promo button svg { color: #071a36 !important; }
-  .mobile-outline-action { color: #0b3d9f !important; border-color: #0b3d9f !important; }
-  .mobile-bottom-nav > button.mobile-nav-active,
-  .mobile-bottom-nav > button.mobile-nav-active svg,
-  .mobile-bottom-nav > button.mobile-nav-active > span { color: #0b3d9f !important; }
+  .mobile-bottom-nav { min-height: 66px !important; background: rgba(255,255,255,.98) !important; border-top: 1px solid var(--mg-border) !important; }
+  .mobile-bottom-nav > button { color: #64748b !important; min-width: 45px !important; }
+  .mobile-bottom-nav > button svg { color: currentColor !important; }
+  .mobile-bottom-nav > button.mobile-nav-active, .mobile-bottom-nav > button.mobile-nav-active svg, .mobile-bottom-nav > button.mobile-nav-active > span { color: var(--mg-text) !important; }
+  .mobile-bottom-nav > button:nth-child(3) > div { background: linear-gradient(135deg, #0b3d9f, #1d63c8) !important; box-shadow: 0 8px 18px rgba(11,61,159,.3) !important; }
+  .mobile-bottom-nav > button:nth-child(3) > div svg { color: #fff !important; }
+  .float-wa { right: 14px !important; bottom: 78px !important; width: 42px !important; height: 42px !important; }
 }
 
 
 @media (max-width: 639px) {
-  .mobile-primary-action,
-  main button[style*="background"],
-  main a[style*="background"],
-  main .mg-product-info button,
-  main .mg-mobile-product button,
-  .mg-mobile-hero button,
-  .mg-mobile-promo button {
-    background: linear-gradient(90deg, #4d8de8, #6da6f5) !important;
-  }
-}
-
-
-/* ===== Final mobile visual contract ===== */
-@media (max-width: 639px) {
-  .store-header { background: linear-gradient(135deg, #061a42 0%, #09285e 58%, #1249a8 100%) !important; }
-  .store-header .header-search input { border: 1px solid rgba(255,255,255,.18) !important; box-shadow: none !important; outline: none !important; }
-  .store-header .header-search input:focus { border-color: rgba(255,255,255,.3) !important; box-shadow: none !important; }
-
-  main h1, main h2, main h3, main h4, main p, main label,
-  main .mg-mobile-section-head h2,
-  main .mg-mobile-categories b,
-  main .mg-mobile-trust b,
-  main .mg-mobile-trust small,
-  main .mg-product-info h3,
-  main .mg-product-info p,
-  main .mg-price,
-  main .text-\[\#5a2e0d\], main .text-\[\#7c2d12\],
-  main .text-amber-600, main .text-amber-700 {
-    color: #111827 !important;
-  }
-  main .mg-mobile-hero h1,
-  main .mg-mobile-hero p,
-  main .mg-mobile-promo b,
-  main .mg-mobile-promo span { color: #fff !important; }
-  main .mg-mobile-hero button,
-  main .mg-mobile-promo button,
-  main .mobile-primary-action,
-  main button[style*="background"],
-  main a[style*="background"],
-  main .mg-product-info button,
-  main .mg-mobile-product button {
-    color: #071a36 !important;
-    background: linear-gradient(90deg, #4d8de8, #6da6f5) !important;
-    -webkit-text-fill-color: #071a36 !important;
-    text-shadow: none !important;
-  }
-  main .mg-mobile-hero button svg,
-  main .mg-mobile-promo button svg,
-  main .mobile-primary-action svg,
-  main button[style*="background"] svg,
-  main a[style*="background"] svg { color: #071a36 !important; }
-  main .mobile-outline-action { color: #0b3d9f !important; background: #fff !important; border-color: #0b3d9f !important; }
-  main button:focus, main a:focus { outline: none !important; box-shadow: none !important; }
-  main .border-\[\#5a2e0d\], main .border-\[\#7c2d12\] { border-color: #dbe4f0 !important; }
+  .mg-mobile-hero { min-height: 165px !important; height: 165px !important; padding: 13px 15px !important; grid-template-columns: 48% 52% !important; }
+  .mg-mobile-hero h1 { font-size: 20px !important; line-height: 1.02 !important; }
+  .mg-mobile-hero p { font-size: 6.7px !important; margin: 6px 0 7px !important; }
+  .mg-mobile-hero button { font-size: 7px !important; padding: 6px 9px !important; }
+  .mg-mobile-hero-art img { height: 135px !important; border-radius: 14px !important; }
+  .mg-mobile-dots { bottom: 7px !important; }
+  .mg-mobile-trust { margin-top: 8px !important; padding: 7px 3px !important; }
+  .mg-mobile-trust span { width: 29px !important; height: 29px !important; margin-bottom: 3px !important; }
+  .mg-mobile-trust b { font-size: 7px !important; }
+  .mg-mobile-trust small { font-size: 5.7px !important; }
+  .mg-mobile-promo { height: 90px !important; margin-top: 8px !important; }
+  .mg-promo-copy { left: 15px !important; top: 13px !important; }
+  .mg-promo-copy b { font-size: 14px !important; }
+  .mg-promo-copy small { font-size: 6px !important; }
+  .mg-promo-copy em { font-size: 6px !important; padding: 4px 7px !important; }
+  .mg-mobile-section-head { margin: 10px 3px 7px !important; }
+  .mg-mobile-categories { gap: 11px !important; }
+  .mg-mobile-categories button { flex-basis: 57px !important; }
+  .mg-mobile-categories img, .mg-mobile-categories .mg-cat-icon { width: 52px !important; height: 52px !important; }
+  .mg-mobile-categories b { font-size: 7px !important; }
+  .mg-trending-head { margin-top: 11px !important; }
+  .mg-mobile-products { gap: 7px !important; }
+  .mg-product-image { height: 70px !important; }
+  .mg-product-info { padding: 7px !important; }
+  .mg-product-info h3 { font-size: 8.5px !important; min-height: 22px !important; }
+  .mg-rating { font-size: 6.5px !important; }
+  .mg-price { font-size: 12px !important; }
+  .mg-product-info button { height: 24px !important; font-size: 6.7px !important; margin-top: 4px !important; }
+  .home-page-float { display: none !important; }
 }
 
 
 @media (max-width: 639px) {
-  main .mg-mobile-hero button,
-  main .mg-mobile-promo button,
-  main .mobile-primary-action {
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-  }
-}
-
-
-/* Final readability override: white type on all blue mobile actions. */
-@media (max-width: 639px) {
-  main .mg-mobile-hero button,
-  main .mg-mobile-promo button,
-  main .mobile-primary-action,
-  main button[style*="background"],
-  main a[style*="background"],
-  main .mg-product-info button,
-  main .mg-mobile-product button {
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-  }
-  main .mg-mobile-hero button svg,
-  main .mg-mobile-promo button svg,
-  main .mobile-primary-action svg,
-  main button[style*="background"] svg,
-  main a[style*="background"] svg { color: #fff !important; }
-  main .mobile-outline-action {
-    color: #0b3d9f !important;
-    -webkit-text-fill-color: #0b3d9f !important;
-    background: #fff !important;
-    border-color: #0b3d9f !important;
-  }
-}
-
-
-/* ===== Final mobile contrast normalization ===== */
-@media (max-width: 639px) {
-  .store-header,
-  .store-header * { outline: none !important; }
-  .store-header .header-search input {
-    border: 1px solid rgba(255,255,255,.22) !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-  .store-header .header-search input:focus { border-color: rgba(255,255,255,.42) !important; box-shadow: none !important; }
-  .store-header .header-search button { background: #fff !important; color: #071a36 !important; }
-  .mobile-profile-trigger { border-color: rgba(255,255,255,.58) !important; box-shadow: none !important; }
-
-  /* Neutral page typography: no accidental blue labels on white cards. */
-  main .text-\[\#5a2e0d\],
-  main .text-\[\#7c2d12\],
-  main .text-orange-600,
-  main .text-amber-600,
-  main .text-amber-700,
-  .mg-mobile-section-head h2,
-  .mg-mobile-categories b,
-  .mg-product-info h3,
-  .mg-price { color: #111827 !important; }
-
-  /* Keep intentionally dark blue surfaces, but use black labels on their actions. */
-  .mobile-primary-action,
-  main button[style*="background"],
-  main a[style*="background"],
-  main .mg-product-info button,
-  main .mg-mobile-product button,
-  .mg-mobile-hero button,
-  .mg-mobile-promo button {
-    color: #050b16 !important;
-    -webkit-text-fill-color: #050b16 !important;
-    text-shadow: none !important;
-  }
-  .mobile-primary-action svg,
-  main button[style*="background"] svg,
-  main a[style*="background"] svg,
-  main .mg-product-info button svg,
-  main .mg-mobile-product button svg,
-  .mg-mobile-hero button svg,
-  .mg-mobile-promo button svg { color: #050b16 !important; }
-  .mobile-outline-action {
-    color: #111827 !important;
-    background: #fff !important;
-    border: 2px solid #111827 !important;
-    -webkit-text-fill-color: #111827 !important;
-  }
-  .mobile-outline-action svg { color: #111827 !important; }
-  .mobile-bottom-nav > button.mobile-nav-active,
-  .mobile-bottom-nav > button.mobile-nav-active svg,
-  .mobile-bottom-nav > button.mobile-nav-active > span { color: #111827 !important; }
+  main [style*="color: rgb(90, 46, 13)"],
+  main [style*="color: #5a2e0d"],
+  main [style*="color: rgb(61, 30, 7)"],
+  main [style*="color: #3d1e07"] { color: #111827 !important; }
+  main [style*="background: rgb(90, 46, 13)"],
+  main [style*="background: #5a2e0d"] { background: linear-gradient(90deg, #4d8de8, #73a6ee) !important; color: #071a36 !important; }
+  main [style*="background: rgb(61, 30, 7)"],
+  main [style*="background: #3d1e07"] { background: #061a42 !important; color: #fff !important; }
+  footer { background: #061a42 !important; }
 }

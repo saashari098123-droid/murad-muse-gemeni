@@ -100,6 +100,8 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.lang = lang === 'en' ? 'en' : 'bn';
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) themeMeta.setAttribute('content', window.matchMedia('(max-width: 639px)').matches ? '#061a42' : '#5a2e0d');
   }, [lang]);
 
   useEffect(() => {
@@ -1908,7 +1910,7 @@ export default function App() {
       </footer>
 
       {/* whatsapp float */}
-      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105" title="Chat on WhatsApp">
+      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105 ${view === 'home' ? 'home-page-float' : ''}`} title="Chat on WhatsApp">
         <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
         <WhatsAppLogo size={27} />
       </a>
