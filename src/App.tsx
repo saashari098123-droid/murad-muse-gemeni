@@ -563,6 +563,8 @@ export default function App() {
 
       if (code === 'auth/popup-closed-by-user') {
         msg = lang === 'bn' ? 'লগইন পপ-আপটি বন্ধ করা হয়েছে।' : 'Sign-in window was closed.';
+      } else if (code === 'auth/account-exists-with-different-credential') {
+        msg = lang === 'bn' ? 'এই ইমেইলে অন্য একটি লগইন পদ্ধতির account আছে। সেই পদ্ধতিতে আগে লগইন করুন।' : 'An account already exists for this email with a different sign-in method.';
       } else if (code === 'auth/cancelled-popup-request') {
         msg = lang === 'bn' ? 'আগের সাইন-ইন রিকোয়েস্ট বাতিল করা হয়েছে।' : 'Previous popup request was cancelled.';
       } else if (code === 'auth/popup-blocked') {
