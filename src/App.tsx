@@ -428,6 +428,41 @@ export default function App() {
     if (window.location.pathname !== target) window.history.replaceState({}, '', target);
   }, [view, detailId, detail?.slug, detail]);
 
+  // One-time migration for the existing coupon settings. This keeps the
+  // current coupon UI working while Firestore rules validate discounts from
+  // trusted numeric claim documents.
+  useEffect(() => {
+    if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_coupon_claims_migrated_v1')) return;
+    let cancelled = false;
+    const ensureCouponClaims = async () => {
+      try {
+        const existing = await getDocs(collection(db, 'couponClaims'));
+        if (existing.empty) {
+          const batch = writeBatch(db);
+          Object.entries(settings.coupons || {}).forEach(([code, rawValue]) => {
+            const valueText = String(rawValue).trim();
+            const isPercent = valueText.endsWith('%');
+            const numericValue = Number.parseFloat(isPercent ? valueText.slice(0, -1) : valueText);
+            if (!Number.isFinite(numericValue) || numericValue < 0 || (isPercent && numericValue > 100)) return;
+            batch.set(doc(db, 'couponClaims', code.toUpperCase()), {
+              code: code.toUpperCase(),
+              value: numericValue,
+              type: isPercent ? 'percent' : 'fixed',
+              active: true,
+              updatedAt: nowStr(),
+            });
+          });
+          if (Object.keys(settings.coupons || {}).length > 0) await batch.commit();
+        }
+        if (!cancelled) localStorage.setItem('ks_coupon_claims_migrated_v1', '1');
+      } catch (error) {
+        console.warn('Coupon claim migration failed:', error);
+      }
+    };
+    void ensureCouponClaims();
+    return () => { cancelled = true; };
+  }, [me?.id, me?.role]);
+
   // One-time migration: keep public product data separate from private Drive delivery links.
   useEffect(() => {
     if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_product_access_migrated_v1') || products.length === 0) return;
