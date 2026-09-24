@@ -65,7 +65,7 @@ export const SEED_SETTINGS: Settings = {
   whatsapp: '8801977981796',
   bkash: '01977981796', nagad: '01977981796', rocket: '01977981796', binance: 'MPAY-882134',
   promoImage: IMG('mg-promo', 800), promoTitle: 'MEGA BUNDLE SALE',
-  facebook: 'https://facebook.com/', youtube: 'https://youtube.com/', instagram: '#', telegram: 'https://t.me/',
+  facebook: '#', youtube: '#', instagram: '#', telegram: '#',
   coupons: { WELCOME10: '10%', TK50: '50' },
 };
 
