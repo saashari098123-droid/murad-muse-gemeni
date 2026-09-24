@@ -424,25 +424,41 @@ export default function App() {
     if (window.location.pathname !== target) window.history.replaceState({}, '', target);
   }, [view, detailId, detail?.slug, detail]);
 
-  // The original demo catalog started in localStorage. Once Firebase has a
-  // product document, the listener replaces the local catalog, so migrate the
-  // existing local/demo catalog once before treating Firestore as canonical.
+  // One-time migration: keep public product data separate from private Drive delivery links.
   useEffect(() => {
-    if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_products_seeded_v1') || products.length === 0) return;
+    if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_product_access_migrated_v1') || products.length === 0) return;
     let cancelled = false;
-    const migrateProducts = async () => {
+    const migrateProductAccess = async () => {
       try {
         const batch = writeBatch(db);
-        products.forEach(product => batch.set(doc(db, 'products', product.id), product, { merge: true }));
+        products.forEach(product => {
+          const driveLink = (product.googleDriveLink || accessLinks[product.id] || '').trim();
+          const hasDataImages = product.previewImages.some(src => src.startsWith('data:'));
+          const { googleDriveLink: _privateLink, ...publicProduct } = product;
+          batch.set(doc(db, 'products', product.id), {
+            ...publicProduct,
+            previewImages: hasDataImages ? [] : product.previewImages,
+          }, { merge: true });
+          if (driveLink) {
+            batch.set(doc(db, 'productAccess', product.id), {
+              productId: product.id,
+              googleDriveLink: driveLink,
+              updatedAt: nowStr(),
+            }, { merge: true });
+          }
+          if (hasDataImages) {
+            batch.set(doc(db, 'productImages', product.id), { productId: product.id, previewImages: product.previewImages }, { merge: true });
+          }
+        });
         await batch.commit();
-        if (!cancelled) localStorage.setItem('ks_products_seeded_v1', '1');
+        if (!cancelled) localStorage.setItem('ks_product_access_migrated_v1', '1');
       } catch (error) {
-        console.warn('Product catalog migration failed:', error);
+        console.warn('Product access migration failed:', error);
       }
     };
-    void migrateProducts();
+    void migrateProductAccess();
     return () => { cancelled = true; };
-  }, [me?.id, me?.role]);
+  }, [me?.id, me?.role, products, accessLinks]);
   useEffect(() => {
     const title = detail ? `${detail.name} | Murad Graphics` : 'Murad Graphics — Digital Products Store Bangladesh';
     const description = detail ? `${detail.description} Buy from Murad Graphics with secure bKash, Nagad or Rocket payment. Current price ${tk(eff(detail))}.` : 'Buy premium digital products, themes, software, bundles and subscriptions from Murad Graphics in Bangladesh. Secure payment and verified delivery.';
