@@ -44,20 +44,19 @@ if (firebaseEnabled && db) {
 }
 
 export async function loginWithGoogle() {
-  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
-  if (isMobile || isNarrow) {
-    await signInWithRedirect(auth, googleProvider);
-    return null;
-  }
+  // Use popup on mobile too. Chrome/Android can complete the Google OAuth
+  // popup reliably, while redirect can lose the result on some hosted origins
+  // because of browser storage/third-party-cookie restrictions.
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: unknown) {
     const code = (error as { code?: string })?.code;
-    // Some mobile/in-app browsers report a popup failure instead of exposing
-    // a reliable mobile viewport. Retry in the current tab automatically.
-    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+    // Fall back to redirect only when the browser explicitly blocks popup auth.
+    if (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/operation-not-supported-in-this-environment'
+    ) {
       await signInWithRedirect(auth, googleProvider);
       return null;
     }
