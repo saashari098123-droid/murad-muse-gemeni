@@ -541,7 +541,7 @@ export default function App() {
   }, [detail]);
 
   // access rule: logged in + owns (paid purchase)
-  const owns = (uid_: string | null, pid: string) => !!uid_ && purchases.some(p => p.userId === uid_ && p.productId === pid && p.accessStatus === 'active');
+  const owns = (uid_: string | null, pid: string) => !!uid_ && (products.some(p => p.id === pid && p.isFree === true) || purchases.some(p => p.userId === uid_ && p.productId === pid && p.accessStatus === 'active'));
   const myPurchases = purchases.filter(p => p.userId === sessionId && p.accessStatus === 'active');
   const myOrders = orders.filter(o => o.userId === sessionId);
 
@@ -746,11 +746,15 @@ export default function App() {
 
   // ---------- cart (digital: one per product, no qty) ----------
   const addCart = (pid: string) => {
+    const product = products.find(p => p.id === pid);
+    if (product?.isFree) { if (!me) { setPendingBuy(pid); setAuthOpen('login'); return; } void openAccess(me.id, pid); return; }
     if (owns(sessionId, pid)) { fail(t.alreadyPurchased); setView('purchases'); return; }
     if (cart.some(c => c.productId === pid)) { fail(t.alreadyCart); return; }
     setCart([...cart, { productId: pid }]); notify('✓ ' + t.cartAdded);
   };
   const buyNow = (pid: string) => {
+    const product = products.find(p => p.id === pid);
+    if (product?.isFree) { if (!me) { setPendingBuy(pid); setAuthOpen('login'); return; } void openAccess(me.id, pid); return; }
     if (owns(sessionId, pid)) { fail(t.alreadyPurchased); setView('purchases'); return; }
     if (!me) { setPendingBuy(pid); setAuthOpen('login'); fail(t.loginRequired); return; }
     setCart([{ productId: pid }]); setView('checkout');
@@ -875,7 +879,9 @@ export default function App() {
 
   const openAccess = async (uid_: string | null, pid: string) => {
     if (!uid_) { fail(t.pleaseLogin); return; }
-    if (!owns(uid_, pid)) { fail(t.accessDenied); return; }
+    const product = products.find(p => p.id === pid);
+    const freeAccess = product?.isFree === true;
+    if (!freeAccess && !owns(uid_, pid)) { fail(t.accessDenied); return; }
     if (!db) { fail(t.noAccessLink); return; }
 
     // Customers always fetch the delivery URL from the purchase-gated document.
@@ -1253,7 +1259,7 @@ export default function App() {
             <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-xs overflow-hidden">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <h3 className="font-bold text-sm sm:text-base">Products ({products.length})</h3>
-                <button onClick={() => { setImgUrl(''); setEditing({ id: uid('p'), name: '', slug: '', description: '', price: 500, categoryId: categories[0]?.id || '', previewImages: [], googleDriveLink: '', features: [], reviews: [], status: 'active', rating: 4.8, sold: 0, createdAt: nowStr() }); }} className="text-white text-xs sm:text-sm px-3.5 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0" style={{ background: BROWN }}><Plus size={15} /> New</button>
+                <button onClick={() => { setImgUrl(''); setEditing({ id: uid('p'), name: '', slug: '', description: '', price: 500, isFree: false, categoryId: categories[0]?.id || '', previewImages: [], googleDriveLink: '', features: [], reviews: [], status: 'active', rating: 4.8, sold: 0, createdAt: nowStr() }); }} className="text-white text-xs sm:text-sm px-3.5 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0" style={{ background: BROWN }}><Plus size={15} /> New</button>
               </div>
               <div className="grid gap-2">
                 {products.map(p => (
@@ -1280,6 +1286,10 @@ export default function App() {
                         <input type="number" min="0" step="1" className="border rounded-lg px-3 py-2" placeholder="Original Price ৳" value={editing.price} onChange={e => setEditing({ ...editing, price: Math.max(0, Number(e.target.value) || 0) })} />
                         <input type="number" min="0" step="1" max={editing.price} className="border rounded-lg px-3 py-2" placeholder="Sale Price ৳ (optional)" value={editing.discountPrice ?? ''} onChange={e => setEditing({ ...editing, discountPrice: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} />
                       </div>
+                      <label className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 cursor-pointer">
+                        <input type="checkbox" checked={editing.isFree === true} onChange={e => setEditing({ ...editing, isFree: e.target.checked })} />
+                        <span><b className="text-emerald-700">Free Product</b><span className="block text-[10px] text-emerald-600">Sign in করলেই এই product-এর download access পাওয়া যাবে</span></span>
+                      </label>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="grid gap-1">
                           <label className="text-[11px] font-bold text-slate-600">Category *</label>
