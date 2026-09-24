@@ -474,6 +474,17 @@ export default function App() {
   const myPurchases = purchases.filter(p => p.userId === sessionId && p.accessStatus === 'active');
   const myOrders = orders.filter(o => o.userId === sessionId);
 
+  const allLiveReviews = useMemo(() => Object.values(cloudReviews).flat(), [cloudReviews]);
+  const homeReviewCount = allLiveReviews.length;
+  const homeAverageRating = homeReviewCount
+    ? (allLiveReviews.reduce((sum, review) => sum + review.rating, 0) / homeReviewCount).toFixed(1)
+    : '—';
+  const homeReviews = useMemo(() => Object.entries(cloudReviews)
+    .flatMap(([productId, reviews]) => reviews.map(review => ({ ...review, productName: products.find(p => p.id === productId)?.name || '' })))
+    .filter(review => review.verified !== false)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 3), [cloudReviews, products]);
+
   const filtered = useMemo(() => {
     let list = activeProducts.filter(p =>
       (catFilter === 'All' || p.categoryId === catFilter) &&
@@ -481,7 +492,7 @@ export default function App() {
       (!maxPrice || eff(p) <= +maxPrice));
     if (sort === 'low') list = [...list].sort((a, b) => eff(a) - eff(b));
     else if (sort === 'high') list = [...list].sort((a, b) => eff(b) - eff(a));
-    else if (sort === 'new') list = [...list].reverse();
+    else if (sort === 'new') list = [...list].sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
     else list = [...list].sort((a, b) => b.sold - a.sold);
     return list;
   }, [activeProducts, catFilter, search, maxPrice, sort]);
@@ -741,12 +752,22 @@ export default function App() {
     }
   };
 
-  const openAccess = (uid_: string | null, pid: string) => {
+  const openAccess = async (uid_: string | null, pid: string) => {
     const prod = products.find(p => p.id === pid);
     if (!uid_) { fail(t.pleaseLogin); return; }
     if (!owns(uid_, pid)) { fail(t.accessDenied); return; }
-    if (!prod?.googleDriveLink) { fail(t.noAccessLink); return; }
-    window.open(prod.googleDriveLink, '_blank');
+    const cachedLink = accessLinks[pid] || prod?.googleDriveLink;
+    if (cachedLink) { window.open(cachedLink, '_blank'); return; }
+    if (!db) { fail(t.noAccessLink); return; }
+    try {
+      const accessDoc = await getDoc(doc(db, 'productAccess', pid));
+      const link = accessDoc.exists() ? String(accessDoc.data().googleDriveLink || '').trim() : '';
+      if (!link) { fail(t.noAccessLink); return; }
+      setAccessLinks(prev => ({ ...prev, [pid]: link }));
+      window.open(link, '_blank');
+    } catch {
+      fail(t.noAccessLink);
+    }
   };
 
   const addReview = async () => {
@@ -756,7 +777,7 @@ export default function App() {
     const existing = (cloudReviews[detail.id] || detail.reviews || []).find(r => r.userId === me.id);
     if (existing) { fail(lang === 'bn' ? 'এই পণ্যে আপনার rating আগে থেকেই দেওয়া আছে।' : 'You have already rated this product.'); return; }
     const purchaseId = `${me.id}_${detail.id}`;
-    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: true };
+    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: true, createdAt: Date.now() };
     try {
       if (!db) throw new Error('Firebase Firestore is not configured.');
       await setDoc(doc(db, 'reviews', review.id || `${detail.id}_${me.id}`), review);
