@@ -983,7 +983,7 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
 
 /* ===== Final compact mobile Home rhythm ===== */
 @media (max-width: 639px) {
-  .home-page-float { display: none !important; }
+  .home-page-float { display: flex !important; position: fixed !important; right: 14px !important; bottom: calc(78px + env(safe-area-inset-bottom)) !important; z-index: 99999 !important; visibility: visible !important; opacity: 1 !important; }
   .mg-mobile-hero { min-height: 165px !important; height: 165px !important; padding: 14px 15px !important; grid-template-columns: 48% 52% !important; }
   .mg-mobile-hero h1 { font-size: 20px !important; line-height: 1.02 !important; }
   .mg-mobile-hero p { font-size: 6.5px !important; margin: 7px 0 8px !important; }
