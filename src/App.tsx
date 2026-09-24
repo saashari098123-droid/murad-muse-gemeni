@@ -738,31 +738,57 @@ export default function App() {
   };
 
   const verifyPayment = async (orderId: string, ok: boolean) => {
-    const o = orders.find(x => x.id === orderId); if (!o) return;
-    const st = ok ? 'Paid' : 'Failed';
-    const updatedStatus = ok ? 'Completed' : 'Payment Failed';
+    const o = orders.find(x => x.id === orderId);
+    if (!o || o.paymentStatus !== 'Pending') return;
+    const st: Order['paymentStatus'] = ok ? 'Paid' : 'Failed';
+    const updatedStatus: Order['orderStatus'] = ok ? 'Completed' : 'Payment Failed';
     try {
       if (!db) throw new Error('Firebase Firestore is not configured.');
       const batch = writeBatch(db);
       batch.update(doc(db, 'orders', orderId), { paymentStatus: st, orderStatus: updatedStatus });
+
+      const relatedPayment = payments.find(p => p.orderId === orderId);
+      if (relatedPayment) {
+        batch.update(doc(db, 'payments', relatedPayment.id), { status: st });
+      }
+
       const fresh: Purchase[] = [];
       if (ok) {
-        o.items.forEach(it => {
-          if (!purchases.some(p => p.userId === o.userId && p.productId === it.productId && p.accessStatus === 'active')) {
-            const pu: Purchase = { id: `${o.userId}_${it.productId}`, userId: o.userId, productId: it.productId, orderId, accessStatus: 'active', purchasedAt: nowStr() };
+        for (const it of o.items) {
+          const purchaseId = o.userId + '_' + it.productId;
+          const alreadyOwned = purchases.some(p => p.id === purchaseId && p.accessStatus === 'active');
+          if (!alreadyOwned) {
+            const pu: Purchase = {
+              id: purchaseId,
+              userId: o.userId,
+              productId: it.productId,
+              orderId,
+              accessStatus: 'active',
+              purchasedAt: nowStr(),
+            };
             fresh.push(pu);
             batch.set(doc(db, 'purchases', pu.id), pu);
+            const product = products.find(p => p.id === it.productId);
+            if (product) {
+              batch.update(doc(db, 'products', product.id), { sold: product.sold + 1 });
+            }
           }
-        });
+        }
       }
+
       await batch.commit();
-      setOrders(orders.map(x => x.id === orderId ? { ...x, paymentStatus: st as Order['paymentStatus'], orderStatus: updatedStatus as Order['orderStatus'] } : x));
-      setPayments(payments.map(p => p.orderId === orderId ? { ...p, status: st as Payment['status'] } : p));
+      setOrders(prev => prev.map(x => x.id === orderId ? { ...x, paymentStatus: st, orderStatus: updatedStatus } : x));
+      setPayments(prev => prev.map(p => p.orderId === orderId ? { ...p, status: st } : p));
       if (ok) {
-        setPurchases([...fresh, ...purchases]);
-        setProducts(products.map(p => o.items.some(i => i.productId === p.id) ? { ...p, sold: p.sold + 1 } : p));
+        setPurchases(prev => [...fresh, ...prev]);
+        setProducts(prev => prev.map(p => {
+          const soldAdds = fresh.filter(pu => pu.productId === p.id).length;
+          return soldAdds ? { ...p, sold: p.sold + soldAdds } : p;
+        }));
         notify('✓ ' + t.saved);
-      } else fail(t.failed);
+      } else {
+        fail(t.failed);
+      }
     } catch (e: unknown) {
       fail(e instanceof Error ? e.message : 'Could not update payment.');
     }
