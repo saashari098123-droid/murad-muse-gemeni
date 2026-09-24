@@ -2,8 +2,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import {
   getAuth,
-  setPersistence,
-  browserLocalPersistence,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -46,29 +44,12 @@ if (firebaseEnabled && db) {
 }
 
 export async function loginWithGoogle() {
-  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
-
-  // Mobile Chrome/WebView is more reliable with a full-page redirect than
-  // OAuth popups, which can be reported as "popup closed" even when Google
-  // authentication itself was not completed.
-  if (isMobile || isNarrow) {
-    await setPersistence(auth, browserLocalPersistence);
+  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
     await signInWithRedirect(auth, googleProvider);
     return null;
   }
-
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (error: unknown) {
-    const code = (error as { code?: string })?.code;
-    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
-    throw error;
-  }
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
 }
 
 export async function resolveGoogleRedirect() {
