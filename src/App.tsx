@@ -102,12 +102,51 @@ export default function App() {
     const pendingMode = sessionStorage.getItem('mg_google_auth_mode');
     if (pendingMode !== 'login' && pendingMode !== 'register') return;
     let active = true;
-    void resolveGoogleRedirect().then(result => {
+    void resolveGoogleRedirect().then(async result => {
       if (!active) return;
       sessionStorage.removeItem('mg_google_auth_mode');
       if (!result?.user) {
         setAuthOpen(pendingMode);
         setAuthErr(lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন অথবা ইমেইল দিয়ে account খুলুন।' : 'Google sign-up was not completed. Try again or create the account with email.');
+        return;
+      }
+
+      // Mobile Google auth uses redirect. The browser leaves this page, so the
+      // normal handleGoogleAuth flow cannot persist the returned Firebase user.
+      // Complete the same profile/session setup after the redirect returns.
+      try {
+        setAuthLoading(true);
+        const fbUser = result.user;
+        const userEmail = (fbUser.email || '').toLowerCase();
+        const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
+        const role = isAdminUser ? 'admin' : 'customer';
+        const u: User = {
+          id: fbUser.uid,
+          name: fbUser.displayName || (userEmail ? userEmail.split('@')[0] : 'Google User'),
+          email: fbUser.email || '',
+          role,
+          photoURL: fbUser.photoURL || undefined,
+          authProvider: authProviderOf(fbUser),
+          createdAt: nowStr(),
+        };
+        if (!db) throw new Error('Firebase Firestore is not configured.');
+        await setDoc(doc(db, 'users', fbUser.uid), { ...u, pass: deleteField() }, { merge: true });
+        setUsers(prev => [u, ...prev.filter(x => x.id !== u.id)]);
+        localStorage.setItem('ks_session_v1', u.id);
+        sessionStorage.setItem('ks_session_v1', u.id);
+        setSessionId(u.id);
+        setAuthOpen(null);
+        notify('✓ ' + (lang === 'bn' ? 'গুগল দিয়ে প্রবেশ সফল হয়েছে: ' : 'Google Sign-in successful: ') + u.name);
+        consumePendingBuy(u.id);
+        if (role === 'admin' && !pendingBuy) setView('admin');
+      } catch (error: unknown) {
+        const code = (error as { code?: string })?.code || '';
+        setAuthOpen(pendingMode);
+        setAuthErr(code === 'permission-denied'
+          ? (lang === 'bn' ? 'Google account পাওয়া গেছে, কিন্তু Firestore-এ profile save করার অনুমতি নেই। Firebase rules চেক করুন।' : 'Google account was found, but Firestore blocked saving the profile. Check your Firebase rules.')
+          : (error instanceof Error ? error.message : (lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন।' : 'Google sign-up was not completed.')));
+      } finally {
+        setAuthLoading(false);
       }
     }).catch((error: unknown) => {
       if (!active) return;
