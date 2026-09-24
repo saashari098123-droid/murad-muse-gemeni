@@ -423,7 +423,7 @@ export default function App() {
     const normalized = String(value || '').replace(/[০-৯]/g, d => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
     const parsed = Date.parse(normalized);
     if (Number.isFinite(parsed)) return parsed;
-    const m = normalized.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})(?:,?\\s+(.*))?$/);
+    const m = normalized.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})(?:,?\s+(.*))?$/);
     if (!m) return 0;
     const [, day, month, year, time = '00:00:00'] = m;
     const fallback = Date.parse(year + '-' + month.padStart(2, '0') + '-' + day.padStart(2, '0') + ' ' + time);
