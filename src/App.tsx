@@ -874,7 +874,7 @@ export default function App() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition hidden sm:flex items-end justify-center gap-2 pb-4">
             {owned
               ? <button onClick={e => { e.stopPropagation(); openAccess(sessionId, p.id); }} className="bg-emerald-500 text-white text-xs font-black px-4 py-2 rounded-full flex items-center gap-1.5 shadow-xl cursor-pointer"><Download size={13} />{t.download}</button>
-              : <><button onClick={e => { e.stopPropagation(); goDetails(p.id); }} className="bg-white text-slate-800 text-xs font-black px-4 py-2 rounded-full shadow-xl hover:bg-orange-50 cursor-pointer">{t.buyNow}</button>
+              : <><button onClick={e => { e.stopPropagation(); buyNow(p.id); }} className="bg-white text-slate-800 text-xs font-black px-4 py-2 rounded-full shadow-xl hover:bg-orange-50 cursor-pointer">{t.buyNow}</button>
                 <button onClick={e => { e.stopPropagation(); addCart(p.id); }} className="bg-white/20 backdrop-blur border border-white/40 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/30 cursor-pointer" title={t.addToCart}><ShoppingCart size={15} /></button></>}
           </div>
         </div>
