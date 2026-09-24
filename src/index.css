@@ -1038,3 +1038,71 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .mg-price { font-size: 10.5px !important; }
   .mg-product-info button { height: 19px !important; font-size: 5.8px !important; margin-top: 2px !important; }
 }
+
+
+/* ===== Compact two-column mobile footer ===== */
+@media (max-width:639px){
+  footer>div:first-child{
+    display:grid!important;
+    grid-template-columns:1.15fr .85fr!important;
+    gap:24px 16px!important;
+    padding:28px 16px 24px!important;
+  }
+  footer>div:first-child>div:first-child{
+    grid-column:1 / -1!important;
+  }
+  footer>div:first-child>div:nth-child(2),
+  footer>div:first-child>div:nth-child(3){
+    min-width:0!important;
+  }
+  footer>div:first-child>div:nth-child(4){
+    grid-column:1 / -1!important;
+  }
+  footer .footer-brand-logo{
+    width:150px!important;
+    max-width:70%!important;
+  }
+  footer p{
+    font-size:10px!important;
+    line-height:1.5!important;
+  }
+  footer h4{
+    font-size:9px!important;
+    margin-bottom:8px!important;
+    letter-spacing:.16em!important;
+  }
+  footer>div:first-child>div:nth-child(2) .grid,
+  footer>div:first-child>div:nth-child(3) .grid,
+  footer>div:first-child>div:nth-child(4) .grid{
+    gap:6px!important;
+  }
+  footer>div:first-child>div:nth-child(2) button,
+  footer>div:first-child>div:nth-child(3) button,
+  footer>div:first-child>div:nth-child(3) a,
+  footer>div:first-child>div:nth-child(3) span,
+  footer>div:first-child>div:nth-child(4) span{
+    font-size:9px!important;
+    line-height:1.35!important;
+  }
+  footer>div:first-child>div:nth-child(4){
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:12px!important;
+  }
+  footer>div:first-child>div:nth-child(4) h4{
+    grid-column:1 / -1!important;
+  }
+  footer>div:last-child>div{
+    padding:9px 12px!important;
+    font-size:8px!important;
+    line-height:1.4!important;
+  }
+  footer .flex.gap-2.mt-3{
+    gap:6px!important;
+    margin-top:8px!important;
+  }
+  footer .flex.gap-2.mt-3 a{
+    width:30px!important;
+    height:30px!important;
+  }
+}
