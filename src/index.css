@@ -1199,3 +1199,54 @@ html[lang="bn"] .font-display,
     background: #eef4ff !important;
   }
 }
+
+
+/* ===== Live customer reviews on mobile Home ===== */
+@media (max-width:639px){
+  .mg-mobile-live-reviews{
+    margin-top:14px;
+    padding-bottom:4px;
+  }
+  .mg-mobile-live-reviews .mg-mobile-section-head{
+    margin:0 3px 7px!important;
+  }
+  .mg-mobile-live-reviews .mg-mobile-section-head>div{
+    color:#16284a;
+  }
+  .mg-mobile-live-reviews .mg-mobile-section-head svg{
+    color:#164bd1;
+  }
+  .mg-mobile-review-list{
+    display:grid;
+    gap:7px;
+  }
+  .mg-mobile-review-list article{
+    background:#fff;
+    border:1px solid #dbe4f0;
+    border-radius:14px;
+    padding:9px 10px;
+  }
+  .mg-mobile-review-stars{
+    display:flex;
+    gap:1px;
+    margin-bottom:4px;
+  }
+  .mg-mobile-review-list p{
+    margin:0;
+    color:#334155;
+    font-size:8px;
+    line-height:1.45;
+  }
+  .mg-mobile-review-list b{
+    display:block;
+    margin-top:6px;
+    color:#111827;
+    font-size:8px;
+  }
+  .mg-mobile-review-list small{
+    display:block;
+    margin-top:2px;
+    color:#64748b;
+    font-size:6.5px;
+  }
+}
