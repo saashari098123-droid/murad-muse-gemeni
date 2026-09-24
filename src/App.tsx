@@ -720,11 +720,20 @@ export default function App() {
       const batch = writeBatch(db);
       batch.set(doc(db, 'orders', oid), order);
       batch.set(doc(db, 'payments', paymentItem.id), paymentItem);
+      batch.create(doc(db, 'transactionClaims', trxLow), {
+        transactionId: trxLow,
+        orderId: oid,
+        userId: me.id,
+        createdAt: nowStr(),
+      });
       await batch.commit();
       setOrders([order, ...orders]);
       setPayments([paymentItem, ...payments]);
       setOrderPlaced(order); setCart([]); setAppliedCoupon(''); setCouponInput(''); setTrxId('');
-    } catch (e: unknown) { fail(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code || '';
+      fail(code === 'already-exists' ? t.trxUsed : (e instanceof Error ? e.message : 'Failed'));
+    }
   };
 
   const verifyPayment = async (orderId: string, ok: boolean) => {
