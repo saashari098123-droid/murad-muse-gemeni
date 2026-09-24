@@ -1106,3 +1106,53 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
     height:30px!important;
   }
 }
+
+
+/* ===== Mobile product cards: show full preview + two purchase actions ===== */
+@media (max-width:639px){
+  .mg-product-image{
+    height:120px!important;
+    background:#eef4ff!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  .mg-product-image img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+    background:#eef4ff!important;
+  }
+  .mg-product-info{padding:8px!important}
+  .mg-product-info h3{min-height:23px!important}
+  .mg-product-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:5px!important;
+    margin-top:6px!important;
+  }
+  .mg-product-info .mg-product-actions button{
+    margin-top:0!important;
+    width:100%!important;
+    height:27px!important;
+    padding:0 5px!important;
+    border-radius:999px!important;
+    font-size:7px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:3px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+  }
+  .mg-product-actions .mg-cart-btn{
+    background:rgba(255,255,255,.08)!important;
+    color:#dce8ff!important;
+    border:1px solid rgba(255,255,255,.25)!important;
+  }
+  .mg-product-actions .mg-buy-btn{
+    background:linear-gradient(90deg,#17caff,#4b3cff)!important;
+    color:#fff!important;
+    border:0!important;
+  }
+}
