@@ -416,6 +416,24 @@ export default function App() {
   const activeCats = categories.filter(c => c.status === 'active');
   const activeProducts = products.filter(p => p.status === 'active');
   const catName = (id: string) => categories.find(c => c.id === id)?.name || '—';
+
+  // Firestore stores createdAt as the Bengali locale string returned by nowStr().
+  // Normalize Bengali digits before parsing so Admin "Recent Orders" is chronological.
+  const orderDateMs = (value: string) => {
+    const normalized = String(value || '').replace(/[০-৯]/g, d => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
+    const parsed = Date.parse(normalized);
+    if (Number.isFinite(parsed)) return parsed;
+    const m = normalized.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})(?:,?\\s+(.*))?$/);
+    if (!m) return 0;
+    const [, day, month, year, time = '00:00:00'] = m;
+    const fallback = Date.parse(year + '-' + month.padStart(2, '0') + '-' + day.padStart(2, '0') + ' ' + time);
+    return Number.isFinite(fallback) ? fallback : 0;
+  };
+
+  const recentAdminOrders = useMemo(
+    () => [...orders].sort((a, b) => orderDateMs(b.createdAt) - orderDateMs(a.createdAt)).slice(0, 6),
+    [orders]
+  );
   const detail = products.find(p => p.id === detailId) || null;
   useEffect(() => {
     let target: string | null = null;
@@ -1144,17 +1162,37 @@ export default function App() {
       setSettingsSaving(true);
       setSettingsSuccess(false);
 
-      // Parse coupon draft into record
+      // Validate and normalize coupons before changing local state or Firestore.
       const parsedCoupons: Record<string, string> = {};
+      const invalidCoupons: string[] = [];
       if (couponDraft.trim()) {
-        couponDraft.split(',').forEach(s => {
-          const parts = s.split('=');
-          if (parts.length >= 2) {
-            const k = parts[0]?.trim().toUpperCase();
-            const v = parts.slice(1).join('=').trim();
-            if (k && v) parsedCoupons[k] = v;
+        couponDraft.split(',').forEach(rawEntry => {
+          const entry = rawEntry.trim();
+          if (!entry) return;
+          const parts = entry.split('=');
+          if (parts.length !== 2) {
+            invalidCoupons.push(entry);
+            return;
           }
+          const code = parts[0].trim().toUpperCase();
+          const valueText = parts[1].trim();
+          const isPercent = valueText.endsWith('%');
+          const numericText = isPercent ? valueText.slice(0, -1).trim() : valueText;
+          const numericValue = Number(numericText);
+          if (!/^[A-Z0-9_-]{2,40}$/.test(code) || !numericText || !Number.isFinite(numericValue) || numericValue < 0 || (isPercent && numericValue > 100)) {
+            invalidCoupons.push(entry);
+            return;
+          }
+          parsedCoupons[code] = isPercent ? numericValue + '%' : String(numericValue);
         });
+      }
+
+      if (invalidCoupons.length > 0) {
+        setSettingsSaving(false);
+        fail(lang === 'bn'
+          ? 'এই coupon গুলো ভুল: ' + invalidCoupons.join(', ') + ' — উদাহরণ: SAVE10=10%'
+          : 'Invalid coupon(s): ' + invalidCoupons.join(', ') + ' — example: SAVE10=10%');
+        return;
       }
 
       const updatedSettings: Settings = {
@@ -1165,21 +1203,36 @@ export default function App() {
       try {
         if (db) {
           const existingClaims = await getDocs(collection(db, 'couponClaims'));
-          const batch = writeBatch(db);
-          existingClaims.forEach(d => batch.delete(d.ref));
+          const existingByCode = new Map<string, { value?: unknown; type?: unknown; active?: unknown }>();
+          existingClaims.forEach(d => existingByCode.set(d.id.toUpperCase(), d.data() as { value?: unknown; type?: unknown; active?: unknown }));
 
+          const nextCodes = new Set(Object.keys(parsedCoupons));
+          const batch = writeBatch(db);
+
+          // Delete only coupons that were actually removed.
+          existingClaims.forEach(d => {
+            if (!nextCodes.has(d.id.toUpperCase())) batch.delete(d.ref);
+          });
+
+          // Update only changed/new coupons instead of deleting and recreating every claim.
           Object.entries(parsedCoupons).forEach(([code, rawValue]) => {
-            const valueText = rawValue.trim();
-            const isPercent = valueText.endsWith('%');
-            const numericValue = Number.parseFloat(isPercent ? valueText.slice(0, -1) : valueText);
-            if (!Number.isFinite(numericValue) || numericValue < 0 || (isPercent && numericValue > 100)) return;
-            batch.set(doc(db, 'couponClaims', code), {
-              code,
-              value: numericValue,
-              type: isPercent ? 'percent' : 'fixed',
-              active: true,
-              updatedAt: nowStr(),
-            });
+            const isPercent = rawValue.endsWith('%');
+            const numericValue = Number(isPercent ? rawValue.slice(0, -1) : rawValue);
+            const previous = existingByCode.get(code);
+            if (
+              !previous ||
+              previous.value !== numericValue ||
+              previous.type !== (isPercent ? 'percent' : 'fixed') ||
+              previous.active !== true
+            ) {
+              batch.set(doc(db, 'couponClaims', code), {
+                code,
+                value: numericValue,
+                type: isPercent ? 'percent' : 'fixed',
+                active: true,
+                updatedAt: nowStr(),
+              }, { merge: true });
+            }
           });
 
           batch.set(doc(db, 'settings', 'global'), updatedSettings, { merge: true });
@@ -1224,9 +1277,9 @@ export default function App() {
           <button onClick={logout} className="shrink-0 text-xs bg-rose-500 hover:bg-rose-600 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1 cursor-pointer transition"><LogOut size={13} /> <span className="hidden sm:inline">{t.logout}</span></button>
         </header>
         <div className="max-w-6xl mx-auto p-3 sm:p-4 w-full">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-4">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-4">
             {([['overview', 'Overview', LayoutDashboard], ['products', 'Products', Package], ['orders', 'Orders', ShoppingBag], ['customers', 'Customers', Users], ['cats', 'Categories', Tag], ['settings', 'Settings', SettingsIcon]] as [typeof adminTab, string, typeof LayoutDashboard][]).map(([k, l, Icon]) => (
-              <button key={k} onClick={() => setAdminTab(k)} className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer transition ${adminTab === k ? 'text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-50'}`} style={adminTab === k ? { background: BROWN } : {}}><Icon size={15} />{l}{k === 'orders' && pendPay.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendPay.length}</span>}</button>
+              <button key={k} onClick={() => setAdminTab(k)} className={`min-h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer transition ${adminTab === k ? 'text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'}`} style={adminTab === k ? { background: BROWN } : {}}><Icon size={15} />{l}{k === 'orders' && pendPay.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendPay.length}</span>}</button>
             ))}
           </div>
 
@@ -1252,7 +1305,7 @@ export default function App() {
               <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
                 <h3 className="font-bold mb-2">Recent Orders</h3>
                 <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-slate-500 text-xs"><th className="p-2">Order</th><th className="p-2">Customer</th><th className="p-2">Total</th><th className="p-2">Payment</th></tr></thead><tbody>
-                  {orders.slice(0, 6).map(o => <tr key={o.id} className="border-t"><td className="p-2 font-mono font-bold whitespace-nowrap">{o.id}</td><td className="p-2 truncate max-w-[140px]">{users.find(u => u.id === o.userId)?.name}</td><td className="p-2 font-bold whitespace-nowrap">{tk(o.total)}</td><td className="p-2 whitespace-nowrap"><span className={`text-xs px-2 py-1 rounded-full font-bold ${payBadge(o.paymentStatus)}`}>{o.paymentStatus}</span></td></tr>)}
+                  {recentAdminOrders.map(o => <tr key={o.id} className="border-t hover:bg-slate-50/70 transition-colors"><td className="p-2 font-mono font-bold whitespace-nowrap">{o.id}</td><td className="p-2 truncate max-w-[140px]">{users.find(u => u.id === o.userId)?.name}</td><td className="p-2 font-bold whitespace-nowrap">{tk(o.total)}</td><td className="p-2 whitespace-nowrap"><span className={`text-xs px-2 py-1 rounded-full font-bold ${payBadge(o.paymentStatus)}`}>{o.paymentStatus}</span></td></tr>)}
                 </tbody></table></div>
               </div>
             </div>
@@ -1267,7 +1320,7 @@ export default function App() {
               <div className="grid gap-2">
                 {products.map(p => (
                   <div key={p.id} className="flex items-center gap-2 sm:gap-3 border border-slate-200 rounded-xl p-2.5 bg-white hover:bg-slate-50/50 transition">
-                    <img src={p.previewImages[0] || IMG(p.id, 200)} alt="" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover bg-slate-50 border border-slate-100 shrink-0" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id, 200); }} />
+                    <img src={p.previewImages[0] || IMG(p.id, 200)} alt="" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-contain bg-slate-50 border border-slate-100 shrink-0 p-0.5" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id, 200); }} />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-xs sm:text-sm truncate text-slate-800">{p.name}</div>
                       <div className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">{catName(p.categoryId)} • {tk(eff(p))} • <span className={p.status === 'active' ? 'text-emerald-600 font-medium' : 'text-slate-400'}>{p.status}</span> • {p.sold} sold</div>
