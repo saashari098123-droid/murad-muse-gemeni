@@ -7,7 +7,7 @@ export type Product = {
   price: number; discountPrice?: number; categoryId: string;
   previewImages: string[]; googleDriveLink: string; features: string[];
   reviews: Review[]; status: 'active' | 'hidden';
-  rating: number; sold: number; createdAt: string;
+  rating: number; sold: number; createdAt: string; createdAtMs?: number;
 };
 export type OrderItem = { productId: string; name: string; price: number };
 export type Order = {
@@ -81,7 +81,7 @@ const P = (id: string, name: string, price: number, discountPrice: number | unde
   id, name, slug: slugify(name) + '-' + id, description: desc, price, discountPrice, categoryId,
   previewImages: [IMG(seed, 700), IMG(seed + '-2', 700)],
   googleDriveLink: 'https://drive.google.com/drive/folders/MG-' + id.toUpperCase() + '-DELIVERY',
-  features, reviews: [], status: 'active', rating, sold, createdAt: nowStr(),
+  features, reviews: [], status: 'active', rating, sold, createdAt: nowStr(), createdAtMs: Date.now(),
 });
 
 export const SEED_PRODUCTS: Product[] = [
