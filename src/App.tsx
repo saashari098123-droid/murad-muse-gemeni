@@ -474,7 +474,7 @@ export default function App() {
     let schema = document.head.querySelector<HTMLScriptElement>('script[data-product-schema]');
     if (detail) {
       if (!schema) { schema = document.createElement('script'); schema.type = 'application/ld+json'; schema.dataset.productSchema = 'true'; document.head.appendChild(schema); }
-      schema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Product', name: detail.name, description: detail.description, image: detail.previewImages, sku: detail.id, brand: { '@type': 'Brand', name: 'Murad Graphics' }, offers: { '@type': 'Offer', url: `${window.location.origin}/product/${detail.slug}`, priceCurrency: 'BDT', price: eff(detail), availability: 'https://schema.org/InStock', seller: { '@type': 'Organization', name: 'Murad Graphics' } }, aggregateRating: detail.reviews.length ? { '@type': 'AggregateRating', ratingValue: detail.rating, reviewCount: detail.reviews.length } : undefined });
+      schema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Product', name: detail.name, description: detail.description, image: detail.previewImages.filter(src => !src.startsWith('data:')).length ? detail.previewImages.filter(src => !src.startsWith('data:')) : [`${window.location.origin}/og-image.png`], sku: detail.id, brand: { '@type': 'Brand', name: 'Murad Graphics' }, offers: { '@type': 'Offer', url: `${window.location.origin}/product/${detail.slug}`, priceCurrency: 'BDT', price: eff(detail), availability: 'https://schema.org/InStock', seller: { '@type': 'Organization', name: 'Murad Graphics' } }, aggregateRating: detail.reviews.length ? { '@type': 'AggregateRating', ratingValue: detail.rating, reviewCount: detail.reviews.length } : undefined });
     } else if (schema) schema.remove();
   }, [detail]);
 
@@ -974,6 +974,13 @@ export default function App() {
       if (!Number.isFinite(editing.price) || editing.price < 0) { fail(lang === 'bn' ? 'সঠিক মূল দাম দিন' : 'Enter a valid original price'); return; }
       if (editing.discountPrice !== undefined && (!Number.isFinite(editing.discountPrice) || editing.discountPrice < 0 || editing.discountPrice > editing.price)) { fail(lang === 'bn' ? 'সেল প্রাইস মূল দামের চেয়ে বেশি হতে পারবে না' : 'Sale price cannot be greater than the original price'); return; }
       if (!editing.googleDriveLink.trim()) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
+      try {
+        const driveUrl = new URL(editing.googleDriveLink.trim());
+        if (!['drive.google.com', 'docs.google.com'].includes(driveUrl.hostname)) throw new Error('INVALID_DRIVE_URL');
+      } catch {
+        fail(lang === 'bn' ? 'শুধু valid Google Drive/Docs link দিন।' : 'Enter a valid Google Drive or Google Docs link.');
+        return;
+      }
       const nextProduct: Product = {
         ...editing,
         createdAtMs: editing.createdAtMs || Date.now(),
