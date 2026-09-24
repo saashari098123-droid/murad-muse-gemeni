@@ -95,6 +95,7 @@ export default function App() {
   const [settingsSuccess, setSettingsSuccess] = useState(false);
   const [passUpdating, setPassUpdating] = useState(false);
   const [passMsg, setPassMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [adminEmailInput, setAdminEmailInput] = useState('');
 
   const t = STR[lang];
 
@@ -564,6 +565,47 @@ export default function App() {
       setAuthLoading(false);
     }
   };
+  const makeCustomerAdmin = async () => {
+    const email = adminEmailInput.trim().toLowerCase();
+    if (!email) {
+      fail(lang === 'bn' ? 'ক্লায়েন্টের Gmail লিখুন।' : 'Enter the client Gmail address.');
+      return;
+    }
+    if (!db) {
+      fail(lang === 'bn' ? 'Firebase Firestore পাওয়া যায়নি।' : 'Firebase Firestore is not configured.');
+      return;
+    }
+
+    const target = users.find(u => u.email.trim().toLowerCase() === email);
+    if (!target) {
+      fail(lang === 'bn'
+        ? 'এই Gmail-এর account পাওয়া যায়নি। আগে ক্লায়েন্টকে Google দিয়ে account খুলতে হবে।'
+        : 'No account found for this Gmail. The client must create an account with Google first.');
+      return;
+    }
+    if (target.id === sessionId) {
+      fail(lang === 'bn' ? 'আপনি ইতিমধ্যে Admin।' : 'You are already an Admin.');
+      return;
+    }
+    try {
+      await setDoc(doc(db, 'admins', target.id), {
+        uid: target.id,
+        email: target.email,
+        name: target.name,
+        createdAt: nowStr(),
+        grantedBy: me?.email || '',
+      }, { merge: true });
+      setUsers(prev => prev.map(u => u.id === target.id ? { ...u, role: 'admin' } : u));
+      setAdminEmailInput('');
+      notify('✓ ' + (lang === 'bn' ? target.name + '-কে Admin করা হয়েছে।' : target.name + ' is now an Admin.'));
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code || '';
+      fail(code === 'permission-denied'
+        ? (lang === 'bn' ? 'Admin বানানোর অনুমতি নেই। শুধু বর্তমান Admin এই কাজটি করতে পারে।' : 'Permission denied. Only the current Admin can grant Admin access.')
+        : (e instanceof Error ? e.message : 'Could not grant Admin access.'));
+    }
+  };
+
   const logout = async () => {
     try { await logoutFirebase(); } catch { /* ignore */ }
     localStorage.removeItem('ks_session_v1');
@@ -1041,6 +1083,26 @@ export default function App() {
 
           {adminTab === 'customers' && (
             <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
+              <div className="mb-4 p-3 rounded-2xl border border-blue-100 bg-blue-50/70">
+                <div className="font-black text-sm text-slate-800">Make Admin</div>
+                <div className="text-[11px] text-slate-500 mt-0.5 mb-2">Client must already have an account with this Gmail.</div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    value={adminEmailInput}
+                    onChange={e => setAdminEmailInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && makeCustomerAdmin()}
+                    type="email"
+                    placeholder="client@gmail.com"
+                    className="flex-1 border border-blue-200 rounded-xl px-3 py-2.5 text-sm bg-white"
+                  />
+                  <button
+                    onClick={makeCustomerAdmin}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <ShieldCheck size={15} /> Make Admin
+                  </button>
+                </div>
+              </div>
               <h3 className="font-bold mb-3">Customers ({users.filter(u => u.role === 'customer').length})</h3>
               {users.filter(u => u.role === 'customer').map(u => {
                 const uo = orders.filter(o => o.userId === u.id);
