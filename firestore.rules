@@ -33,6 +33,7 @@ service cloud.firestore {
         && item.name is string
         && item.price is number
         && product.status == 'active'
+        && product.isFree != true
         && item.name == product.name
         && item.price == expectedPrice;
     }
@@ -57,6 +58,13 @@ service cloud.firestore {
                 ? request.resource.data.subtotal
                 : get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value))
           );
+    }
+
+    function freeProduct(productId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/products/$(productId))
+        && get(/databases/$(database)/documents/products/$(productId)).data.isFree == true
+        && get(/databases/$(database)/documents/products/$(productId)).data.status == 'active';
     }
 
     function activePurchaseFor(productId) {
@@ -109,7 +117,7 @@ service cloud.firestore {
     }
 
     match /productAccess/{productId} {
-      allow read: if isAdmin() || activePurchaseFor(productId);
+      allow read: if isAdmin() || freeProduct(productId) || activePurchaseFor(productId);
       allow write: if isAdmin();
     }
 
