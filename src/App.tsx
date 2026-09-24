@@ -14,7 +14,7 @@ import {
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
 import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
-import { collection, doc, setDoc, onSnapshot, getDoc, getDocs, deleteDoc, writeBatch, deleteField, query, where, increment } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, getDoc, getDocs, deleteDoc, writeBatch, deleteField, query, where, increment, runTransaction } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
@@ -786,22 +786,33 @@ export default function App() {
       };
       const paymentItem = { id: uid('pay'), orderId: oid, userId: me.id, amount: total, transactionId: trxId.trim(), method: payMethod, status: 'Pending' as const, createdAt: nowStr() };
       if (!db) throw new Error('Firebase Firestore is not configured. Order was not submitted.');
-      const batch = writeBatch(db);
-      batch.set(doc(db, 'orders', oid), order);
-      batch.set(doc(db, 'payments', paymentItem.id), paymentItem);
-      batch.create(doc(db, 'transactionClaims', trxLow), {
-        transactionId: trxLow,
-        orderId: oid,
-        userId: me.id,
-        createdAt: nowStr(),
+      const orderRef = doc(db, 'orders', oid);
+      const paymentRef = doc(db, 'payments', paymentItem.id);
+      const claimRef = doc(db, 'transactionClaims', trxLow);
+
+      // Firestore WriteBatch has no create() method in the Web SDK.
+      // Use a transaction so the transaction-id claim remains atomic and
+      // concurrent orders cannot reuse the same TrxID.
+      await runTransaction(db, async (transaction) => {
+        const claimSnap = await transaction.get(claimRef);
+        if (claimSnap.exists()) throw new Error('__TRX_USED__');
+
+        transaction.set(orderRef, order);
+        transaction.set(paymentRef, paymentItem);
+        transaction.set(claimRef, {
+          transactionId: trxLow,
+          orderId: oid,
+          userId: me.id,
+          createdAt: nowStr(),
+        });
       });
-      await batch.commit();
       setOrders([order, ...orders]);
       setPayments([paymentItem, ...payments]);
       setOrderPlaced(order); setCart([]); setAppliedCoupon(''); setCouponInput(''); setTrxId('');
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code || '';
-      fail(code === 'already-exists' ? t.trxUsed : (e instanceof Error ? e.message : 'Failed'));
+      const message = e instanceof Error ? e.message : 'Failed';
+      fail(code === 'already-exists' || message === '__TRX_USED__' ? t.trxUsed : message);
     }
   };
 
