@@ -36,7 +36,7 @@ function Logo() {
   return (
     <div className="brand-lockup flex items-center gap-2 min-w-0" aria-label="Murad Graphics">
       <img src="/murad-logo.png" alt="Murad Graphics" className="brand-logo-icon w-10 h-10 md:w-11 md:h-11 shrink-0 object-contain" />
-      <div className="brand-wordmark flex md:hidden flex-col items-start leading-none text-white">
+      <div className="brand-wordmark flex flex-col items-start leading-none text-white">
         <div className="font-display font-extrabold text-sm">Murad <span className="text-cyan-300">Graphics</span></div>
         <div className="mt-1 text-[7px] tracking-[.28em] text-cyan-100/80">DIGITAL STORE</div>
       </div>
