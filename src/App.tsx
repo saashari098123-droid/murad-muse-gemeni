@@ -554,7 +554,7 @@ export default function App() {
     .flatMap(([productId, reviews]) => reviews.map(review => ({ ...review, productName: products.find(p => p.id === productId)?.name || '' })))
     .filter(review => review.verified === true)
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-    .slice(0, 3), [cloudReviews, products]);
+    .slice(0, 6), [cloudReviews, products]);
 
   const filtered = useMemo(() => {
     let list = activeProducts.filter(p =>
