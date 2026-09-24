@@ -191,7 +191,11 @@ service cloud.firestore {
     }
 
     match /transactionClaims/{claimId} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      // A signed-in customer may check only a specific claim ID. Listing
+      // transaction claims remains admin-only, so customers cannot enumerate
+      // other customers' transaction records.
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
       allow create: if isSignedIn()
         && request.resource.data.transactionId is string
         && request.resource.data.transactionId.size() > 0
