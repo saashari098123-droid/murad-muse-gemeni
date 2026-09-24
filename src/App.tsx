@@ -1932,7 +1932,7 @@ export default function App() {
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
                   <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl hero-image-frame">
-                    <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" />
+                    <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-contain blur-xl scale-110 opacity-50" />
                     <div className="absolute inset-0 bg-black/10" />
                     <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="hero-image-full relative z-10 w-full h-48 sm:h-64 md:h-80 object-contain rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
                     <div className="mobile-hero-overlay absolute inset-0 rounded-2xl p-4 flex flex-col justify-end items-start text-white">
@@ -1988,7 +1988,7 @@ export default function App() {
             </div>
           </div>
           <button onClick={() => setView('products')} className="home-promo relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
-            <img src={settings.promoImage || IMG('promo', 800)} alt="" aria-hidden="true" className="promo-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-45" />
+            <img src={settings.promoImage || IMG('promo', 800)} alt="" aria-hidden="true" className="promo-image-backdrop absolute inset-0 w-full h-full object-contain blur-xl scale-110 opacity-45" />
             <div className="absolute inset-0 bg-black/5" />
             <img src={settings.promoImage || IMG('promo', 800)} alt="" className="promo-image-full relative z-10 w-full h-32 sm:h-40 md:h-44 object-contain group-hover:scale-[1.02] transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
             <span className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
