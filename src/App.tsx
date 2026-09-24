@@ -14,7 +14,7 @@ import {
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
 import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
-import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
@@ -270,7 +270,6 @@ export default function App() {
     // Auth state changed listener
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        sessionStorage.removeItem('mg_google_auth_mode');
         let isAdminUser = false;
         try {
           isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
