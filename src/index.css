@@ -1250,3 +1250,10 @@ html[lang="bn"] .font-display,
     font-size:6.5px;
   }
 }
+
+
+/* ===== Global image integrity: show the complete image without cropping ===== */
+img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
