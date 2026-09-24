@@ -1515,7 +1515,7 @@ html[lang="bn"] .font-display,
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
     object-position: center center !important;
     transform: none !important;
     flex: 1 1 auto !important;
