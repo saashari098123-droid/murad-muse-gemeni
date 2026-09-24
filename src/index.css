@@ -953,7 +953,7 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
   .mg-rating { font-size: 6.5px !important; }
   .mg-price { font-size: 12px !important; }
   .mg-product-info button { height: 24px !important; font-size: 6.7px !important; margin-top: 4px !important; }
-  .home-page-float { display: none !important; }
+  .home-page-float { display: flex !important; }
 }
 
 
