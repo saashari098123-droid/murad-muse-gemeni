@@ -421,6 +421,8 @@ export default function App() {
   // One-time migration: keep public product data separate from private Drive delivery links.
   useEffect(() => {
     if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_product_access_migrated_v1') || products.length === 0) return;
+    const migrationHasLinks = products.some(product => (product.googleDriveLink || accessLinks[product.id] || '').trim());
+    if (!migrationHasLinks) return;
     let cancelled = false;
     const migrateProductAccess = async () => {
       try {
