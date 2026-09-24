@@ -1010,7 +1010,12 @@ export default function App() {
         </div>
       </div>
     );
-    const pendPay = payments.filter(p => p.status === 'Pending');
+    // Orders are the source of truth for verification. A legacy payment record
+    // can remain Pending after its order was already Paid/Failed, so do not show
+    // those stale records again in the Overview action list.
+    const pendPay = payments.filter(p =>
+      p.status === 'Pending' && orders.some(o => o.id === p.orderId && o.paymentStatus === 'Pending')
+    );
 
     const confirmDeleteProduct = (id: string, name: string) => {
       setDeleteConfirm({ type: 'product', id, name });
