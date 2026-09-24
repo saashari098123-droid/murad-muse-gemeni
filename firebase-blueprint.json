@@ -5,137 +5,410 @@
       "description": "User profile with customer or admin role",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string" },
-        "role": { "type": "string", "enum": ["customer", "admin"] },
-        "photoURL": { "type": "string" },
-        "createdAt": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "customer",
+            "admin"
+          ]
+        },
+        "photoURL": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
       },
-      "required": ["id", "name", "email", "role", "createdAt"]
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role",
+        "createdAt"
+      ]
     },
     "Category": {
       "title": "Category",
       "description": "Product categories in the store",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "slug": { "type": "string" },
-        "image": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "hidden"] }
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "hidden"
+          ]
+        }
       },
-      "required": ["id", "name", "slug", "status"]
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "status"
+      ]
     },
     "Product": {
       "title": "Product",
-      "description": "Digital products catalog",
+      "description": "Public digital product catalog data. Private delivery links are stored separately in ProductAccess.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "slug": { "type": "string" },
-        "description": { "type": "string" },
-        "price": { "type": "number" },
-        "discountPrice": { "type": "number" },
-        "categoryId": { "type": "string" },
-        "previewImages": { "type": "array" },
-        "googleDriveLink": { "type": "string" },
-        "features": { "type": "array" },
-        "status": { "type": "string", "enum": ["active", "hidden"] },
-        "rating": { "type": "number" },
-        "sold": { "type": "number" },
-        "createdAt": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "discountPrice": {
+          "type": "number"
+        },
+        "categoryId": {
+          "type": "string"
+        },
+        "previewImages": {
+          "type": "array"
+        },
+        "features": {
+          "type": "array"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "hidden"
+          ]
+        },
+        "rating": {
+          "type": "number"
+        },
+        "sold": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdAtMs": {
+          "type": "number"
+        }
       },
-      "required": ["id", "name", "price", "categoryId", "status"]
+      "required": [
+        "id",
+        "name",
+        "price",
+        "categoryId",
+        "status"
+      ]
     },
     "Order": {
       "title": "Order",
       "description": "Customer digital purchase order",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "userEmail": { "type": "string" },
-        "userName": { "type": "string" },
-        "items": { "type": "array" },
-        "subtotal": { "type": "number" },
-        "discount": { "type": "number" },
-        "total": { "type": "number" },
-        "coupon": { "type": "string" },
-        "paymentMethod": { "type": "string" },
-        "paymentStatus": { "type": "string", "enum": ["Pending", "Paid", "Failed"] },
-        "orderStatus": { "type": "string", "enum": ["Awaiting Verification", "Completed", "Payment Failed"] },
-        "trxId": { "type": "string" },
-        "createdAt": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array"
+        },
+        "subtotal": {
+          "type": "number"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "total": {
+          "type": "number"
+        },
+        "coupon": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": [
+            "Pending",
+            "Paid",
+            "Failed"
+          ]
+        },
+        "orderStatus": {
+          "type": "string",
+          "enum": [
+            "Awaiting Verification",
+            "Completed",
+            "Payment Failed"
+          ]
+        },
+        "trxId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
       },
-      "required": ["id", "userId", "items", "total", "paymentMethod", "paymentStatus", "trxId", "createdAt"]
+      "required": [
+        "id",
+        "userId",
+        "items",
+        "total",
+        "paymentMethod",
+        "paymentStatus",
+        "trxId",
+        "createdAt"
+      ]
     },
     "Purchase": {
       "title": "Purchase",
       "description": "Unlocked digital access for verified customers",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "productId": { "type": "string" },
-        "orderId": { "type": "string" },
-        "accessStatus": { "type": "string", "enum": ["active", "revoked"] },
-        "purchasedAt": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "orderId": {
+          "type": "string"
+        },
+        "accessStatus": {
+          "type": "string",
+          "enum": [
+            "active",
+            "revoked"
+          ]
+        },
+        "purchasedAt": {
+          "type": "string"
+        }
       },
-      "required": ["id", "userId", "productId", "orderId", "accessStatus", "purchasedAt"]
+      "required": [
+        "id",
+        "userId",
+        "productId",
+        "orderId",
+        "accessStatus",
+        "purchasedAt"
+      ]
     },
     "Settings": {
       "title": "Settings",
       "description": "Store configuration and payment phone numbers",
       "type": "object",
       "properties": {
-        "storeName": { "type": "string" },
-        "announcement": { "type": "string" },
-        "whatsapp": { "type": "string" },
-        "bkash": { "type": "string" },
-        "nagad": { "type": "string" },
-        "rocket": { "type": "string" },
-        "binance": { "type": "string" },
-        "promoImage": { "type": "string" },
-        "promoTitle": { "type": "string" },
-        "facebook": { "type": "string" },
-        "youtube": { "type": "string" },
-        "instagram": { "type": "string" },
-        "telegram": { "type": "string" },
-        "coupons": { "type": "object" }
+        "storeName": {
+          "type": "string"
+        },
+        "announcement": {
+          "type": "string"
+        },
+        "whatsapp": {
+          "type": "string"
+        },
+        "bkash": {
+          "type": "string"
+        },
+        "nagad": {
+          "type": "string"
+        },
+        "rocket": {
+          "type": "string"
+        },
+        "binance": {
+          "type": "string"
+        },
+        "promoImage": {
+          "type": "string"
+        },
+        "promoTitle": {
+          "type": "string"
+        },
+        "facebook": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "telegram": {
+          "type": "string"
+        },
+        "coupons": {
+          "type": "object"
+        }
       },
-      "required": ["storeName", "whatsapp"]
+      "required": [
+        "storeName",
+        "whatsapp"
+      ]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Customer payment verification record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "orderId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Pending",
+            "Paid",
+            "Failed"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "userId",
+        "amount",
+        "transactionId",
+        "method",
+        "status",
+        "createdAt"
+      ]
+    },
+    "ProductAccess": {
+      "title": "ProductAccess",
+      "description": "Private delivery link readable only by admins or customers with an active purchase",
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "googleDriveLink": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "productId",
+        "googleDriveLink",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
     "/users/{userId}": {
-      "schema": { "$ref": "#/entities/User" },
+      "schema": {
+        "$ref": "#/entities/User"
+      },
       "description": "User profiles"
     },
     "/admins/{userId}": {
-      "schema": { "$ref": "#/entities/User" },
+      "schema": {
+        "$ref": "#/entities/User"
+      },
       "description": "Admin access lookup"
     },
     "/categories/{categoryId}": {
-      "schema": { "$ref": "#/entities/Category" },
+      "schema": {
+        "$ref": "#/entities/Category"
+      },
       "description": "Digital product categories"
     },
     "/products/{productId}": {
-      "schema": { "$ref": "#/entities/Product" },
+      "schema": {
+        "$ref": "#/entities/Product"
+      },
       "description": "Digital product catalog"
     },
     "/orders/{orderId}": {
-      "schema": { "$ref": "#/entities/Order" },
+      "schema": {
+        "$ref": "#/entities/Order"
+      },
       "description": "Store orders submitted by users"
     },
     "/purchases/{purchaseId}": {
-      "schema": { "$ref": "#/entities/Purchase" },
+      "schema": {
+        "$ref": "#/entities/Purchase"
+      },
       "description": "Verified digital downloads access"
     },
     "/settings/{settingsId}": {
-      "schema": { "$ref": "#/entities/Settings" },
+      "schema": {
+        "$ref": "#/entities/Settings"
+      },
       "description": "Global store settings"
+    },
+    "/productAccess/{productId}": {
+      "schema": {
+        "$ref": "#/entities/ProductAccess"
+      },
+      "description": "Purchase-gated Google Drive delivery links"
+    },
+    "/payments/{paymentId}": {
+      "schema": {
+        "$ref": "#/entities/Payment"
+      },
+      "description": "Payment verification records"
     }
   }
 }
