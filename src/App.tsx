@@ -301,15 +301,24 @@ export default function App() {
           createdAt: nowStr(),
         };
 
-        // sync user to firestore
+        // Sync profile without changing immutable identity fields on existing users.
         try {
           if (db) {
-            await setDoc(doc(db, 'users', fbUser.uid), { ...userDoc, pass: deleteField() }, { merge: true });
+            const userRef = doc(db, 'users', fbUser.uid);
+            const existing = await getDoc(userRef);
+            if (existing.exists()) {
+              await setDoc(userRef, {
+                id: userDoc.id,
+                name: userDoc.name,
+                email: userDoc.email,
+                photoURL: userDoc.photoURL,
+                authProvider: userDoc.authProvider,
+              }, { merge: true });
+            } else {
+              await setDoc(userRef, userDoc, { merge: true });
+            }
           }
         } catch (error) {
-          // Authentication has succeeded even if the optional profile write is
-          // rejected by Firestore rules. Keep the session usable and retry the
-          // profile sync on the next auth-state refresh instead of logging out.
           console.warn('Firebase profile sync failed:', error);
         }
 
@@ -553,11 +562,8 @@ export default function App() {
         createdAt: nowStr(),
       };
 
-      // Persist the authenticated profile before completing the login flow.
-      // This prevents a successful-looking login when Firestore is unavailable
-      // or its security rules reject the write.
-      if (!db) throw new Error('Firebase Firestore is not configured.');
-      await setDoc(doc(db, 'users', fbUser.uid), { ...u, pass: deleteField() }, { merge: true });
+      // The auth-state listener performs the Firestore profile sync with
+      // create/update rules that keep identity and role fields protected.
       setUsers(prev => [u, ...prev.filter(x => x.id !== u.id)]);
       localStorage.setItem('ks_session_v1', u.id);
       sessionStorage.setItem('ks_session_v1', u.id);
