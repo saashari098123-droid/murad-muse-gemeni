@@ -1107,7 +1107,29 @@ export default function App() {
       };
 
       try {
-        if (db) await setDoc(doc(db, 'settings', 'global'), updatedSettings, { merge: true });
+        if (db) {
+          const existingClaims = await getDocs(collection(db, 'couponClaims'));
+          const batch = writeBatch(db);
+          existingClaims.forEach(d => batch.delete(d.ref));
+
+          Object.entries(parsedCoupons).forEach(([code, rawValue]) => {
+            const valueText = rawValue.trim();
+            const isPercent = valueText.endsWith('%');
+            const numericValue = Number.parseFloat(isPercent ? valueText.slice(0, -1) : valueText);
+            if (!Number.isFinite(numericValue) || numericValue < 0 || (isPercent && numericValue > 100)) return;
+            batch.set(doc(db, 'couponClaims', code), {
+              code,
+              value: numericValue,
+              type: isPercent ? 'percent' : 'fixed',
+              active: true,
+              updatedAt: nowStr(),
+            });
+          });
+
+          batch.set(doc(db, 'settings', 'global'), updatedSettings, { merge: true });
+          await batch.commit();
+        }
+
         setSettings(updatedSettings);
         save('ks_settings_v2', updatedSettings);
         setSettingsSaving(false);
