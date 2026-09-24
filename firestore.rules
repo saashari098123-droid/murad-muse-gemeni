@@ -14,6 +14,24 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function validOrderItem(item) {
+      let product = get(/databases/$(database)/documents/products/$(item.productId)).data;
+      let expectedPrice = (product.discountPrice is number
+        && product.discountPrice >= 0
+        && product.discountPrice < product.price)
+        ? product.discountPrice
+        : product.price;
+      return item is map
+        && item.keys().hasAll(['productId', 'name', 'price'])
+        && item.keys().hasOnly(['productId', 'name', 'price'])
+        && item.productId is string
+        && item.name is string
+        && item.price is number
+        && product.status == 'active'
+        && item.name == product.name
+        && item.price == expectedPrice;
+    }
+
     function activePurchaseFor(productId) {
       return isSignedIn()
         && exists(/databases/$(database)/documents/purchases/$(request.auth.uid + '_' + productId))
@@ -114,6 +132,16 @@ service cloud.firestore {
         && request.resource.data.items is list
         && request.resource.data.items.size() > 0
         && request.resource.data.items.size() <= 10
+        && validOrderItem(request.resource.data.items[0])
+        && (request.resource.data.items.size() <= 1 || validOrderItem(request.resource.data.items[1]))
+        && (request.resource.data.items.size() <= 2 || validOrderItem(request.resource.data.items[2]))
+        && (request.resource.data.items.size() <= 3 || validOrderItem(request.resource.data.items[3]))
+        && (request.resource.data.items.size() <= 4 || validOrderItem(request.resource.data.items[4]))
+        && (request.resource.data.items.size() <= 5 || validOrderItem(request.resource.data.items[5]))
+        && (request.resource.data.items.size() <= 6 || validOrderItem(request.resource.data.items[6]))
+        && (request.resource.data.items.size() <= 7 || validOrderItem(request.resource.data.items[7]))
+        && (request.resource.data.items.size() <= 8 || validOrderItem(request.resource.data.items[8]))
+        && (request.resource.data.items.size() <= 9 || validOrderItem(request.resource.data.items[9]))
         && request.resource.data.subtotal is number
         && request.resource.data.subtotal >= 0
         && request.resource.data.discount is number
