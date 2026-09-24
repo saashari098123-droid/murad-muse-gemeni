@@ -53,8 +53,8 @@ export const tk = (n: number) => '৳' + n.toLocaleString('en-IN');
 export const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9\u0980-\u09FF]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('item-' + Date.now());
 export const uid = (p: string) => p + '-' + Date.now().toString(36) + Math.floor(Math.random() * 999);
 export const nowStr = () => new Date().toLocaleString('bn-BD');
-export const eff = (p: Product) => (p.discountPrice && p.discountPrice < p.price ? p.discountPrice : p.price);
-export const offPct = (p: Product) => (p.discountPrice && p.discountPrice < p.price ? Math.round((1 - p.discountPrice / p.price) * 100) : 0);
+export const eff = (p: Product) => (typeof p.discountPrice === 'number' && p.discountPrice >= 0 && p.discountPrice < p.price ? p.discountPrice : p.price);
+export const offPct = (p: Product) => (typeof p.discountPrice === 'number' && p.discountPrice >= 0 && p.discountPrice < p.price ? Math.round((1 - p.discountPrice / p.price) * 100) : 0);
 export const waLink = (num: string, msg: string) => `https://wa.me/${num.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
 export const IMG = (seed: string, w = 600) => `https://picsum.photos/seed/${seed}/${w}/600`;
 
