@@ -421,14 +421,25 @@ export default function App() {
   // One-time migration: keep public product data separate from private Drive delivery links.
   useEffect(() => {
     if (!firebaseEnabled || !db || !me || me.role !== 'admin' || localStorage.getItem('ks_product_access_migrated_v1') || products.length === 0) return;
-    const migrationHasLinks = products.some(product => (product.googleDriveLink || accessLinks[product.id] || '').trim());
-    if (!migrationHasLinks) return;
+
+    // Some older builds may have removed the Drive field from the live product
+    // snapshot before this migration ran. Recover legacy links from the
+    // browser's previous product cache or from already-migrated access docs.
+    const legacyProducts = load<Product[]>('ks_products_v2', []);
+    const legacyLinks: Record<string, string> = {};
+    legacyProducts.forEach(product => {
+      const link = (product.googleDriveLink || '').trim();
+      if (link) legacyLinks[product.id] = link;
+    });
+    const linksAvailable = products.some(product => (product.googleDriveLink || accessLinks[product.id] || legacyLinks[product.id] || '').trim());
+    if (!linksAvailable) return;
+
     let cancelled = false;
     const migrateProductAccess = async () => {
       try {
         const batch = writeBatch(db);
         products.forEach(product => {
-          const driveLink = (product.googleDriveLink || accessLinks[product.id] || '').trim();
+          const driveLink = (product.googleDriveLink || accessLinks[product.id] || legacyLinks[product.id] || '').trim();
           const hasDataImages = product.previewImages.some(src => src.startsWith('data:'));
           const { googleDriveLink: _privateLink, ...publicProduct } = product;
           batch.set(doc(db, 'products', product.id), {
@@ -444,7 +455,10 @@ export default function App() {
             }, { merge: true });
           }
           if (hasDataImages) {
-            batch.set(doc(db, 'productImages', product.id), { productId: product.id, previewImages: product.previewImages }, { merge: true });
+            batch.set(doc(db, 'productImages', product.id), {
+              productId: product.id,
+              previewImages: product.previewImages,
+            }, { merge: true });
           }
         });
         await batch.commit();
