@@ -27,3 +27,10 @@ Open the same document and delete it. The account remains a normal Firebase user
 ## SEO deployment notes
 
 The Render static build generates `public/sitemap.xml` and `public/robots.txt` during `npm run build` / `pnpm build`. Set `VITE_SITE_URL` in the Render environment when using a custom domain; otherwise the default Render URL is used. Because this is a client-rendered static site, products created after deployment cannot appear in a crawler sitemap until a new build runs. Full real-time sitemap generation would require a server-side endpoint or a scheduled build.
+
+
+## Delivery-link security migration
+
+The storefront now keeps Google Drive delivery links in `productAccess/{productId}` instead of public product documents. A one-time migration runs automatically when an authorized admin opens the store after this update. Publish the current `firestore.rules` in Firebase Console before treating the change as live security protection.
+
+For new or edited products, the Admin panel saves the public catalog separately from the purchase-gated delivery link.
