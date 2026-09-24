@@ -484,14 +484,14 @@ export default function App() {
   const myPurchases = purchases.filter(p => p.userId === sessionId && p.accessStatus === 'active');
   const myOrders = orders.filter(o => o.userId === sessionId);
 
-  const allLiveReviews = useMemo(() => Object.values(cloudReviews).flat(), [cloudReviews]);
+  const allLiveReviews = useMemo(() => Object.values(cloudReviews).flat().filter(review => review.verified === true), [cloudReviews]);
   const homeReviewCount = allLiveReviews.length;
   const homeAverageRating = homeReviewCount
     ? (allLiveReviews.reduce((sum, review) => sum + review.rating, 0) / homeReviewCount).toFixed(1)
     : '—';
   const homeReviews = useMemo(() => Object.entries(cloudReviews)
     .flatMap(([productId, reviews]) => reviews.map(review => ({ ...review, productName: products.find(p => p.id === productId)?.name || '' })))
-    .filter(review => review.verified !== false)
+    .filter(review => review.verified === true)
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
     .slice(0, 3), [cloudReviews, products]);
 
