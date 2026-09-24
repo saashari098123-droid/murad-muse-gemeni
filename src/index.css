@@ -1172,3 +1172,30 @@ html[lang="bn"] .font-display,
 .lang-bn .font-display{
   font-family:'Noto Serif Bengali','Hind Siliguri',sans-serif!important;
 }
+
+
+/* ===== Product preview integrity: never crop or distort the actual product artwork ===== */
+.product-preview,
+.home-hero-visual img,
+.mg-mobile-hero-art img,
+.mg-product-image img {
+  object-fit: contain !important;
+  background: #f1f5f9;
+}
+
+@media (max-width: 639px) {
+  .home-hero-visual img,
+  .mg-mobile-hero-art img {
+    object-fit: contain !important;
+    background: rgba(255,255,255,.08) !important;
+  }
+
+  .mg-product-image {
+    background: #eef4ff !important;
+  }
+
+  .mg-product-image img {
+    object-fit: contain !important;
+    background: #eef4ff !important;
+  }
+}
