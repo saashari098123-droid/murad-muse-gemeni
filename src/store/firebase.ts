@@ -2,6 +2,8 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import {
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -51,6 +53,7 @@ export async function loginWithGoogle() {
   // OAuth popups, which can be reported as "popup closed" even when Google
   // authentication itself was not completed.
   if (isMobile || isNarrow) {
+    await setPersistence(auth, browserLocalPersistence);
     await signInWithRedirect(auth, googleProvider);
     return null;
   }
