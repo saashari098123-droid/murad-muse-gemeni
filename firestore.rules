@@ -1,60 +1,168 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
-    function ownsUser(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function ownsUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function activePurchaseFor(productId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/purchases/$(request.auth.uid + '_' + productId))
+        && get(/databases/$(database)/documents/purchases/$(request.auth.uid + '_' + productId)).data.accessStatus == 'active';
+    }
 
     match /users/{userId} {
-      allow read, create, update: if ownsUser(userId) || isAdmin();
+      allow read: if ownsUser(userId) || isAdmin();
+
+      allow create: if isAdmin()
+        || (ownsUser(userId)
+          && request.resource.data.keys().hasAll(['id', 'name', 'email', 'role', 'createdAt'])
+          && request.resource.data.role == 'customer'
+          && request.resource.data.id == userId
+          && request.resource.data.name is string
+          && request.resource.data.email is string
+          && request.resource.data.createdAt is string);
+
+      allow update: if isAdmin()
+        || (ownsUser(userId)
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'authProvider']));
+
       allow delete: if isAdmin();
     }
+
     match /admins/{userId} {
       allow read: if ownsUser(userId) || isAdmin();
       allow write: if isAdmin();
     }
-    match /categories/{categoryId} { allow read: if true; allow write: if isAdmin(); }
-    match /products/{productId} { allow read: if true; allow write: if isAdmin(); }
-    match /productImages/{productId} { allow read: if true; allow write: if isAdmin(); }
-    match /settings/{settingsId} { allow read: if true; allow write: if isAdmin(); }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /productImages/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /productAccess/{productId} {
+      allow read: if isAdmin() || activePurchaseFor(productId);
+      allow write: if isAdmin();
+    }
+
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
     match /reviews/{reviewId} {
       allow read: if true;
+
       allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['productId', 'userId', 'purchaseId', 'name', 'rating', 'text', 'date', 'verified', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['productId', 'userId', 'purchaseId', 'name', 'rating', 'text', 'date', 'verified', 'createdAt', 'id'])
         && reviewId == request.resource.data.productId + '_' + request.auth.uid
+        && request.resource.data.id == reviewId
+        && request.resource.data.productId is string
         && request.resource.data.userId == request.auth.uid
+        && request.resource.data.purchaseId == request.auth.uid + '_' + request.resource.data.productId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.date is string
         && request.resource.data.verified == true
-        && get(/databases/$(database)/documents/purchases/$(request.resource.data.purchaseId)).data.userId == request.auth.uid
-        && get(/databases/$(database)/documents/purchases/$(request.resource.data.purchaseId)).data.productId == request.resource.data.productId
-        && get(/databases/$(database)/documents/purchases/$(request.resource.data.purchaseId)).data.accessStatus == 'active';
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && reviewId == resource.data.productId + '_' + request.auth.uid && request.resource.data.userId == request.auth.uid && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5;
+        && request.resource.data.createdAt is number
+        && activePurchaseFor(request.resource.data.productId);
+
+      // Reviews are intentionally immutable from the client after submission.
+      allow update: if false;
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     match /orders/{orderId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
       allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['id', 'userId', 'items', 'subtotal', 'discount', 'total', 'coupon', 'paymentMethod', 'paymentStatus', 'orderStatus', 'trxId', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['id', 'userId', 'items', 'subtotal', 'discount', 'total', 'coupon', 'paymentMethod', 'paymentStatus', 'orderStatus', 'trxId', 'createdAt'])
+        && request.resource.data.id == orderId
         && request.resource.data.userId == request.auth.uid
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0
+        && request.resource.data.items.size() <= 10
+        && request.resource.data.subtotal is number
+        && request.resource.data.subtotal >= 0
+        && request.resource.data.discount is number
+        && request.resource.data.discount >= 0
+        && request.resource.data.discount <= request.resource.data.subtotal
+        && request.resource.data.total is number
+        && request.resource.data.total == request.resource.data.subtotal - request.resource.data.discount
+        && request.resource.data.coupon is string
+        && request.resource.data.paymentMethod is string
         && request.resource.data.paymentStatus == 'Pending'
         && request.resource.data.orderStatus == 'Awaiting Verification'
-        && request.resource.data.total is number
-        && request.resource.data.total >= 0
         && request.resource.data.trxId is string
-        && request.resource.data.trxId.size() > 0;
+        && request.resource.data.trxId.size() > 0
+        && request.resource.data.trxId.size() <= 120
+        && request.resource.data.createdAt is string;
+
       allow update, delete: if isAdmin();
     }
+
     match /purchases/{purchaseId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow write: if isAdmin();
     }
+
     match /payments/{paymentId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'Pending' && request.resource.data.amount is number && request.resource.data.amount >= 0;
+
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['id', 'orderId', 'userId', 'amount', 'transactionId', 'method', 'status', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['id', 'orderId', 'userId', 'amount', 'transactionId', 'method', 'status', 'createdAt'])
+        && request.resource.data.id == paymentId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.amount is number
+        && request.resource.data.amount >= 0
+        && request.resource.data.transactionId is string
+        && request.resource.data.transactionId.size() > 0
+        && request.resource.data.method is string
+        && request.resource.data.status == 'Pending'
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.userId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.total == request.resource.data.amount
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.trxId == request.resource.data.transactionId
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.paymentMethod == request.resource.data.method
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.paymentStatus == 'Pending'
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.orderStatus == 'Awaiting Verification';
+
       allow update, delete: if isAdmin();
     }
-    match /{document=**} { allow read, write: if false; }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
