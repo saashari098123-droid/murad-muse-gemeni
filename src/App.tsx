@@ -761,7 +761,10 @@ export default function App() {
   };
   const consumePendingBuy = (uid_: string) => {
     if (pendingBuy) {
-      const pid = pendingBuy; setPendingBuy(null);
+      const pid = pendingBuy;
+      const product = products.find(p => p.id === pid);
+      setPendingBuy(null);
+      if (product?.isFree) { void openAccess(uid_, pid); return; }
       if (!owns(uid_, pid)) { setCart([{ productId: pid }]); setView('checkout'); return; }
       setView('purchases'); return;
     }
@@ -2086,7 +2089,7 @@ export default function App() {
               <div className="flex items-baseline gap-2 mt-3"><span className="font-display font-black text-3xl" style={{ color: BROWN }}>{tk(eff(detail))}</span>{offPct(detail) > 0 && <s className="text-slate-400">{tk(detail.price)}</s>}</div>
               <div className="flex items-center gap-1 mt-1 text-xs text-slate-500"><Star size={13} className="fill-amber-400 text-amber-400" />{detail.rating} • {detail.reviews.length} {t.reviews.toLowerCase()} • {detail.sold.toLocaleString()} sold</div>
               {owns(sessionId, detail.id) ? (
-                <button onClick={() => openAccess(sessionId, detail.id)} className="w-full mt-5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black py-3.5 rounded-xl flex items-center justify-center gap-1.5 transition"><Download size={16} />{t.alreadyPurchased}</button>
+                <button onClick={() => openAccess(sessionId, detail.id)} className="w-full mt-5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black py-3.5 rounded-xl flex items-center justify-center gap-1.5 transition"><Download size={16} />{detail.isFree ? (lang === 'bn' ? 'ফ্রি ডাউনলোড' : 'Free Download') : t.alreadyPurchased}</button>
               ) : (
                 <><div className="grid grid-cols-2 gap-2 mt-5">
                   <button onClick={() => addCart(detail.id)} className="mobile-outline-action border-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 py-3 transition hover:bg-orange-50" style={{ borderColor: BROWN, color: BROWN }}><ShoppingCart size={17} />{t.addToCart}</button>
