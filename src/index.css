@@ -1431,3 +1431,36 @@ img {
     background: #fff7ed !important;
   }
 }
+
+
+/* Full-image presentation: fill the banner area visually while keeping the original image uncropped */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .hero-image-frame {
+    height: 220px !important;
+    background: rgba(0,0,0,.10) !important;
+  }
+  .mg-desktop-home-only .hero-image-full {
+    height: 220px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
+  }
+  .mg-desktop-home-only .hero-image-backdrop {
+    object-fit: cover !important;
+    pointer-events: none !important;
+  }
+  .mg-desktop-home-only .home-promo {
+    min-height: 175px !important;
+    background: #fff7ed !important;
+  }
+  .mg-desktop-home-only .promo-image-full {
+    height: 175px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
+  }
+  .mg-desktop-home-only .promo-image-backdrop {
+    object-fit: cover !important;
+    pointer-events: none !important;
+  }
+}
