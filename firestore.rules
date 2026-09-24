@@ -166,6 +166,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /transactionClaims/{claimId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.transactionId is string
+        && request.resource.data.transactionId.size() > 0
+        && request.resource.data.transactionId.size() <= 120
+        && claimId == request.resource.data.transactionId
+        && request.resource.data.orderId is string
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.createdAt is string;
+      allow update, delete: if isAdmin();
+    }
+
     match /payments/{paymentId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
 
