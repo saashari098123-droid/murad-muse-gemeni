@@ -44,19 +44,23 @@ if (firebaseEnabled && db) {
 }
 
 export async function loginWithGoogle() {
-  // Use popup on mobile too. Chrome/Android can complete the Google OAuth
-  // popup reliably, while redirect can lose the result on some hosted origins
-  // because of browser storage/third-party-cookie restrictions.
+  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+
+  // Mobile Chrome/WebView is more reliable with a full-page redirect than
+  // OAuth popups, which can be reported as "popup closed" even when Google
+  // authentication itself was not completed.
+  if (isMobile || isNarrow) {
+    await signInWithRedirect(auth, googleProvider);
+    return null;
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: unknown) {
     const code = (error as { code?: string })?.code;
-    // Fall back to redirect only when the browser explicitly blocks popup auth.
-    if (
-      code === 'auth/popup-blocked' ||
-      code === 'auth/operation-not-supported-in-this-environment'
-    ) {
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
       await signInWithRedirect(auth, googleProvider);
       return null;
     }
