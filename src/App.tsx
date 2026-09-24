@@ -1960,9 +1960,9 @@ export default function App() {
                     <div className="font-display font-black text-lg sm:text-2xl text-white">{tk(eff(hero))}</div>
                     <button onClick={() => goDetails(hero.id)} className="mt-1 bg-gradient-to-r from-orange-400 to-amber-500 text-[10px] sm:text-[11px] font-black px-3 sm:px-4 py-1.5 rounded-full shadow cursor-pointer">{t.orderNow}</button>
                   </div>
-                  <div className="absolute -right-1 sm:-right-4 top-4 sm:top-6 glass rounded-xl sm:rounded-2xl px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 flex items-center gap-1.5 sm:gap-2 float-slow shadow-xl" style={{ animationDelay: '-2.5s' }}>
-                    <BadgeCheck size={18} className="text-emerald-300 shrink-0" />
-                    <div className="text-[10px] sm:text-[11px] font-bold text-white leading-tight">{t.verifiedPay}<br /><span className="text-orange-200/70 font-medium">{t.instantAccess}</span></div>
+                  <div className="hero-verified-badge absolute -right-1 sm:-right-3 top-1 sm:top-2 glass rounded-lg sm:rounded-xl px-2 sm:px-2.5 py-1 sm:py-1.5 flex items-center gap-1 sm:gap-1.5 shadow-xl" style={{ animationDelay: '-2.5s' }}>
+                    <BadgeCheck size={15} className="text-emerald-300 shrink-0" />
+                    <div className="text-[9px] sm:text-[10px] font-bold text-white leading-tight">{t.verifiedPay}<br /><span className="text-orange-200/70 font-medium">{t.instantAccess}</span></div>
                   </div>
                 </div>
               )}
@@ -2011,7 +2011,7 @@ export default function App() {
 
         <main className="home-desktop-main max-w-7xl mx-auto px-3 py-4 sm:py-6">
           <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} /><Zap size={18} style={{ color: BROWN }} />{t.newTrending}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{activeProducts.slice(0, 20).map(p => <ProductCard key={p.id} p={p} />)}</div>
+          <div className="home-products-static grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4">{activeProducts.slice(0, 20).map(p => <ProductCard key={p.id} p={p} />)}</div>
 
           <div className="mt-12 bg-white border border-orange-100 rounded-[1.75rem] p-6 md:p-10 reveal">
             <div className="text-center text-[11px] font-black tracking-[.25em] text-amber-600">✦ HOW IT WORKS ✦</div>
