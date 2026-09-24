@@ -904,28 +904,33 @@ export default function App() {
     const executeDelete = async () => {
       if (!deleteConfirm) return;
       const { type, id, name } = deleteConfirm;
-      if (type === 'product') {
-        setProducts(prev => prev.filter(x => x.id !== id));
+      try {
         if (db) {
-          try {
-            await deleteDoc(doc(db, 'products', id));
-          } catch {
-            // fallback
+          const batch = writeBatch(db);
+          if (type === 'product') {
+            batch.delete(doc(db, 'products', id));
+            batch.delete(doc(db, 'productImages', id));
+            batch.delete(doc(db, 'productAccess', id));
+          } else {
+            batch.delete(doc(db, 'categories', id));
           }
+          await batch.commit();
         }
-        notify(`✓ "${name}" ` + (lang === 'bn' ? 'মুছে ফেলা হয়েছে' : 'deleted'));
-      } else if (type === 'category') {
-        setCategories(prev => prev.filter(x => x.id !== id));
-        if (db) {
-          try {
-            await deleteDoc(doc(db, 'categories', id));
-          } catch {
-            // fallback
-          }
+        if (type === 'product') {
+          setProducts(prev => prev.filter(x => x.id !== id));
+          setAccessLinks(prev => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          });
+        } else {
+          setCategories(prev => prev.filter(x => x.id !== id));
         }
+        setDeleteConfirm(null);
         notify(`✓ "${name}" ` + (lang === 'bn' ? 'মুছে ফেলা হয়েছে' : 'deleted'));
+      } catch (e: unknown) {
+        fail(e instanceof Error ? e.message : (lang === 'bn' ? 'মুছে ফেলা যায়নি। আবার চেষ্টা করুন।' : 'Could not delete. Please try again.'));
       }
-      setDeleteConfirm(null);
     };
 
     const handleSaveProduct = async () => {
@@ -983,16 +988,14 @@ export default function App() {
       const updated = categories.find(x => x.id === editingCat.id)
         ? categories.map(x => x.id === editingCat.id ? editingCat : x)
         : [...categories, editingCat];
-      setCategories(updated);
-      if (db) {
-        try {
-          await setDoc(doc(db, 'categories', editingCat.id), editingCat, { merge: true });
-        } catch {
-          // fallback
-        }
+      try {
+        if (db) await setDoc(doc(db, 'categories', editingCat.id), editingCat, { merge: true });
+        setCategories(updated);
+        setEditingCat(null);
+        notify('✓ ' + t.saved);
+      } catch (e: unknown) {
+        fail(e instanceof Error ? e.message : (lang === 'bn' ? 'ক্যাটাগরি save হয়নি। Firebase rules পরীক্ষা করুন।' : 'Category could not be saved. Check Firebase rules.'));
       }
-      setEditingCat(null);
-      notify('✓ ' + t.saved);
     };
 
     const handlePromoImageUpload = async (files: FileList | null) => {
@@ -1030,20 +1033,19 @@ export default function App() {
         coupons: parsedCoupons,
       };
 
-      setSettings(updatedSettings);
-      save('ks_settings_v2', updatedSettings);
-
-      if (db) {
-        try {
-          await setDoc(doc(db, 'settings', 'global'), updatedSettings, { merge: true });
-        } catch (error) {
-          console.warn('Firestore settings save error:', error);
-        }
+      try {
+        if (db) await setDoc(doc(db, 'settings', 'global'), updatedSettings, { merge: true });
+        setSettings(updatedSettings);
+        save('ks_settings_v2', updatedSettings);
+        setSettingsSaving(false);
+        setSettingsSuccess(true);
+        notify('✓ ' + (lang === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত ও সিঙ্ক হয়েছে' : 'Settings saved & synced successfully'));
+      } catch (error: unknown) {
+        setSettingsSaving(false);
+        setSettingsSuccess(false);
+        fail(error instanceof Error ? error.message : (lang === 'bn' ? 'সেটিংস save হয়নি। আবার চেষ্টা করুন।' : 'Settings could not be saved. Please try again.'));
+        return;
       }
-
-      setSettingsSaving(false);
-      setSettingsSuccess(true);
-      notify('✓ ' + (lang === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত ও সিঙ্ক হয়েছে' : 'Settings saved & synced successfully'));
       setTimeout(() => setSettingsSuccess(false), 4000);
     };
 
