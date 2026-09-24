@@ -811,7 +811,7 @@ export default function App() {
       }
       setAccessLinks(prev => ({ ...prev, [pid]: link }));
       if (popup) popup.location.href = link;
-      else window.open(link, '_blank');
+      else window.location.assign(link);
     } catch {
       popup?.close();
       fail(t.noAccessLink);
