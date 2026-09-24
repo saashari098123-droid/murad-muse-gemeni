@@ -1,11 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -35,13 +33,6 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
-if (firebaseEnabled && db) {
-  try {
-    getDocFromServer(doc(db, 'settings', 'global')).catch(() => {});
-  } catch {
-    // Firebase availability is handled by the UI actions.
-  }
-}
 
 export async function loginWithGoogle() {
   // Keep the same Google OAuth flow that was working on mobile before the
@@ -50,9 +41,6 @@ export async function loginWithGoogle() {
   return result.user;
 }
 
-export async function resolveGoogleRedirect() {
-  return getRedirectResult(auth);
-}
 
 export async function loginWithEmail(email: string, password: string) {
   const result = await signInWithEmailAndPassword(auth, email, password);
