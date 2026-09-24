@@ -24,10 +24,6 @@ An existing admin must perform this change because the Firestore rules allow wri
 
 Open the same document and delete it. The account remains a normal Firebase user, but it will no longer receive admin access after the next auth refresh/sign-in.
 
-## Current administrator
-
-The current Firebase admin document is `admins/Z02xMAzckaVv0iHJwdwR00PtGzt1` for `saashari098123@gmail.com`.
-
 ## SEO deployment notes
 
 The Render static build generates `public/sitemap.xml` and `public/robots.txt` during `npm run build` / `pnpm build`. Set `VITE_SITE_URL` in the Render environment when using a custom domain; otherwise the default Render URL is used. Because this is a client-rendered static site, products created after deployment cannot appear in a crawler sitemap until a new build runs. Full real-time sitemap generation would require a server-side endpoint or a scheduled build.
