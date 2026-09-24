@@ -62,6 +62,7 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>(() => load('ks_orders_v2', SEED_ORDERS));
   const [purchases, setPurchases] = useState<Purchase[]>(() => load('ks_purchases_v2', SEED_PURCHASES));
   const [cloudReviews, setCloudReviews] = useState<Record<string, Review[]>>({});
+  const [accessLinks, setAccessLinks] = useState<Record<string, string>>({});
   const [payments, setPayments] = useState<Payment[]>(() => load('ks_payments_v2', [] as Payment[]));
   const [settings, setSettings] = useState<Settings>(() => load('ks_settings_v2', SEED_SETTINGS));
   const [cart, setCart] = useState<CartLine[]>(() => load('ks_cart_v1', [] as CartLine[]));
@@ -205,6 +206,7 @@ export default function App() {
         if (!review.productId || review.rating < 1 || review.rating > 5) return;
         (grouped[review.productId] ||= []).push(review);
       });
+      Object.values(grouped).forEach(list => list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
       setCloudReviews(grouped);
       if (!snap.empty) {
         setProducts(prev => prev.map(p => {
@@ -220,27 +222,48 @@ export default function App() {
     // violates the Firestore rules because it could include another customer's data.
     let unsubOrders = () => {};
     let unsubPurchases = () => {};
+    let unsubPayments = () => {};
+    let unsubAccessLinks = () => {};
     const subscribeOrderData = (uid: string, isAdmin: boolean) => {
       unsubOrders();
       unsubPurchases();
+      unsubPayments();
+      unsubAccessLinks();
+
       const orderSource = isAdmin ? collection(db, 'orders') : query(collection(db, 'orders'), where('userId', '==', uid));
       const purchaseSource = isAdmin ? collection(db, 'purchases') : query(collection(db, 'purchases'), where('userId', '==', uid));
+      const paymentSource = isAdmin ? collection(db, 'payments') : query(collection(db, 'payments'), where('userId', '==', uid));
+
       unsubOrders = onSnapshot(orderSource, snap => {
         const cloudOrders: Order[] = [];
         snap.forEach(d => cloudOrders.push(d.data() as Order));
-        // The authorized Firestore snapshot is the source of truth. Replacing
-        // local cached orders prevents an old Pending value from reappearing.
         setOrders(cloudOrders);
-      }, (err) => {
-        console.warn('Orders listener:', err.message);
-      });
+      }, (err) => console.warn('Orders listener:', err.message));
+
       unsubPurchases = onSnapshot(purchaseSource, snap => {
         const cloudPurchases: Purchase[] = [];
         snap.forEach(d => cloudPurchases.push(d.data() as Purchase));
         setPurchases(cloudPurchases);
-      }, (err) => {
-        console.warn('Purchases listener:', err.message);
-      });
+      }, (err) => console.warn('Purchases listener:', err.message));
+
+      unsubPayments = onSnapshot(paymentSource, snap => {
+        const cloudPayments: Payment[] = [];
+        snap.forEach(d => cloudPayments.push(d.data() as Payment));
+        setPayments(cloudPayments);
+      }, (err) => console.warn('Payments listener:', err.message));
+
+      if (isAdmin) {
+        unsubAccessLinks = onSnapshot(collection(db, 'productAccess'), snap => {
+          const links: Record<string, string> = {};
+          snap.forEach(d => {
+            const data = d.data() as { productId?: string; googleDriveLink?: string };
+            if (data.productId && typeof data.googleDriveLink === 'string' && data.googleDriveLink.trim()) {
+              links[data.productId] = data.googleDriveLink.trim();
+            }
+          });
+          setAccessLinks(links);
+        }, (err) => console.warn('Product access listener:', err.message));
+      }
     };
 
     // Listen to settings
@@ -306,6 +329,9 @@ export default function App() {
         unsubUsers();
         unsubOrders();
         unsubPurchases();
+        unsubPayments();
+        unsubAccessLinks();
+        setAccessLinks({});
         localStorage.removeItem('ks_session_v1');
         sessionStorage.removeItem('ks_session_v1');
         setSessionId(null);
@@ -320,6 +346,8 @@ export default function App() {
       unsubReviews();
       unsubOrders();
       unsubPurchases();
+      unsubPayments();
+      unsubAccessLinks();
       unsubSettings();
       unsubAuth();
     };
