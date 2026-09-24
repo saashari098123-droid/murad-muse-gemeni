@@ -1521,3 +1521,17 @@ html[lang="bn"] .font-display,
     flex: 1 1 auto !important;
   }
 }
+
+
+/* Home hero: keep the verified-payment badge compact and slightly higher. */
+.hero-verified-badge {
+  animation: none !important;
+  transform: none !important;
+  z-index: 20;
+}
+
+/* Home product cards: stay still; only normal hover interaction remains. */
+.home-products-static > * {
+  animation: none !important;
+  transform: none !important;
+}
