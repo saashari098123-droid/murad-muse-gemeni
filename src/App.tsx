@@ -935,22 +935,37 @@ export default function App() {
       if (!Number.isFinite(editing.price) || editing.price < 0) { fail(lang === 'bn' ? 'সঠিক মূল দাম দিন' : 'Enter a valid original price'); return; }
       if (editing.discountPrice !== undefined && (!Number.isFinite(editing.discountPrice) || editing.discountPrice < 0 || editing.discountPrice > editing.price)) { fail(lang === 'bn' ? 'সেল প্রাইস মূল দামের চেয়ে বেশি হতে পারবে না' : 'Sale price cannot be greater than the original price'); return; }
       if (!editing.googleDriveLink.trim()) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
-    const updated = products.find(x => x.id === editing.id)
-      ? products.map(x => x.id === editing.id ? editing : x)
-      : [...products, editing];
+      const nextProduct: Product = {
+        ...editing,
+        createdAtMs: editing.createdAtMs || Date.now(),
+      };
+      const updated = products.find(x => x.id === nextProduct.id)
+        ? products.map(x => x.id === nextProduct.id ? nextProduct : x)
+        : [...products, nextProduct];
       if (db) {
         try {
-          // Persist the catalog without embedding large data URLs in product
-          // docs; preview images are stored in separate free-plan documents.
+          const hasDataImages = nextProduct.previewImages.some(src => src.startsWith('data:'));
+          const { googleDriveLink: _privateLink, ...publicProduct } = nextProduct;
+          const productForCloud = {
+            ...publicProduct,
+            previewImages: hasDataImages ? [] : nextProduct.previewImages,
+          };
           const batch = writeBatch(db);
-          updated.forEach(product => {
-            const hasDataImages = product.previewImages.some(src => src.startsWith('data:'));
-            const productForCloud = hasDataImages ? { ...product, previewImages: [] } : product;
-            batch.set(doc(db, 'products', product.id), productForCloud, { merge: true });
-            if (hasDataImages) batch.set(doc(db, 'productImages', product.id), { productId: product.id, previewImages: product.previewImages }, { merge: true });
-          });
+          batch.set(doc(db, 'products', nextProduct.id), productForCloud, { merge: true });
+          batch.set(doc(db, 'productAccess', nextProduct.id), {
+            productId: nextProduct.id,
+            googleDriveLink: nextProduct.googleDriveLink.trim(),
+            updatedAt: nowStr(),
+          }, { merge: true });
+          if (hasDataImages) {
+            batch.set(doc(db, 'productImages', nextProduct.id), {
+              productId: nextProduct.id,
+              previewImages: nextProduct.previewImages,
+            }, { merge: true });
+          } else {
+            batch.delete(doc(db, 'productImages', nextProduct.id));
+          }
           await batch.commit();
-          localStorage.setItem('ks_products_seeded_v1', '1');
         } catch (e: unknown) {
           fail(e instanceof Error ? e.message : (lang === 'bn' ? 'Product save হয়নি। Firebase rules পরীক্ষা করুন।' : 'Could not save product. Check Firebase rules.'));
           return;
