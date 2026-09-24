@@ -352,6 +352,11 @@ export default function App() {
         localStorage.setItem('ks_session_v1', fbUser.uid);
         sessionStorage.setItem('ks_session_v1', fbUser.uid);
         setSessionId(fbUser.uid);
+        // A Google redirect returns to a fresh app instance. Close any stale
+        // auth modal once Firebase confirms the authenticated user.
+        setAuthOpen(null);
+        setAuthErr('');
+        setAuthLoading(false);
       } else {
         unsubUsers();
         unsubOrders();
