@@ -13,7 +13,7 @@ import {
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
-import { db, auth, loginWithGoogle, resolveGoogleRedirect, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
+import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
 import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -22,21 +22,15 @@ const BROWN_D = '#3d1e07';
 
 function Logo() {
   return (
-    <div className="brand-lockup flex items-center gap-2 min-w-0" aria-label="Murad Graphics">
-      <img src="/murad-logo-icon.svg" alt="Murad Graphics" className="brand-logo-icon w-10 h-10 md:w-11 md:h-11 shrink-0 object-contain" />
-      <div className="brand-wordmark flex md:hidden flex-col items-start leading-none text-white">
-        <div className="font-display font-extrabold text-sm">Murad <span className="text-cyan-300">Graphics</span></div>
-        <div className="mt-1 text-[7px] tracking-[.28em] text-cyan-100/80">DIGITAL STORE</div>
+    <div className="flex items-center gap-2">
+      <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-white text-xl font-display relative overflow-hidden shrink-0">
+        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full"><path d="M18 72 L38 28 L50 52 L62 28 L82 72" stroke="white" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" /><circle cx="78" cy="26" r="8" fill="#fb923c" /></svg>
+      </div>
+      <div className="leading-tight min-w-0">
+        <div className="font-display font-extrabold text-base md:text-xl text-white tracking-tight truncate">Murad Graphics</div>
+        <div className="text-[8px] md:text-[10px] tracking-[.25em] text-orange-200/70 font-semibold">DIGITAL STORE</div>
       </div>
     </div>
-  );
-}
-
-function WhatsAppLogo({ size = 26 }: { size?: number }) {
-  return (
-    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.149-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.1-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.075c.149.198 2.095 3.2 5.076 4.487.71.306 1.263.489 1.694.626.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982 1-3.648-.235-.374a9.866 9.866 0 01-1.511-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.886 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.89c0 2.096.547 4.142 1.588 5.945L.057 24l6.304-1.654a11.88 11.88 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.471-8.413" />
-    </svg>
   );
 }
 
@@ -56,10 +50,7 @@ export default function App() {
   const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('ks_session_v1') || sessionStorage.getItem('ks_session_v1'));
 
   const [view, setView] = useState<View>(() => window.location.pathname === '/products' ? 'products' : window.location.pathname.startsWith('/product/') ? 'details' : 'home');
-  const [detailId, setDetailId] = useState<string | null>(() => {
-    const slug = window.location.pathname.startsWith('/product/') ? decodeURIComponent(window.location.pathname.slice('/product/'.length)) : '';
-    return slug ? products.find(p => p.slug === slug)?.id || null : null;
-  });
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('All');
   const [maxPrice, setMaxPrice] = useState('');
@@ -98,85 +89,25 @@ export default function App() {
 
   const t = STR[lang];
 
-  useEffect(() => {
-    const pendingMode = sessionStorage.getItem('mg_google_auth_mode');
-    if (pendingMode !== 'login' && pendingMode !== 'register') return;
-    let active = true;
-    void resolveGoogleRedirect().then(result => {
-      if (!active) return;
-      sessionStorage.removeItem('mg_google_auth_mode');
-      if (!result?.user) {
-        setAuthOpen(pendingMode);
-        setAuthErr(lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন অথবা ইমেইল দিয়ে account খুলুন।' : 'Google sign-up was not completed. Try again or create the account with email.');
-      }
-    }).catch((error: unknown) => {
-      if (!active) return;
-      sessionStorage.removeItem('mg_google_auth_mode');
-      const code = (error as { code?: string })?.code;
-      setAuthOpen(pendingMode);
-      setAuthErr(code === 'auth/popup-closed-by-user'
-        ? (lang === 'bn' ? 'Google sign-up window বন্ধ করা হয়েছে। account তৈরি হয়নি।' : 'The Google sign-up window was closed. No account was created.')
-        : (lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন।' : 'Google sign-up was not completed. Please try again.'));
-    });
-    return () => { active = false; };
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = lang === 'en' ? 'en' : 'bn';
-    const themeMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeMeta) themeMeta.setAttribute('content', window.matchMedia('(max-width: 639px)').matches ? '#061a42' : '#5a2e0d');
-  }, [lang]);
-
-  useEffect(() => {
-    if (window.matchMedia('(max-width: 639px)').matches && window.location.pathname !== '/') {
-      window.history.replaceState({}, '', '/');
-      setDetailId(null);
-      setView('home');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!window.location.pathname.startsWith('/product/')) return;
-    const slug = decodeURIComponent(window.location.pathname.slice('/product/'.length));
-    const product = products.find(p => p.slug === slug);
-    if (product) setDetailId(product.id);
-    else if (products.length) {
-      window.history.replaceState({}, '', '/');
-      setView('home');
-    }
-  }, [products]);
-
   // Live sync with Firebase Firestore if available, otherwise localStorage fallback
   useEffect(() => {
     if (!firebaseEnabled || !db) return;
 
-    // User reads must be scoped. Only admins may read the full customer list;
-    // a customer session subscribes to its own profile document data only.
-    let unsubUsers = () => {};
-    const subscribeUsers = (uid: string, isAdmin: boolean) => {
-      unsubUsers();
-      const applyUsersSnapshot = (snap: any) => {
-        const cloudUsers: User[] = [];
-        if (isAdmin) snap.forEach((d: any) => cloudUsers.push(d.data() as User));
-        else if (snap.exists?.() && snap.data) cloudUsers.push(snap.data() as User);
-        if (cloudUsers.length > 0) {
-          setUsers(prev => {
-            const map = new Map<string, User>();
-            prev.forEach(u => map.set(u.id, u));
-            cloudUsers.forEach(u => map.set(u.id, u));
-            return Array.from(map.values());
-          });
-        }
-      };
-      const onUsersError = (err: Error) => {
-        console.warn('Users listener:', err.message);
-      };
-      if (isAdmin) {
-        unsubUsers = onSnapshot(collection(db, 'users'), snap => applyUsersSnapshot(snap), onUsersError);
-      } else {
-        unsubUsers = onSnapshot(doc(db, 'users', uid), snap => applyUsersSnapshot(snap), onUsersError);
+    // Listen to users
+    const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
+      const cloudUsers: User[] = [];
+      snap.forEach(d => cloudUsers.push(d.data() as User));
+      if (cloudUsers.length > 0) {
+        setUsers(prev => {
+          const map = new Map<string, User>();
+          prev.forEach(u => map.set(u.id, u));
+          cloudUsers.forEach(u => map.set(u.id, u));
+          return Array.from(map.values());
+        });
       }
-    };
+    }, (err) => {
+      console.warn('Users listener:', err.message);
+    });
 
     // Listen to categories
     const unsubCats = onSnapshot(collection(db, 'categories'), snap => {
@@ -275,15 +206,8 @@ export default function App() {
     // Auth state changed listener
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        sessionStorage.removeItem('mg_google_auth_mode');
-        let isAdminUser = false;
-        try {
-          isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
-        } catch (error) {
-          console.warn('Admin role lookup failed; using customer role:', error);
-        }
+        const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
         const role = isAdminUser ? 'admin' : 'customer';
-        subscribeUsers(fbUser.uid, isAdminUser);
         subscribeOrderData(fbUser.uid, isAdminUser);
         const userDoc: User = {
           id: fbUser.uid,
@@ -300,11 +224,13 @@ export default function App() {
           if (db) {
             await setDoc(doc(db, 'users', fbUser.uid), { ...userDoc, pass: deleteField() }, { merge: true });
           }
-        } catch (error) {
-          // Authentication has succeeded even if the optional profile write is
-          // rejected by Firestore rules. Keep the session usable and retry the
-          // profile sync on the next auth-state refresh instead of logging out.
-          console.warn('Firebase profile sync failed:', error);
+        } catch {
+          await logoutFirebase().catch(() => {});
+          localStorage.removeItem('ks_session_v1');
+          sessionStorage.removeItem('ks_session_v1');
+          setSessionId(null);
+          setAuthErr(lang === 'bn' ? 'Firebase-এ profile save করা যায়নি। আবার চেষ্টা করুন।' : 'Could not save your Firebase profile. Please try again.');
+          return;
         }
 
         setUsers(prev => {
@@ -315,7 +241,6 @@ export default function App() {
         sessionStorage.setItem('ks_session_v1', fbUser.uid);
         setSessionId(fbUser.uid);
       } else {
-        unsubUsers();
         unsubOrders();
         unsubPurchases();
         localStorage.removeItem('ks_session_v1');
@@ -473,13 +398,8 @@ export default function App() {
     setAuthErr('');
     setAuthLoading(true);
     try {
-      if (window.matchMedia('(max-width: 639px)').matches && authOpen) {
-        sessionStorage.setItem('mg_google_auth_mode', authOpen);
-      }
       const fbUser = await loginWithGoogle();
-      if (!fbUser) {
-        return;
-      }
+      if (!fbUser) throw new Error('No user returned from Google sign-in');
 
       const userEmail = (fbUser.email || '').toLowerCase();
       const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
@@ -533,7 +453,6 @@ export default function App() {
 
   const doRegister = async () => {
     setAuthErr('');
-    setAuthLoading(true);
     try {
       if (!authForm.name.trim() || !authForm.email.trim() || !authForm.password) throw new Error(lang === 'bn' ? 'নাম, ইমেইল ও পাসওয়ার্ড দিন।' : 'Name, email and password required.');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(authForm.email)) throw new Error(lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email.');
@@ -542,43 +461,21 @@ export default function App() {
       const fbUser = await registerWithEmail(authForm.email.trim(), authForm.password, authForm.name);
       setAuthOpen(null);
       notify('✓ ' + (fbUser.displayName || fbUser.email || 'Account created'));
-      consumePendingBuy(fbUser.uid);
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code;
-      const messages: Record<string, string> = {
-        'auth/email-already-in-use': lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'An account already exists with this email. Please sign in.',
-        'auth/invalid-email': lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email address.',
-        'auth/weak-password': lang === 'bn' ? 'পাসওয়ার্ড আরও শক্তিশালী দিন।' : 'Use a stronger password with at least 6 characters.',
-        'auth/network-request-failed': lang === 'bn' ? 'নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।' : 'Network error. Check your connection and try again.',
-      };
-      setAuthErr(messages[code || ''] || (e instanceof Error ? e.message : 'Registration failed'));
-    } finally {
-      setAuthLoading(false);
+      setAuthErr(code === 'auth/email-already-in-use' ? (lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'Account exists — please login.') : e instanceof Error ? e.message : 'Registration failed');
     }
   };
   const doLogin = async () => {
     setAuthErr('');
-    setAuthLoading(true);
     try {
-      if (!authForm.email.trim() || !authForm.password) throw new Error(lang === 'bn' ? 'ইমেইল ও পাসওয়ার্ড দিন।' : 'Enter your email and password.');
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(authForm.email)) throw new Error(lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email address.');
       if (!firebaseEnabled) throw new Error('Firebase Authentication is not configured.');
       const fbUser = await loginWithEmail(authForm.email.trim(), authForm.password);
       setAuthOpen(null);
       notify('✓ ' + (fbUser.displayName || fbUser.email || 'Login successful'));
-      consumePendingBuy(fbUser.uid);
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code;
-      const messages: Record<string, string> = {
-        'auth/invalid-credential': lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড।' : 'Wrong email or password.',
-        'auth/user-not-found': lang === 'bn' ? 'এই ইমেইলে account পাওয়া যায়নি।' : 'No account was found with this email.',
-        'auth/wrong-password': lang === 'bn' ? 'ভুল পাসওয়ার্ড।' : 'Wrong password.',
-        'auth/too-many-requests': lang === 'bn' ? 'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।' : 'Too many attempts. Please try again later.',
-        'auth/network-request-failed': lang === 'bn' ? 'নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।' : 'Network error. Check your connection and try again.',
-      };
-      setAuthErr(messages[code || ''] || (e instanceof Error ? e.message : 'Login failed'));
-    } finally {
-      setAuthLoading(false);
+      setAuthErr(code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password' ? (lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড।' : 'Wrong email or password.') : e instanceof Error ? e.message : 'Login failed');
     }
   };
   const logout = async () => {
@@ -1424,9 +1321,9 @@ export default function App() {
   const trustItems: [typeof Zap, string][] = [[Zap, t.instantAccess], [BadgeCheck, t.verifiedPay], [Headphones, t.support247], [Download, t.lifetimeLib], [ShieldCheck, t.securePay]];
 
   return (
-    <div className={`min-h-screen bg-[#f7f4ef] pb-20 md:pb-0 lang-${lang}`}>
+    <div className="min-h-screen bg-[#f7f4ef] pb-20 md:pb-0">
       {/* topbar */}
-      <div className="store-topbar text-white text-xs md:text-sm" style={{ background: BROWN_D }}>
+      <div className="text-white text-xs md:text-sm" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
           <span className="font-medium truncate min-w-0">{lang === 'bn' ? settings.announcement.replace('Welcome to Murad Graphics!', 'মুরাদ গ্রাফিক্সে স্বাগতম!') : settings.announcement}</span>
           <div className="flex-1" />
@@ -1437,30 +1334,26 @@ export default function App() {
       </div>
 
       {/* header */}
-      <header className="store-header text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
+      <header className="text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
         <div className="max-w-7xl mx-auto px-3 py-2.5 sm:py-3 flex items-center gap-3">
           <button onClick={() => setView('home')} className="shrink-0 cursor-pointer"><Logo /></button>
-          <div className="header-search flex-1 max-w-2xl mx-auto relative flex items-center">
+          <div className="flex-1 max-w-2xl mx-auto relative hidden sm:flex items-center">
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && setView('products')}
               placeholder={t.searchPh}
-              className="w-full rounded-full pl-4 pr-12 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 bg-white shadow-xs focus:ring-2 focus:ring-cyan-400"
+              className="w-full rounded-full pl-5 pr-14 py-2.5 sm:py-3 text-sm text-slate-800 bg-white shadow-xs focus:ring-2 focus:ring-amber-400"
             />
             <button
               onClick={() => setView('products')}
-              className="absolute right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition hover:opacity-90 shrink-0"
+              className="absolute right-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition hover:opacity-90 shrink-0"
               style={{ background: BROWN_D }}
             >
               <Search size={16} />
             </button>
           </div>
           <div className="flex-1 sm:hidden" />
-          <div className="mobile-header-actions sm:hidden flex items-center gap-1">
-            <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
-            <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
-          </div>
           {me ? (
             <div className="relative">
               <button onClick={() => setAcctMenu(!acctMenu)} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer">
@@ -1472,13 +1365,6 @@ export default function App() {
                 <span className="truncate max-w-[100px]">{me.name.split(' ')[0]}</span>
                 <ChevronDown size={14} />
               </button>
-              <button onClick={() => setAcctMenu(!acctMenu)} aria-label="Open account menu" className="mobile-profile-trigger md:hidden">
-                {me.photoURL ? (
-                  <img src={me.photoURL} alt={me.name} className="w-7 h-7 rounded-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <UserIcon size={17} />
-                )}
-              </button>
               {acctMenu && <div className="absolute right-0 mt-2 w-52 bg-white text-slate-700 rounded-2xl shadow-2xl overflow-hidden text-sm z-50">
                 <div className="px-4 py-2.5 border-b text-xs text-slate-400 truncate">{me.email}</div>
                 {me.role === 'admin'
@@ -1489,14 +1375,11 @@ export default function App() {
                 <button onClick={logout} className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold flex items-center gap-2 cursor-pointer"><LogOut size={14} />{t.logout}</button>
               </div>}
             </div>
-          ) : <>
-            <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>
-            <button onClick={() => setAuthOpen('login')} aria-label="Open account" className="mobile-profile-trigger md:hidden"><UserIcon size={19} /></button>
-          </>}
+          ) : <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>}
           <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full cursor-pointer hidden sm:block"><Box size={19} /></button>
-          <button onClick={() => setView('cart')} className="header-cart p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
+          <button onClick={() => setView('cart')} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
         </div>
-        <div className="mobile-secondary-search hidden px-3 pb-2.5">
+        <div className="sm:hidden px-3 pb-2.5">
           <div className="relative flex items-center w-full">
             <input
               value={search}
@@ -1518,77 +1401,13 @@ export default function App() {
 
       {/* ============ HOME ============ */}
       {view === 'home' && <>
-        {/* Reference-matched mobile home. Desktop/home logic remains untouched. */}
-        <section className="mg-mobile-home sm:hidden">
-          <div className="mg-mobile-hero">
-            <div className="mg-mobile-hero-copy">
-              <div className="mg-eyebrow">PREMIUM DIGITAL STORE</div>
-              <h1>Digital<br />Products,<br /><span>Instant Access</span></h1>
-              <p>Get high-quality digital products, templates, software and more — instantly after purchase.</p>
-              <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
-            </div>
-            <div className="mg-mobile-hero-art">
-              {hero && <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} onError={e => { const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG(hero.id); }} />}
-            </div>
-            {slides.length > 1 && <div className="mg-mobile-dots">{slides.slice(0,5).map((x,i)=><button key={x.id} onClick={()=>setSlide(i)} className={i===slide?'active':''} />)}</div>}
-          </div>
-
-          <div className="mg-mobile-trust">
-            {([[Zap,'Instant Access','Get your files instantly'],[ShieldCheck,'Verified Payment','Safe & secure'],[Headphones,'24/7 Support',"We're here 24/7"],[Download,'Lifetime Library','Access anytime']] as [typeof Zap,string,string][]).map(([Icon,title,sub]) =>
-              <div key={title}><span><Icon size={21}/></span><b>{title}</b><small>{sub}</small></div>
-            )}
-          </div>
-
-          <button className="mg-mobile-promo" onClick={() => setView('products')}>
-            <img src={settings.promoImage || IMG('promo', 1000)} alt="" onError={e=>{const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG('promo',1000);}} />
-            <span className="mg-promo-copy"><b>{settings.promoTitle || 'Mega Bundle Sale'}</b><small>Get Premium Digital Products<br />at Unbeatable Prices!</small><em>{t.shopNow} <ArrowRight size={14}/></em></span>
-          </button>
-
-          <div className="mg-mobile-section-head">
-            <div><LayoutGrid size={25}/><h2>{t.shopByCat}</h2></div>
-            <button onClick={()=>{setCatFilter('All');setView('products')}}>{t.seeAll}<ChevronRight size={18}/></button>
-          </div>
-          <div className="mg-mobile-categories">
-            {activeCats.slice(0,6).map((c,i)=>{
-              const CatIcon = [LayoutGrid, Tag, Box, Store, Package, Globe][i] || Tag;
-              return <button key={c.id} onClick={()=>{setCatFilter(c.id);setView('products')}}>
-              {c.image && !c.image.includes('picsum.photos') ? <img src={c.image} alt={c.name} onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(c.id,200)}}/> : <span className={`mg-cat-icon c${i}`}><CatIcon size={25}/></span>}
-              <b>{c.name}</b>
-            </button>;
-            })}
-          </div>
-
-          <div className="mg-mobile-section-head mg-trending-head">
-            <div><span className="mg-fire">♦</span><h2>{t.newTrending}</h2></div>
-            <button onClick={()=>setView('products')}>{t.seeAll}<ChevronRight size={18}/></button>
-          </div>
-          <div className="mg-mobile-products">
-            {activeProducts.slice(0,10).map(p=>{
-              const owned=owns(sessionId,p.id);
-              return <article key={p.id} className="mg-mobile-product" onClick={()=>goDetails(p.id)}>
-                <div className="mg-product-image"><img src={p.previewImages[0] || IMG(p.id)} alt={p.name} onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(p.id)}}/>
-                  <span>{owned ? t.ownedBadge : t.digitalTag}</span>
-                </div>
-                <div className="mg-product-info">
-                  <h3>{p.name}</h3>
-                  <div className="mg-rating"><Star size={13} className="fill-amber-400 text-amber-400"/>{p.rating} <small>({p.sold.toLocaleString()})</small></div>
-                  <div className="mg-price">{tk(eff(p))} {offPct(p)>0 && <s>{tk(p.price)}</s>}</div>
-                  <button onClick={e=>{e.stopPropagation();owned?openAccess(sessionId,p.id):addCart(p.id)}}>{owned?<Download size={14}/>:<Download size={14}/>} {owned?t.download:t.instantAccess}</button>
-                </div>
-              </article>
-            })}
-          </div>
-        </section>
-
-        <div className="mg-desktop-home-only">
-
-        <div className="home-top-grid max-w-7xl mx-auto px-3 py-3 sm:py-4 grid lg:grid-cols-[1fr_280px] gap-4">
-          <div className="home-hero relative overflow-hidden rounded-2xl sm:rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
+        <div className="max-w-7xl mx-auto px-3 py-3 sm:py-4 grid lg:grid-cols-[1fr_280px] gap-4">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[1.75rem] mesh-hero shadow-2xl shadow-orange-950/30">
           <div className="blob w-80 h-80 bg-orange-500/40 -top-16 -left-16" />
           <div className="blob w-96 h-96 bg-amber-500/25 bottom-[-6rem] right-[8%]" style={{ animationDelay: '-4s' }} />
           <div className="grid-pattern absolute inset-0" />
           <div className="relative grid lg:grid-cols-2 gap-6 sm:gap-8 items-center p-5 sm:p-8 md:p-12 text-white">
-            <div className="home-hero-copy fade-up">
+            <div className="fade-up">
               <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3 py-1 text-[10px] sm:text-[11px] font-bold tracking-[.18em] text-amber-200">✦ {lang === 'bn' ? 'প্রিমিয়াম ডিজিটাল স্টোর' : 'PREMIUM DIGITAL STORE'}</span>
               <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.12] mt-3 sm:mt-4">{lang === 'bn' ? (<>ডিজিটাল প্রোডাক্ট,<br /><span className="gold-text">ইনস্ট্যান্ট অ্যাক্সেস</span></>) : (<>Digital products,<br /><span className="gold-text">instant access</span></> )}</h1>
               <p className="text-orange-100/90 text-xs sm:text-sm md:text-base mt-2.5 sm:mt-4 max-w-md leading-relaxed">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই Google Drive অ্যাক্সেস — কোনো অপেক্ষা নেই, কোনো ডেলিভারি চার্জ নেই।' : 'Verified payment unlocks Google Drive access instantly — no waiting, no delivery fees.'}</p>
@@ -1603,18 +1422,10 @@ export default function App() {
                 <div className="hidden sm:block"><div className="font-display font-black text-xl sm:text-2xl">{activeProducts.length * 36}+</div><div className="text-[10px] sm:text-[11px] text-orange-100/70">products sold</div></div>
               </div>
             </div>
-            <div className="home-hero-visual relative mt-2 lg:mt-0">
+            <div className="relative mt-2 lg:mt-0">
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
-                  <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl">
-                    <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl rotate-1 sm:rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
-                    <div className="mobile-hero-overlay absolute inset-0 rounded-2xl p-4 flex flex-col justify-end items-start text-white">
-                      <span className="mobile-hero-badge inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#4a250d]">✦ {lang === 'bn' ? 'আজকের অফার' : 'TODAY\'S OFFER'}</span>
-                      <h2 className="mt-2 max-w-[72%] font-display text-lg font-black leading-tight drop-shadow-md">{hero.name}</h2>
-                      <p className="mt-1 max-w-[68%] text-[10px] font-medium leading-snug text-white/90">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই ইনস্ট্যান্ট অ্যাক্সেস' : 'Instant access after payment verification'}</p>
-                      <button onClick={() => goDetails(hero.id)} className="mt-2 rounded-full bg-white px-3.5 py-1.5 text-[10px] font-black text-[#5a2e0d] shadow-lg cursor-pointer transition active:scale-95">{lang === 'bn' ? 'এখনই দেখুন' : 'Explore now'} <ArrowRight size={11} className="inline" /></button>
-                    </div>
-                  </div>
+                  <div className="float-slow"><img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl rotate-1 sm:rotate-2 border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} /></div>
                   <div className="absolute -left-1 sm:-left-4 bottom-4 sm:bottom-8 glass rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 float-slower shadow-xl">
                     <div className="text-[9px] sm:text-[10px] text-orange-200/80 font-bold tracking-wider">{t.grandTotal}</div>
                     <div className="font-display font-black text-lg sm:text-2xl text-white">{tk(eff(hero))}</div>
@@ -1634,7 +1445,7 @@ export default function App() {
             </div>
           </div>
         </div>
-          <div className="home-trust bg-white rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 content-start shadow-xs">
+          <div className="bg-white rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 content-start shadow-xs">
             {trustItems.map(([Icon, label]) => (
               <div key={label} className="flex items-center gap-2.5 bg-white border border-orange-100 hover:border-orange-300 rounded-xl px-3 py-2.5 transition cursor-default">
                 <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center shrink-0"><Icon size={16} style={{ color: BROWN }} /></span>
@@ -1644,9 +1455,9 @@ export default function App() {
           </div>
         </div>
 
-        <div className="home-category-row max-w-7xl mx-auto px-3 grid lg:grid-cols-[1fr_340px] gap-4 sm:gap-6 items-start">
+        <div className="max-w-7xl mx-auto px-3 grid lg:grid-cols-[1fr_340px] gap-4 sm:gap-6 items-start">
           <div>
-            <div className="home-category flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="font-display font-black text-base sm:text-xl text-slate-800 flex items-center gap-2 reveal"><LayoutGrid size={18} style={{ color: BROWN }} />{t.shopByCat}</h2>
               <button onClick={() => { setCatFilter('All'); setView('products'); }} className="text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all cursor-pointer" style={{ color: BROWN }}>{t.seeAll}<ChevronRight size={14} /></button>
             </div>
@@ -1660,16 +1471,18 @@ export default function App() {
               ))}
             </div>
           </div>
-          <button onClick={() => setView('products')} className="home-promo relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
+          <button onClick={() => setView('products')} className="relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
             <img src={settings.promoImage || IMG('promo', 800)} alt="" className="w-full h-32 sm:h-40 md:h-44 object-cover group-hover:scale-105 transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
             <span className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 text-[10px] sm:text-[11px] font-black bg-white px-3.5 py-1 rounded-full whitespace-nowrap shadow" style={{ color: BROWN }}>{settings.promoTitle} • {t.shopNow}</span>
           </button>
         </div>
 
-        <main className="home-desktop-main max-w-7xl mx-auto px-3 py-4 sm:py-6">
+        <main className="max-w-7xl mx-auto px-3 py-4 sm:py-6">
           <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} /><Zap size={18} style={{ color: BROWN }} />{t.newTrending}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{activeProducts.slice(0, 20).map(p => <ProductCard key={p.id} p={p} />)}</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{activeProducts.slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
+          <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mt-8 sm:mt-10 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} />{t.latestProducts}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 stagger-in">{[...activeProducts].reverse().slice(0, 5).map(p => <ProductCard key={p.id} p={p} />)}</div>
 
           <div className="mt-12 bg-white border border-orange-100 rounded-[1.75rem] p-6 md:p-10 reveal">
             <div className="text-center text-[11px] font-black tracking-[.25em] text-amber-600">✦ HOW IT WORKS ✦</div>
@@ -1706,7 +1519,6 @@ export default function App() {
             </div>
           </div>
         </main>
-        </div>
       </>}
 
       {/* ============ PRODUCTS ============ */}
@@ -1754,8 +1566,8 @@ export default function App() {
                 <button onClick={() => openAccess(sessionId, detail.id)} className="w-full mt-5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black py-3.5 rounded-xl flex items-center justify-center gap-1.5 transition"><Download size={16} />{t.alreadyPurchased}</button>
               ) : (
                 <><div className="grid grid-cols-2 gap-2 mt-5">
-                  <button onClick={() => addCart(detail.id)} className="mobile-outline-action border-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 py-3 transition hover:bg-orange-50" style={{ borderColor: BROWN, color: BROWN }}><ShoppingCart size={17} />{t.addToCart}</button>
-                  <button onClick={() => buyNow(detail.id)} className="mobile-primary-action text-white text-sm font-black py-3 rounded-xl" style={{ background: BROWN }}>{t.buyNow}</button>
+                  <button onClick={() => addCart(detail.id)} className="border-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 py-3 transition hover:bg-orange-50" style={{ borderColor: BROWN, color: BROWN }}><ShoppingCart size={17} />{t.addToCart}</button>
+                  <button onClick={() => buyNow(detail.id)} className="text-white text-sm font-black py-3 rounded-xl" style={{ background: BROWN }}>{t.buyNow}</button>
                 </div></>
               )}
               <p className="text-[11px] text-slate-400 mt-2">🔒 {t.pendingNote}</p>
@@ -1958,7 +1770,7 @@ export default function App() {
       {/* footer */}
       <footer className="text-orange-100/70 mt-10" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
-          <div><img src="/murad-logo-full.svg" alt="Murad Graphics Digital Store" className="footer-brand-logo w-56 max-w-full h-auto" /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
+          <div><Logo /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
             <div className="flex gap-2 mt-3">
               <a href={settings.facebook} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Facebook size={16} /></a>
               <a href={settings.youtube} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Youtube size={16} /></a>
@@ -1979,35 +1791,35 @@ export default function App() {
       </footer>
 
       {/* whatsapp float */}
-      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105 ${view === 'home' ? 'home-page-float' : ''}`} title="Chat on WhatsApp">
+      <a href={waLink(settings.whatsapp, t.supportTitle)} target="_blank" rel="noreferrer" className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 bg-[#25d366] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl float-wa cursor-pointer transition hover:scale-105" title="Chat">
         <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
-        <WhatsAppLogo size={27} />
+        <MessageCircle size={26} className="text-white relative" />
       </a>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setView('home')}
-          className={`mobile-nav-home flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'mobile-nav-active text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'home' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          <Store size={19} className={view === 'home' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
+          <Store size={19} className={view === 'home' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'হোম' : 'Home'}</span>
         </button>
 
         <button
           onClick={() => { setCatFilter('All'); setView('products'); }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'products' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'products' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          <Package size={19} className={view === 'products' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
+          <Package size={19} className={view === 'products' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'প্রোডাক্ট' : 'Shop'}</span>
         </button>
 
         <button
           onClick={() => setView('cart')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${view === 'cart' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${view === 'cart' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
         >
           <div className="relative">
-            <ShoppingCart size={19} className={view === 'cart' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
+            <ShoppingCart size={19} className={view === 'cart' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
             {cart.length > 0 && (
               <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                 {cart.length}
@@ -2019,9 +1831,9 @@ export default function App() {
 
         <button
           onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('purchases'); }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'purchases' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'purchases' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          <Download size={19} className={view === 'purchases' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
+          <Download size={19} className={view === 'purchases' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
           <span className="text-[10px] leading-none">{lang === 'bn' ? 'লাইব্রেরি' : 'Library'}</span>
         </button>
 
@@ -2031,12 +1843,14 @@ export default function App() {
             if (me.role === 'admin') setView('admin');
             else setView('dashboard');
           }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'dashboard' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'dashboard' ? 'text-[#5a2e0d] font-bold' : 'text-slate-500 font-medium'}`}
         >
           {me?.role === 'admin' ? (
             <LayoutDashboard size={19} className="text-slate-500" />
+          ) : me?.photoURL ? (
+            <img src={me.photoURL} alt={me.name} className={`w-5 h-5 rounded-full object-cover ${view === 'dashboard' ? 'ring-2 ring-[#5a2e0d]/30' : ''}`} referrerPolicy="no-referrer" />
           ) : (
-            <UserIcon size={19} className={view === 'dashboard' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
+            <UserIcon size={19} className={view === 'dashboard' ? 'text-[#5a2e0d]' : 'text-slate-500'} />
           )}
           <span className="text-[10px] leading-none">{me ? (me.role === 'admin' ? (lang === 'bn' ? 'অ্যাডমিন' : 'Admin') : (lang === 'bn' ? 'অ্যাকাউন্ট' : 'Account')) : (lang === 'bn' ? 'লগইন' : 'Login')}</span>
         </button>
@@ -2060,7 +1874,7 @@ export default function App() {
       {authOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setAuthOpen(null); setPendingBuy(null); }}>
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm fade-up" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center"><img src="/murad-logo-mark.svg" alt="Murad Graphics" className="w-12 h-12 rounded-2xl object-cover" /></div>
+            <div className="flex justify-center"><div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-2xl" style={{ background: BROWN }}>M</div></div>
             <h3 className="font-black text-center mt-2 text-lg">{authOpen === 'login' ? t.welcomeBack : t.createAccount}</h3>
             <p className="text-[11px] text-center text-slate-400 mt-0.5">{authOpen === 'login' ? (lang === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Sign in to your account') : (lang === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create your free account')}</p>
             <div className="grid gap-2 mt-3 text-sm">
@@ -2093,7 +1907,7 @@ export default function App() {
               <input type="password" className="border rounded-xl px-3 py-2.5" placeholder={t.password} value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} onKeyDown={e => e.key === 'Enter' && (authOpen === 'login' ? doLogin() : doRegister())} />
               {authOpen === 'login' && <button type="button" onClick={async () => { try { if (!authForm.email.trim()) throw new Error(lang === 'bn' ? 'আগে ইমেইল লিখুন।' : 'Enter your email first.'); await resetPassword(authForm.email.trim()); setAuthErr(lang === 'bn' ? 'Password reset link ইমেইলে পাঠানো হয়েছে।' : 'Password reset link sent to your email.'); } catch (e: unknown) { setAuthErr(e instanceof Error ? e.message : 'Could not send reset link.'); } }} className="text-right text-xs font-semibold text-slate-500 hover:text-[#5a2e0d]">{lang === 'bn' ? 'পাসওয়ার্ড ভুলে গেছেন?' : 'Forgot password?'}</button>}
               {authErr && <p className="text-xs text-rose-600 flex items-center gap-1"><AlertCircle size={13} />{authErr}</p>}
-              <button disabled={authLoading} onClick={authOpen === 'login' ? doLogin : doRegister} className="text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: BROWN }}><LogIn size={15} />{authLoading ? (lang === 'bn' ? 'অপেক্ষা করুন...' : 'Please wait...') : (authOpen === 'login' ? t.login : t.register)}</button>
+              <button onClick={authOpen === 'login' ? doLogin : doRegister} className="text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5" style={{ background: BROWN }}><LogIn size={15} />{authOpen === 'login' ? t.login : t.register}</button>
               <button onClick={() => { setAuthErr(''); setAuthOpen(authOpen === 'login' ? 'register' : 'login'); }} className="text-xs font-bold" style={{ color: BROWN }}>{authOpen === 'login' ? t.newHere : t.haveAccount}</button>
             </div>
           </div>
