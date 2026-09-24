@@ -1527,13 +1527,6 @@ export default function App() {
                 <span className="truncate max-w-[100px]">{me.name.split(' ')[0]}</span>
                 <ChevronDown size={14} />
               </button>
-              <button onClick={() => setAcctMenu(!acctMenu)} aria-label="Open account menu" className="mobile-profile-trigger md:hidden">
-                {me.photoURL ? (
-                  <img src={me.photoURL} alt={me.name} className="w-7 h-7 rounded-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <UserIcon size={17} />
-                )}
-              </button>
               {acctMenu && <div className="absolute right-0 mt-2 w-52 bg-white text-slate-700 rounded-2xl shadow-2xl overflow-hidden text-sm z-50">
                 <div className="px-4 py-2.5 border-b text-xs text-slate-400 truncate">{me.email}</div>
                 {me.role === 'admin'
@@ -1546,7 +1539,6 @@ export default function App() {
             </div>
           ) : <>
             <button onClick={() => setAuthOpen('login')} className="hidden md:flex items-center gap-1.5 border border-white/30 rounded-full px-4 py-2 text-sm font-bold hover:bg-white/10 cursor-pointer"><UserIcon size={16} />{t.login}</button>
-            <button onClick={() => setAuthOpen('login')} aria-label="Open account" className="mobile-profile-trigger md:hidden"><UserIcon size={19} /></button>
           </>}
           <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full cursor-pointer hidden sm:block"><Box size={19} /></button>
           <button onClick={() => setView('cart')} className="header-cart p-2 sm:p-2.5 hover:bg-white/10 rounded-full relative cursor-pointer"><ShoppingCart size={20} />{cart.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white">{cart.length}</span>}</button>
@@ -2088,7 +2080,14 @@ export default function App() {
           }}
           className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${view === 'dashboard' ? 'text-[#1e5bd7] font-bold' : 'text-slate-500 font-medium'}`}
         >
-          {me?.role === 'admin' ? (
+          {me?.photoURL ? (
+            <img
+              src={me.photoURL}
+              alt={me.name || 'Account'}
+              className={`w-[22px] h-[22px] rounded-full object-cover ${view === 'dashboard' ? 'ring-2 ring-cyan-300 ring-offset-1' : 'opacity-90'}`}
+              referrerPolicy="no-referrer"
+            />
+          ) : me?.role === 'admin' ? (
             <LayoutDashboard size={19} className="text-slate-500" />
           ) : (
             <UserIcon size={19} className={view === 'dashboard' ? 'text-[#1e5bd7]' : 'text-slate-500'} />
