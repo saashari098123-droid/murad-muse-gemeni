@@ -44,12 +44,25 @@ if (firebaseEnabled && db) {
 }
 
 export async function loginWithGoogle() {
-  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
+  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+  if (isMobile || isNarrow) {
     await signInWithRedirect(auth, googleProvider);
     return null;
   }
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error: unknown) {
+    const code = (error as { code?: string })?.code;
+    // Some mobile/in-app browsers report a popup failure instead of exposing
+    // a reliable mobile viewport. Retry in the current tab automatically.
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function resolveGoogleRedirect() {

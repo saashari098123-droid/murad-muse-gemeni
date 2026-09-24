@@ -473,7 +473,7 @@ export default function App() {
     setAuthErr('');
     setAuthLoading(true);
     try {
-      if (window.matchMedia('(max-width: 639px)').matches && authOpen) {
+      if (authOpen) {
         sessionStorage.setItem('mg_google_auth_mode', authOpen);
       }
       const fbUser = await loginWithGoogle();
