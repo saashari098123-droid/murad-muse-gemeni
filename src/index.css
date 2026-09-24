@@ -1156,3 +1156,19 @@ input:focus,select:focus,textarea:focus{border-color:#c2701d !important; box-sha
     border:0!important;
   }
 }
+
+
+
+/* ===== Bengali typography: Noto Serif Bengali ===== */
+html[lang="bn"] body,
+.lang-bn,
+.lang-bn input,
+.lang-bn select,
+.lang-bn textarea,
+.lang-bn button{
+  font-family:'Noto Serif Bengali','Hind Siliguri',sans-serif!important;
+}
+html[lang="bn"] .font-display,
+.lang-bn .font-display{
+  font-family:'Noto Serif Bengali','Hind Siliguri',sans-serif!important;
+}
