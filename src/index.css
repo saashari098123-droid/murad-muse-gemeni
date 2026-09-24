@@ -1383,3 +1383,51 @@ img {
     height: 128px !important;
   }
 }
+
+
+/* ===== Desktop banner sizing + full hero image visibility ===== */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero {
+    height: 300px !important;
+    min-height: 300px !important;
+  }
+
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    height: 300px !important;
+    min-height: 300px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual > div:first-child {
+    width: 100% !important;
+    max-width: 450px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .float-slow {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual img {
+    display: block !important;
+    width: 100% !important;
+    height: 220px !important;
+    max-height: 220px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+    border-radius: 16px !important;
+  }
+
+  .mg-desktop-home-only .home-category-row .home-promo {
+    align-self: stretch !important;
+  }
+
+  .mg-desktop-home-only .home-promo img {
+    width: 100% !important;
+    height: 175px !important;
+    min-height: 175px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #fff7ed !important;
+  }
+}
