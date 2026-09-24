@@ -295,15 +295,25 @@ export default function App() {
             const userRef = doc(db, 'users', fbUser.uid);
             const existing = await getDoc(userRef);
             if (existing.exists()) {
-              await setDoc(userRef, {
+              const profilePatch: Record<string, string> = {
                 id: userDoc.id,
                 name: userDoc.name,
                 email: userDoc.email,
-                photoURL: userDoc.photoURL,
-                authProvider: userDoc.authProvider,
-              }, { merge: true });
+              };
+              if (userDoc.photoURL) profilePatch.photoURL = userDoc.photoURL;
+              if (userDoc.authProvider) profilePatch.authProvider = userDoc.authProvider;
+              await setDoc(userRef, profilePatch, { merge: true });
             } else {
-              await setDoc(userRef, userDoc, { merge: true });
+              const newProfile: Record<string, string> = {
+                id: userDoc.id,
+                name: userDoc.name,
+                email: userDoc.email,
+                role: userDoc.role,
+                createdAt: userDoc.createdAt,
+              };
+              if (userDoc.photoURL) newProfile.photoURL = userDoc.photoURL;
+              if (userDoc.authProvider) newProfile.authProvider = userDoc.authProvider;
+              await setDoc(userRef, newProfile, { merge: true });
             }
           }
         } catch (error) {
