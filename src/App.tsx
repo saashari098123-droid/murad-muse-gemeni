@@ -13,7 +13,7 @@ import {
   SEED_SETTINGS, SEED_CATS, SEED_PRODUCTS, SEED_USERS, SEED_ORDERS, SEED_PURCHASES,
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
-import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
+import { db, auth, loginWithGoogle, resolveGoogleRedirect, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
 import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -97,6 +97,29 @@ export default function App() {
   const [passMsg, setPassMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   const t = STR[lang];
+
+  useEffect(() => {
+    const pendingMode = sessionStorage.getItem('mg_google_auth_mode');
+    if (pendingMode !== 'login' && pendingMode !== 'register') return;
+    let active = true;
+    void resolveGoogleRedirect().then(result => {
+      if (!active) return;
+      sessionStorage.removeItem('mg_google_auth_mode');
+      if (!result?.user) {
+        setAuthOpen(pendingMode);
+        setAuthErr(lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন অথবা ইমেইল দিয়ে account খুলুন।' : 'Google sign-up was not completed. Try again or create the account with email.');
+      }
+    }).catch((error: unknown) => {
+      if (!active) return;
+      sessionStorage.removeItem('mg_google_auth_mode');
+      const code = (error as { code?: string })?.code;
+      setAuthOpen(pendingMode);
+      setAuthErr(code === 'auth/popup-closed-by-user'
+        ? (lang === 'bn' ? 'Google sign-up window বন্ধ করা হয়েছে। account তৈরি হয়নি।' : 'The Google sign-up window was closed. No account was created.')
+        : (lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন।' : 'Google sign-up was not completed. Please try again.'));
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = lang === 'en' ? 'en' : 'bn';
@@ -252,6 +275,7 @@ export default function App() {
     // Auth state changed listener
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
+        sessionStorage.removeItem('mg_google_auth_mode');
         let isAdminUser = false;
         try {
           isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
@@ -446,14 +470,16 @@ export default function App() {
 
   // ---------- auth ----------
   const handleGoogleAuth = async () => {
-      setAuthErr('');
-      setAuthLoading(true);
-      try {
-        const fbUser = await loginWithGoogle();
-        if (!fbUser) {
-          setAuthOpen(null);
-          return;
-        }
+    setAuthErr('');
+    setAuthLoading(true);
+    try {
+      if (window.matchMedia('(max-width: 639px)').matches && authOpen) {
+        sessionStorage.setItem('mg_google_auth_mode', authOpen);
+      }
+      const fbUser = await loginWithGoogle();
+      if (!fbUser) {
+        return;
+      }
 
       const userEmail = (fbUser.email || '').toLowerCase();
       const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();

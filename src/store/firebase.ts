@@ -5,6 +5,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -49,6 +50,10 @@ export async function loginWithGoogle() {
   }
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
+}
+
+export async function resolveGoogleRedirect() {
+  return getRedirectResult(auth);
 }
 
 export async function loginWithEmail(email: string, password: string) {
