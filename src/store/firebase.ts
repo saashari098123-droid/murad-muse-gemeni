@@ -4,6 +4,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -35,10 +36,19 @@ export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.p
 
 
 export async function loginWithGoogle() {
-  // Keep the same Google OAuth flow that was working on mobile before the
-  // redirect-specific changes: Firebase opens Google's auth popup directly.
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error) {
+    const code = (error as { code?: string })?.code || '';
+    // Some mobile browsers block auth popups. In that case use Firebase's
+    // redirect flow, which is the recommended mobile fallback.
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+    throw error;
+  }
 }
 
 
