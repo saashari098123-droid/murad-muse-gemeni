@@ -37,7 +37,8 @@ service cloud.firestore {
           && request.resource.data.id == resource.data.id
           && request.resource.data.email == resource.data.email
           && request.resource.data.role == resource.data.role
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'authProvider']));
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'authProvider', 'createdAt']));
 
       allow delete: if isAdmin();
     }
