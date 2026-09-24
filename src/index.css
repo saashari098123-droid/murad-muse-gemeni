@@ -1459,3 +1459,38 @@ html[lang="bn"] .font-display,
     pointer-events: none !important;
   }
 }
+
+
+/* Final desktop hero: keep the complete product preview visible and make the whole visual area feel filled */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .hero-image-frame {
+    width: 100% !important;
+    height: 220px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0,0,0,.08) !important;
+  }
+
+  .mg-desktop-home-only .hero-image-full {
+    position: relative !important;
+    z-index: 10 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
+  }
+
+  .mg-desktop-home-only .hero-image-backdrop {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    filter: blur(18px) !important;
+    transform: scale(1.08) !important;
+  }
+}
