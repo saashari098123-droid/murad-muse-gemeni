@@ -106,14 +106,13 @@ export default function App() {
       if (!active) return;
       sessionStorage.removeItem('mg_google_auth_mode');
       if (!result?.user) {
-        setAuthOpen(pendingMode);
-        setAuthErr(lang === 'bn' ? 'Google sign-up সম্পন্ন হয়নি। আবার চেষ্টা করুন অথবা ইমেইল দিয়ে account খুলুন।' : 'Google sign-up was not completed. Try again or create the account with email.');
+        // getRedirectResult can be null when Firebase restores the authenticated
+        // user through onAuthStateChanged. Do not show a false registration error
+        // before that listener gets a chance to restore the session.
         return;
       }
 
-      // Mobile Google auth uses redirect. The browser leaves this page, so the
-      // normal handleGoogleAuth flow cannot persist the returned Firebase user.
-      // Complete the same profile/session setup after the redirect returns.
+      // Complete the same profile/session setup after a redirect returns.
       try {
         setAuthLoading(true);
         const fbUser = result.user;
