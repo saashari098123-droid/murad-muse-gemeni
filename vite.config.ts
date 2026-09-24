@@ -18,6 +18,6 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
-    allowedHosts: true,
+      // Keep Vite's default host allowlist in development; do not allow arbitrary Host headers.
   },
 });
