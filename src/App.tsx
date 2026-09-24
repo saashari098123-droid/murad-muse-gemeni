@@ -104,13 +104,25 @@ export default function App() {
     let active = true;
     void resolveGoogleRedirect().then(async result => {
       if (!active) return;
-      sessionStorage.removeItem('mg_google_auth_mode');
       if (!result?.user) {
-        // getRedirectResult can be null when Firebase restores the authenticated
-        // user through onAuthStateChanged. Do not show a false registration error
-        // before that listener gets a chance to restore the session.
+        // Firebase may restore the redirected user through onAuthStateChanged
+        // instead of getRedirectResult. Keep the auth intent alive briefly; if
+        // no user is restored, reopen the auth modal instead of silently
+        // dropping the visitor back on the home page.
+        window.setTimeout(() => {
+          if (!active) return;
+          if (auth.currentUser) return;
+          sessionStorage.removeItem('mg_google_auth_mode');
+          setAuthOpen(pendingMode);
+          setAuthLoading(false);
+          setAuthErr(lang === 'bn'
+            ? 'Google account দিয়ে sign-in সম্পন্ন হয়নি। আবার Continue with Google চাপুন।'
+            : 'Google sign-in did not complete. Please press Continue with Google again.');
+        }, 3000);
         return;
       }
+
+      sessionStorage.removeItem('mg_google_auth_mode');
 
       // Complete the same profile/session setup after a redirect returns.
       try {
