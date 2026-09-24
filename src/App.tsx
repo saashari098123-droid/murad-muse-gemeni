@@ -846,6 +846,9 @@ export default function App() {
     const handleSaveProduct = async () => {
       if (!editing) return;
       if (!editing.name.trim()) { fail(lang === 'bn' ? 'প্রোডাক্টের নাম দিন' : 'Name required'); return; }
+      if (!editing.categoryId || !categories.some(c => c.id === editing.categoryId)) { fail(lang === 'bn' ? 'সঠিক একটি ক্যাটাগরি নির্বাচন করুন' : 'Select a valid category'); return; }
+      if (!Number.isFinite(editing.price) || editing.price < 0) { fail(lang === 'bn' ? 'সঠিক মূল দাম দিন' : 'Enter a valid original price'); return; }
+      if (editing.discountPrice !== undefined && (!Number.isFinite(editing.discountPrice) || editing.discountPrice < 0 || editing.discountPrice > editing.price)) { fail(lang === 'bn' ? 'সেল প্রাইস মূল দামের চেয়ে বেশি হতে পারবে না' : 'Sale price cannot be greater than the original price'); return; }
       if (!editing.googleDriveLink.trim()) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
     const updated = products.find(x => x.id === editing.id)
       ? products.map(x => x.id === editing.id ? editing : x)
@@ -876,6 +879,7 @@ export default function App() {
     const handleSaveCategory = async () => {
       if (!editingCat) return;
       if (!editingCat.name.trim()) { fail(lang === 'bn' ? 'ক্যাটাগরির নাম দিন' : 'Name required'); return; }
+      if (!editingCat.status || !['active', 'hidden'].includes(editingCat.status)) { fail(lang === 'bn' ? 'ক্যাটাগরির visibility নির্বাচন করুন' : 'Select category visibility'); return; }
       const updated = categories.find(x => x.id === editingCat.id)
         ? categories.map(x => x.id === editingCat.id ? editingCat : x)
         : [...categories, editingCat];
@@ -1029,12 +1033,25 @@ export default function App() {
                     <div className="grid gap-2 text-sm">
                       <input className="border rounded-lg px-3 py-2" placeholder="Name" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value, slug: slugify(e.target.value) + '-' + editing.id })} />
                       <div className="grid grid-cols-2 gap-2">
-                        <input type="number" className="border rounded-lg px-3 py-2" placeholder="Price ৳" value={editing.price} onChange={e => setEditing({ ...editing, price: +e.target.value })} />
-                        <input type="number" className="border rounded-lg px-3 py-2" placeholder="Discount ৳" value={editing.discountPrice || ''} onChange={e => setEditing({ ...editing, discountPrice: e.target.value ? +e.target.value : undefined })} />
+                        <input type="number" min="0" step="1" className="border rounded-lg px-3 py-2" placeholder="Original Price ৳" value={editing.price} onChange={e => setEditing({ ...editing, price: Math.max(0, Number(e.target.value) || 0) })} />
+                        <input type="number" min="0" step="1" max={editing.price} className="border rounded-lg px-3 py-2" placeholder="Sale Price ৳ (optional)" value={editing.discountPrice ?? ''} onChange={e => setEditing({ ...editing, discountPrice: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} />
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        <select className="border rounded-lg px-3 py-2" value={editing.categoryId} onChange={e => setEditing({ ...editing, categoryId: e.target.value })}>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                        <select className="border rounded-lg px-3 py-2" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value as Product['status'] })}><option value="active">active (show)</option><option value="hidden">hidden</option></select>
+                        <div className="grid gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">Category *</label>
+                          <select required className="border rounded-lg px-3 py-2 bg-white font-semibold" value={editing.categoryId} onChange={e => setEditing({ ...editing, categoryId: e.target.value })}>
+                            <option value="">— Select category —</option>
+                            {categories.filter(c => c.status === 'active').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            {categories.filter(c => c.status === 'hidden' && c.id === editing.categoryId).map(c => <option key={c.id} value={c.id}>{c.name} (hidden)</option>)}
+                          </select>
+                        </div>
+                        <div className="grid gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">Visibility *</label>
+                          <select required className="border rounded-lg px-3 py-2 bg-white font-semibold" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value as Product['status'] })}>
+                            <option value="active">Active — show in store</option>
+                            <option value="hidden">Hidden — don't show</option>
+                          </select>
+                        </div>
                       </div>
                       <input className="border rounded-lg px-3 py-2 font-mono" placeholder="Google Drive / download link *" value={editing.googleDriveLink} onChange={e => setEditing({ ...editing, googleDriveLink: e.target.value })} />
                       <div className="border rounded-xl p-2.5 bg-slate-50">
@@ -1136,8 +1153,17 @@ export default function App() {
                     <h3 className="font-bold mb-3">Category</h3>
                     <div className="grid gap-2 text-sm">
                       {editingCat.image && <img src={editingCat.image} alt="" className="w-20 h-20 rounded-full object-cover mx-auto" />}
-                      <input className="border rounded-lg px-3 py-2" placeholder="Name" value={editingCat.name} onChange={e => setEditingCat({ ...editingCat, name: e.target.value, slug: slugify(e.target.value) })} />
-                      <select className="border rounded-lg px-3 py-2" value={editingCat.status} onChange={e => setEditingCat({ ...editingCat, status: e.target.value as Category['status'] })}><option value="active">active</option><option value="hidden">hidden</option></select>
+                      <div className="grid gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">Category Name *</label>
+                        <input required className="border rounded-lg px-3 py-2" placeholder="e.g. Graphics" value={editingCat.name} onChange={e => setEditingCat({ ...editingCat, name: e.target.value, slug: slugify(e.target.value) })} />
+                      </div>
+                      <div className="grid gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">Visibility *</label>
+                        <select required className="border rounded-lg px-3 py-2 bg-white font-semibold" value={editingCat.status} onChange={e => setEditingCat({ ...editingCat, status: e.target.value as Category['status'] })}>
+                          <option value="active">Active — show in store</option>
+                          <option value="hidden">Hidden — don't show</option>
+                        </select>
+                      </div>
                       <label className="block text-center text-xs font-bold px-3 py-2.5 rounded-lg cursor-pointer text-white" style={{ background: BROWN }}>{uploading ? '⏳…' : '📤 Upload image'}
                         <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e => { handleFiles(e.target.files, true); e.target.value = ''; }} /></label>
                       <input className="border rounded-lg px-3 py-2" placeholder="…or image URL" value={editingCat.image.startsWith('data:') ? '' : editingCat.image} onChange={e => setEditingCat({ ...editingCat, image: e.target.value })} />
