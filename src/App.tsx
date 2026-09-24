@@ -119,17 +119,6 @@ export default function App() {
     if (themeMeta) themeMeta.setAttribute('content', window.matchMedia('(max-width: 639px)').matches ? '#061a42' : '#5a2e0d');
   }, [lang]);
 
-  useEffect(() => {
-    if (!window.location.pathname.startsWith('/product/')) return;
-    const slug = decodeURIComponent(window.location.pathname.slice('/product/'.length));
-    const product = products.find(p => p.slug === slug);
-    if (product) setDetailId(product.id);
-    else if (products.length) {
-      window.history.replaceState({}, '', '/');
-      setView('home');
-    }
-  }, [products]);
-
   // Live sync with Firebase Firestore if available, otherwise localStorage fallback
   useEffect(() => {
     if (!firebaseEnabled || !db) return;
@@ -388,9 +377,6 @@ export default function App() {
         if (found) {
           setDetailId(found.id);
           setView('details');
-        } else if (products.length > 0) {
-          setDetailId(null);
-          setView('products');
         }
         return;
       }
@@ -492,7 +478,6 @@ export default function App() {
       schema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Product', name: detail.name, description: detail.description, image: detail.previewImages, sku: detail.id, brand: { '@type': 'Brand', name: 'Murad Graphics' }, offers: { '@type': 'Offer', url: `${window.location.origin}/product/${detail.slug}`, priceCurrency: 'BDT', price: eff(detail), availability: 'https://schema.org/InStock', seller: { '@type': 'Organization', name: 'Murad Graphics' } }, aggregateRating: detail.reviews.length ? { '@type': 'AggregateRating', ratingValue: detail.rating, reviewCount: detail.reviews.length } : undefined });
     } else if (schema) schema.remove();
   }, [detail]);
-  useEffect(() => { if (view === 'details' && !detail) setView('products'); }, [view, detail]);
 
   // access rule: logged in + owns (paid purchase)
   const owns = (uid_: string | null, pid: string) => !!uid_ && purchases.some(p => p.userId === uid_ && p.productId === pid && p.accessStatus === 'active');
