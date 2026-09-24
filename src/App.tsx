@@ -1941,7 +1941,7 @@ export default function App() {
       {/* footer */}
       <footer className="text-orange-100/70 mt-10" style={{ background: BROWN_D }}>
         <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
-          <div><img src="/murad-logo.png" alt="Murad Graphics Digital Store" className="footer-brand-logo w-24 h-24 max-w-full object-contain" /><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
+          <div><p className="text-white font-display font-black text-lg">Murad Graphics</p><p className="mt-3 text-xs leading-relaxed">{t.digitalNote}</p>
             <div className="flex gap-2 mt-3">
               <a href={settings.facebook} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Facebook size={16} /></a>
               <a href={settings.youtube} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><Youtube size={16} /></a>
