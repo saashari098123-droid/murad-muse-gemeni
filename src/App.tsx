@@ -14,7 +14,7 @@ import {
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
 import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
-import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where, increment } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, getDoc, getDocs, deleteDoc, writeBatch, deleteField, query, where, increment } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
@@ -733,6 +733,11 @@ export default function App() {
     try {
       if (!me) throw new Error(t.loginRequired);
       if (cartDetailed.length === 0) throw new Error(t.cartEmpty);
+      if (appliedCoupon && cartDetailed.length > 9) {
+        throw new Error(lang === 'bn'
+          ? 'কুপন ব্যবহার করে একসাথে সর্বোচ্চ ৯টি পণ্য অর্ডার করা যাবে।'
+          : 'With a coupon, you can order up to 9 products at a time.');
+      }
       if (!trxId.trim()) throw new Error(t.trxRequired);
       if (appliedCoupon && !couponValue(appliedCoupon)) throw new Error(t.invalidCoupon);
       const trxLow = trxId.trim().toLowerCase();
