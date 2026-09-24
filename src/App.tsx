@@ -35,7 +35,7 @@ function viewFromPath(pathname: string): { view: View; slug?: string } {
 function Logo() {
   return (
     <div className="brand-lockup flex items-center gap-2 min-w-0" aria-label="Murad Graphics">
-      <img src="/murad-logo-icon.svg" alt="Murad Graphics" className="brand-logo-icon w-10 h-10 md:w-11 md:h-11 shrink-0 object-contain" />
+      <img src="/murad-logo.png" alt="Murad Graphics" className="brand-logo-icon w-10 h-10 md:w-11 md:h-11 shrink-0 object-contain" />
       <div className="brand-wordmark flex md:hidden flex-col items-start leading-none text-white">
         <div className="font-display font-extrabold text-sm">Murad <span className="text-cyan-300">Graphics</span></div>
         <div className="mt-1 text-[7px] tracking-[.28em] text-cyan-100/80">DIGITAL STORE</div>
@@ -1051,9 +1051,10 @@ export default function App() {
       if (!editing.categoryId || !categories.some(c => c.id === editing.categoryId)) { fail(lang === 'bn' ? 'সঠিক একটি ক্যাটাগরি নির্বাচন করুন' : 'Select a valid category'); return; }
       if (!Number.isFinite(editing.price) || editing.price < 0) { fail(lang === 'bn' ? 'সঠিক মূল দাম দিন' : 'Enter a valid original price'); return; }
       if (editing.discountPrice !== undefined && (!Number.isFinite(editing.discountPrice) || editing.discountPrice < 0 || editing.discountPrice > editing.price)) { fail(lang === 'bn' ? 'সেল প্রাইস মূল দামের চেয়ে বেশি হতে পারবে না' : 'Sale price cannot be greater than the original price'); return; }
-      if (!editing.googleDriveLink.trim()) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
+      const deliveryLink = String(editing.googleDriveLink || accessLinks[editing.id] || '').trim();
+      if (!deliveryLink) { fail(lang === 'bn' ? 'Google Drive link আবশ্যক' : 'Google Drive link required'); return; }
       try {
-        const driveUrl = new URL(editing.googleDriveLink.trim());
+        const driveUrl = new URL(deliveryLink);
         if (!['drive.google.com', 'docs.google.com'].includes(driveUrl.hostname)) throw new Error('INVALID_DRIVE_URL');
       } catch {
         fail(lang === 'bn' ? 'শুধু valid Google Drive/Docs link দিন।' : 'Enter a valid Google Drive or Google Docs link.');
@@ -1078,7 +1079,7 @@ export default function App() {
           batch.set(doc(db, 'products', nextProduct.id), { ...productForCloud, googleDriveLink: deleteField() }, { merge: true });
           batch.set(doc(db, 'productAccess', nextProduct.id), {
             productId: nextProduct.id,
-            googleDriveLink: nextProduct.googleDriveLink.trim(),
+            googleDriveLink: deliveryLink,
             updatedAt: nowStr(),
           }, { merge: true });
           if (hasDataImages) {
@@ -1263,7 +1264,7 @@ export default function App() {
                       <div className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">{catName(p.categoryId)} • {tk(eff(p))} • <span className={p.status === 'active' ? 'text-emerald-600 font-medium' : 'text-slate-400'}>{p.status}</span> • {p.sold} sold</div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => { setImgUrl(''); setEditing({ ...p }); }} className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer" title="Edit"><Edit3 size={15} /></button>
+                      <button onClick={() => { setImgUrl(''); setEditing({ ...p, googleDriveLink: p.googleDriveLink || accessLinks[p.id] || '' }); }} className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer" title="Edit"><Edit3 size={15} /></button>
                       <button onClick={() => confirmDeleteProduct(p.id, p.name)} className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer" title="Delete"><Trash2 size={15} /></button>
                     </div>
                   </div>
