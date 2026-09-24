@@ -4,6 +4,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -42,6 +43,10 @@ if (firebaseEnabled && db) {
 }
 
 export async function loginWithGoogle() {
+  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
+    await signInWithRedirect(auth, googleProvider);
+    return null;
+  }
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
 }

@@ -127,21 +127,33 @@ export default function App() {
   useEffect(() => {
     if (!firebaseEnabled || !db) return;
 
-    // Listen to users
-    const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
-      const cloudUsers: User[] = [];
-      snap.forEach(d => cloudUsers.push(d.data() as User));
-      if (cloudUsers.length > 0) {
-        setUsers(prev => {
-          const map = new Map<string, User>();
-          prev.forEach(u => map.set(u.id, u));
-          cloudUsers.forEach(u => map.set(u.id, u));
-          return Array.from(map.values());
-        });
+    // User reads must be scoped. Only admins may read the full customer list;
+    // a customer session subscribes to its own profile document data only.
+    let unsubUsers = () => {};
+    const subscribeUsers = (uid: string, isAdmin: boolean) => {
+      unsubUsers();
+      const applyUsersSnapshot = (snap: any) => {
+        const cloudUsers: User[] = [];
+        if (isAdmin) snap.forEach((d: any) => cloudUsers.push(d.data() as User));
+        else if (snap.exists?.() && snap.data) cloudUsers.push(snap.data() as User);
+        if (cloudUsers.length > 0) {
+          setUsers(prev => {
+            const map = new Map<string, User>();
+            prev.forEach(u => map.set(u.id, u));
+            cloudUsers.forEach(u => map.set(u.id, u));
+            return Array.from(map.values());
+          });
+        }
+      };
+      const onUsersError = (err: Error) => {
+        console.warn('Users listener:', err.message);
+      };
+      if (isAdmin) {
+        unsubUsers = onSnapshot(collection(db, 'users'), snap => applyUsersSnapshot(snap), onUsersError);
+      } else {
+        unsubUsers = onSnapshot(doc(db, 'users', uid), snap => applyUsersSnapshot(snap), onUsersError);
       }
-    }, (err) => {
-      console.warn('Users listener:', err.message);
-    });
+    };
 
     // Listen to categories
     const unsubCats = onSnapshot(collection(db, 'categories'), snap => {
@@ -240,8 +252,14 @@ export default function App() {
     // Auth state changed listener
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
+        let isAdminUser = false;
+        try {
+          isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
+        } catch (error) {
+          console.warn('Admin role lookup failed; using customer role:', error);
+        }
         const role = isAdminUser ? 'admin' : 'customer';
+        subscribeUsers(fbUser.uid, isAdminUser);
         subscribeOrderData(fbUser.uid, isAdminUser);
         const userDoc: User = {
           id: fbUser.uid,
@@ -258,13 +276,11 @@ export default function App() {
           if (db) {
             await setDoc(doc(db, 'users', fbUser.uid), { ...userDoc, pass: deleteField() }, { merge: true });
           }
-        } catch {
-          await logoutFirebase().catch(() => {});
-          localStorage.removeItem('ks_session_v1');
-          sessionStorage.removeItem('ks_session_v1');
-          setSessionId(null);
-          setAuthErr(lang === 'bn' ? 'Firebase-এ profile save করা যায়নি। আবার চেষ্টা করুন।' : 'Could not save your Firebase profile. Please try again.');
-          return;
+        } catch (error) {
+          // Authentication has succeeded even if the optional profile write is
+          // rejected by Firestore rules. Keep the session usable and retry the
+          // profile sync on the next auth-state refresh instead of logging out.
+          console.warn('Firebase profile sync failed:', error);
         }
 
         setUsers(prev => {
@@ -275,6 +291,7 @@ export default function App() {
         sessionStorage.setItem('ks_session_v1', fbUser.uid);
         setSessionId(fbUser.uid);
       } else {
+        unsubUsers();
         unsubOrders();
         unsubPurchases();
         localStorage.removeItem('ks_session_v1');
@@ -429,11 +446,14 @@ export default function App() {
 
   // ---------- auth ----------
   const handleGoogleAuth = async () => {
-    setAuthErr('');
-    setAuthLoading(true);
-    try {
-      const fbUser = await loginWithGoogle();
-      if (!fbUser) throw new Error('No user returned from Google sign-in');
+      setAuthErr('');
+      setAuthLoading(true);
+      try {
+        const fbUser = await loginWithGoogle();
+        if (!fbUser) {
+          setAuthOpen(null);
+          return;
+        }
 
       const userEmail = (fbUser.email || '').toLowerCase();
       const isAdminUser = !!db && (await getDoc(doc(db, 'admins', fbUser.uid))).exists();
@@ -487,6 +507,7 @@ export default function App() {
 
   const doRegister = async () => {
     setAuthErr('');
+    setAuthLoading(true);
     try {
       if (!authForm.name.trim() || !authForm.email.trim() || !authForm.password) throw new Error(lang === 'bn' ? 'নাম, ইমেইল ও পাসওয়ার্ড দিন।' : 'Name, email and password required.');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(authForm.email)) throw new Error(lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email.');
@@ -495,21 +516,43 @@ export default function App() {
       const fbUser = await registerWithEmail(authForm.email.trim(), authForm.password, authForm.name);
       setAuthOpen(null);
       notify('✓ ' + (fbUser.displayName || fbUser.email || 'Account created'));
+      consumePendingBuy(fbUser.uid);
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code;
-      setAuthErr(code === 'auth/email-already-in-use' ? (lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'Account exists — please login.') : e instanceof Error ? e.message : 'Registration failed');
+      const messages: Record<string, string> = {
+        'auth/email-already-in-use': lang === 'bn' ? 'এই ইমেইলে account আছে — Login করুন।' : 'An account already exists with this email. Please sign in.',
+        'auth/invalid-email': lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email address.',
+        'auth/weak-password': lang === 'bn' ? 'পাসওয়ার্ড আরও শক্তিশালী দিন।' : 'Use a stronger password with at least 6 characters.',
+        'auth/network-request-failed': lang === 'bn' ? 'নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।' : 'Network error. Check your connection and try again.',
+      };
+      setAuthErr(messages[code || ''] || (e instanceof Error ? e.message : 'Registration failed'));
+    } finally {
+      setAuthLoading(false);
     }
   };
   const doLogin = async () => {
     setAuthErr('');
+    setAuthLoading(true);
     try {
+      if (!authForm.email.trim() || !authForm.password) throw new Error(lang === 'bn' ? 'ইমেইল ও পাসওয়ার্ড দিন।' : 'Enter your email and password.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(authForm.email)) throw new Error(lang === 'bn' ? 'সঠিক ইমেইল দিন।' : 'Enter a valid email address.');
       if (!firebaseEnabled) throw new Error('Firebase Authentication is not configured.');
       const fbUser = await loginWithEmail(authForm.email.trim(), authForm.password);
       setAuthOpen(null);
       notify('✓ ' + (fbUser.displayName || fbUser.email || 'Login successful'));
+      consumePendingBuy(fbUser.uid);
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code;
-      setAuthErr(code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password' ? (lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড।' : 'Wrong email or password.') : e instanceof Error ? e.message : 'Login failed');
+      const messages: Record<string, string> = {
+        'auth/invalid-credential': lang === 'bn' ? 'ভুল ইমেইল/পাসওয়ার্ড।' : 'Wrong email or password.',
+        'auth/user-not-found': lang === 'bn' ? 'এই ইমেইলে account পাওয়া যায়নি।' : 'No account was found with this email.',
+        'auth/wrong-password': lang === 'bn' ? 'ভুল পাসওয়ার্ড।' : 'Wrong password.',
+        'auth/too-many-requests': lang === 'bn' ? 'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।' : 'Too many attempts. Please try again later.',
+        'auth/network-request-failed': lang === 'bn' ? 'নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।' : 'Network error. Check your connection and try again.',
+      };
+      setAuthErr(messages[code || ''] || (e instanceof Error ? e.message : 'Login failed'));
+    } finally {
+      setAuthLoading(false);
     }
   };
   const logout = async () => {
@@ -2024,7 +2067,7 @@ export default function App() {
               <input type="password" className="border rounded-xl px-3 py-2.5" placeholder={t.password} value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} onKeyDown={e => e.key === 'Enter' && (authOpen === 'login' ? doLogin() : doRegister())} />
               {authOpen === 'login' && <button type="button" onClick={async () => { try { if (!authForm.email.trim()) throw new Error(lang === 'bn' ? 'আগে ইমেইল লিখুন।' : 'Enter your email first.'); await resetPassword(authForm.email.trim()); setAuthErr(lang === 'bn' ? 'Password reset link ইমেইলে পাঠানো হয়েছে।' : 'Password reset link sent to your email.'); } catch (e: unknown) { setAuthErr(e instanceof Error ? e.message : 'Could not send reset link.'); } }} className="text-right text-xs font-semibold text-slate-500 hover:text-[#5a2e0d]">{lang === 'bn' ? 'পাসওয়ার্ড ভুলে গেছেন?' : 'Forgot password?'}</button>}
               {authErr && <p className="text-xs text-rose-600 flex items-center gap-1"><AlertCircle size={13} />{authErr}</p>}
-              <button onClick={authOpen === 'login' ? doLogin : doRegister} className="text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5" style={{ background: BROWN }}><LogIn size={15} />{authOpen === 'login' ? t.login : t.register}</button>
+              <button disabled={authLoading} onClick={authOpen === 'login' ? doLogin : doRegister} className="text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: BROWN }}><LogIn size={15} />{authLoading ? (lang === 'bn' ? 'অপেক্ষা করুন...' : 'Please wait...') : (authOpen === 'login' ? t.login : t.register)}</button>
               <button onClick={() => { setAuthErr(''); setAuthOpen(authOpen === 'login' ? 'register' : 'login'); }} className="text-xs font-bold" style={{ color: BROWN }}>{authOpen === 'login' ? t.newHere : t.haveAccount}</button>
             </div>
           </div>
