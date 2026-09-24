@@ -545,6 +545,7 @@ export default function App() {
   const owns = (uid_: string | null, pid: string) => !!uid_ && (products.some(p => p.id === pid && p.isFree === true) || purchases.some(p => p.userId === uid_ && p.productId === pid && p.accessStatus === 'active'));
   const myPurchases = purchases.filter(p => p.userId === sessionId && p.accessStatus === 'active');
   const myOrders = orders.filter(o => o.userId === sessionId);
+  const recentAdminOrders = [...orders].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 6);
 
   const allLiveReviews = useMemo(() => Object.values(cloudReviews).flat().filter(review => review.verified === true), [cloudReviews]);
   const homeReviewCount = allLiveReviews.length;
