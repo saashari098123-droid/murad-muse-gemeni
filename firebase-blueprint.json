@@ -353,6 +353,39 @@
         "googleDriveLink",
         "updatedAt"
       ]
+    },
+    "CouponClaim": {
+      "title": "CouponClaim",
+      "description": "Trusted numeric coupon definition used by Firestore order validation",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "percent",
+            "fixed"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "value",
+        "type",
+        "active",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -409,6 +442,12 @@
         "$ref": "#/entities/Payment"
       },
       "description": "Payment verification records"
+    },
+    "/couponClaims/{couponId}": {
+      "schema": {
+        "$ref": "#/entities/CouponClaim"
+      },
+      "description": "Trusted coupon definitions for secure order totals"
     }
   }
 }
