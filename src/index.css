@@ -1325,7 +1325,7 @@ html[lang="bn"] .font-display,
   .mg-desktop-home-only .home-hero-visual img {
     height: 205px !important;
     border-radius: 18px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     background: rgba(255,255,255,.06) !important;
     transform: none !important;
   }
@@ -1407,7 +1407,7 @@ html[lang="bn"] .font-display,
     width: 100% !important;
     height: 220px !important;
     max-height: 220px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
     transform: none !important;
     border-radius: 16px !important;
@@ -1436,7 +1436,7 @@ html[lang="bn"] .font-display,
   }
   .mg-desktop-home-only .hero-image-full {
     height: 220px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
     transform: none !important;
   }
@@ -1450,7 +1450,7 @@ html[lang="bn"] .font-display,
   }
   .mg-desktop-home-only .promo-image-full {
     height: 175px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
     transform: none !important;
   }
