@@ -1776,6 +1776,17 @@ export default function App() {
               </article>
             })}
           </div>
+          {homeReviews.length > 0 && <div className="mg-mobile-live-reviews">
+            <div className="mg-mobile-section-head"><div><Star size={21}/><h2>{t.testiTitle}</h2></div></div>
+            <div className="mg-mobile-review-list">
+              {homeReviews.map(review => <article key={review.id || (review.productId + '-' + review.name)}>
+                <div className="mg-mobile-review-stars">{[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />)}</div>
+                <p>“{review.text}”</p>
+                <b>{review.name}</b>
+                <small>{review.productName || 'Digital product'} {review.verified ? '• ✓ Verified Buyer' : ''}</small>
+              </article>)}
+            </div>
+          </div>}
         </section>
 
         <div className="mg-desktop-home-only">
@@ -1795,10 +1806,10 @@ export default function App() {
                 {!me && <button onClick={() => setAuthOpen('register')} className="glass px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm hover:bg-white/15 transition cursor-pointer">{t.createAccount}</button>}
               </div>
               <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-8 flex-wrap">
-                <div className="flex -space-x-2">{['R', 'S', 'N', 'T'].map((c, i) => <span key={i} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#3d1e07] flex items-center justify-center text-[10px] sm:text-xs font-black text-white" style={{ background: ['#b45309', '#047857', '#1d4ed8', '#be123c'][i] }}>{c}</span>)}</div>
-                <div className="text-[11px] sm:text-xs"><div className="flex items-center gap-1">{[1, 2, 3, 4, 5].map(s => <Star key={s} size={11} className="fill-amber-400 text-amber-400" />)}<b className="ml-1">4.9</b></div><span className="text-orange-100/70">{users.filter(u => u.role === 'customer').length * 1240}+ happy customers</span></div>
+                {homeReviewCount > 0 && <div className="flex -space-x-2">{homeReviews.map((review, i) => <span key={review.id || i} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#3d1e07] flex items-center justify-center text-[10px] sm:text-xs font-black text-white bg-blue-700">{review.name.slice(0, 1).toUpperCase()}</span>)}</div>}
+                <div className="text-[11px] sm:text-xs"><div className="flex items-center gap-1">{homeReviewCount > 0 && [1, 2, 3, 4, 5].map(s => <Star key={s} size={11} className={s <= Math.round(Number(homeAverageRating)) ? "fill-amber-400 text-amber-400" : "text-white/30"} />)}<b className="ml-1">{homeReviewCount ? homeAverageRating : '—'}</b></div><span className="text-orange-100/70">{homeReviewCount} customer reviews</span></div>
                 <div className="h-8 w-px bg-white/15 hidden sm:block" />
-                <div className="hidden sm:block"><div className="font-display font-black text-xl sm:text-2xl">{activeProducts.length * 36}+</div><div className="text-[10px] sm:text-[11px] text-orange-100/70">products sold</div></div>
+                <div className="hidden sm:block"><div className="font-display font-black text-xl sm:text-2xl">{activeProducts.length}</div><div className="text-[10px] sm:text-[11px] text-orange-100/70">active products</div></div>
               </div>
             </div>
             <div className="home-hero-visual relative mt-2 lg:mt-0">
@@ -1886,24 +1897,21 @@ export default function App() {
 
           <div className="mt-8 reveal">
             <h2 className="font-display font-black text-xl md:text-2xl text-slate-800 mb-4 flex items-center gap-2"><span className="w-1.5 h-7 rounded-full" style={{ background: BROWN }} /><Star size={20} className="fill-amber-400 text-amber-400" />{t.testiTitle}</h2>
-            <div className="grid md:grid-cols-3 gap-3 md:gap-4">
-              {([
-                ['পেমেন্টের ১০ মিনিটের মধ্যে Drive লিংক পেয়ে গেছি। Super fast service!', 'Rahat Hossain', 'Graphic Designer', '#b45309'],
-                ['Bundle quality is top-notch. Best digital store in Bangladesh.', 'Nusrat Jahan', 'Freelancer', '#047857'],
-                ['WhatsApp support is amazing. Highly recommended!', 'Tanvir Ahmed', 'YouTuber', '#1d4ed8'],
-              ] as [string, string, string, string][]).map(([q, n, r, c]) => (
-                <div key={n} className="bg-white border border-slate-100 rounded-3xl p-5 card-hover">
-                  <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} className="fill-amber-400 text-amber-400" />)}</div>
-                  <p className="text-sm text-slate-600 mt-2.5 leading-relaxed">“{q}”</p>
-                  <div className="flex items-center gap-2.5 mt-4">
-                    <span className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black" style={{ background: c }}>{n[0]}</span>
-                    <div><div className="text-sm font-black text-slate-800">{n}</div><div className="text-[11px] text-slate-400">{r} • <span className="text-emerald-600 font-bold">✓ Verified Buyer</span></div></div>
+            {homeReviews.length === 0
+              ? <div className="bg-white border border-slate-100 rounded-3xl p-6 text-sm text-slate-500 text-center">{lang === 'bn' ? 'এখনও কোনো customer review নেই।' : 'No customer reviews yet.'}</div>
+              : <div className="grid md:grid-cols-3 gap-3 md:gap-4">
+                {homeReviews.map(review => (
+                  <div key={review.id || (review.productId + '-' + (review.createdAt || review.date) + '-' + review.name)} className="bg-white border border-slate-100 rounded-3xl p-5 card-hover">
+                    <div className="flex gap-0.5">{[1,2,3,4,5].map(s => <Star key={s} size={14} className={s <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />)}</div>
+                    <p className="text-sm text-slate-600 mt-2.5 leading-relaxed">“{review.text}”</p>
+                    <div className="flex items-center gap-2.5 mt-4">
+                      <span className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black bg-[#1d4ed8]">{review.name.slice(0, 1).toUpperCase()}</span>
+                      <div><div className="text-sm font-black text-slate-800">{review.name}</div><div className="text-[11px] text-slate-400">{review.productName || (lang === 'bn' ? 'ডিজিটাল প্রোডাক্ট' : 'Digital product')} {review.verified ? '• ✓ Verified Buyer' : ''}</div></div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </main>
+                ))}
+              </div>}
+          </div>    </main>
         </div>
       </>}
 
