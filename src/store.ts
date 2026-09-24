@@ -4,7 +4,7 @@ export type Category = { id: string; name: string; slug: string; image: string; 
 export type Review = { id?: string; productId?: string; userId?: string; purchaseId?: string; name: string; rating: number; text: string; date: string; verified?: boolean; createdAt?: number };
 export type Product = {
   id: string; name: string; slug: string; description: string;
-  price: number; discountPrice?: number; categoryId: string;
+  price: number; discountPrice?: number; isFree?: boolean; categoryId: string;
   previewImages: string[]; googleDriveLink: string; features: string[];
   reviews: Review[]; status: 'active' | 'hidden';
   rating: number; sold: number; createdAt: string; createdAtMs?: number;
@@ -53,7 +53,7 @@ export const tk = (n: number) => '৳' + n.toLocaleString('en-IN');
 export const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9\u0980-\u09FF]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('item-' + Date.now());
 export const uid = (p: string) => p + '-' + Date.now().toString(36) + Math.floor(Math.random() * 999);
 export const nowStr = () => new Date().toLocaleString('bn-BD');
-export const eff = (p: Product) => (typeof p.discountPrice === 'number' && p.discountPrice >= 0 && p.discountPrice < p.price ? p.discountPrice : p.price);
+export const eff = (p: Product) => p.isFree ? 0 : (typeof p.discountPrice === 'number' && p.discountPrice >= 0 && p.discountPrice < p.price ? p.discountPrice : p.price);
 export const offPct = (p: Product) => (typeof p.discountPrice === 'number' && p.discountPrice >= 0 && p.discountPrice < p.price ? Math.round((1 - p.discountPrice / p.price) * 100) : 0);
 export const waLink = (num: string, msg: string) => `https://wa.me/${num.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
 export const IMG = (seed: string, w = 600) => `https://picsum.photos/seed/${seed}/${w}/600`;
