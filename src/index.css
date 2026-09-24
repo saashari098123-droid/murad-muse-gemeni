@@ -1523,15 +1523,55 @@ html[lang="bn"] .font-display,
 }
 
 
-/* Home hero: keep the verified-payment badge compact and slightly higher. */
+/* Home hero: keep the verified-payment badge smaller and higher. */
 .hero-verified-badge {
   animation: none !important;
   transform: none !important;
   z-index: 20;
+  top: -7px !important;
+  right: -2px !important;
+  padding: 3px 6px !important;
+  gap: 4px !important;
+  border-radius: 9px !important;
+}
+.hero-verified-badge svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+.hero-verified-badge > div {
+  font-size: 8px !important;
+  line-height: 1.05 !important;
+}
+.hero-verified-badge > div span {
+  font-size: 7px !important;
 }
 
-/* Home product cards: stay still; only normal hover interaction remains. */
-.home-products-static > * {
+@media (max-width: 639px) {
+  .hero-verified-badge {
+    top: -4px !important;
+    right: -1px !important;
+    padding: 2px 5px !important;
+    border-radius: 8px !important;
+  }
+  .hero-verified-badge svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  .hero-verified-badge > div {
+    font-size: 7px !important;
+  }
+  .hero-verified-badge > div span {
+    font-size: 6px !important;
+  }
+}
+
+/* Home product cards: stay completely still; no repeated animation/jump. */
+.home-products-static,
+.home-products-static > *,
+.mg-mobile-products,
+.mg-mobile-products > *,
+.mg-mobile-product {
   animation: none !important;
   transform: none !important;
+  will-change: auto !important;
 }
