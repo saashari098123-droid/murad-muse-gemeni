@@ -1511,13 +1511,13 @@ html[lang="bn"] .font-display,
     position: relative !important;
     z-index: 10 !important;
     display: block !important;
-    width: auto !important;
+    width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain !important;
     object-position: center center !important;
     transform: none !important;
-    flex: 0 1 auto !important;
+    flex: 1 1 auto !important;
   }
 }
