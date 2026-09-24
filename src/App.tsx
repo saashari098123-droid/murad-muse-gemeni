@@ -1548,7 +1548,14 @@ export default function App() {
                   <h3>{p.name}</h3>
                   <div className="mg-rating"><Star size={13} className="fill-amber-400 text-amber-400"/>{p.rating} <small>({p.sold.toLocaleString()})</small></div>
                   <div className="mg-price">{tk(eff(p))} {offPct(p)>0 && <s>{tk(p.price)}</s>}</div>
-                  <button onClick={e=>{e.stopPropagation();owned?openAccess(sessionId,p.id):addCart(p.id)}}>{owned?<Download size={14}/>:<Download size={14}/>} {owned?t.download:t.instantAccess}</button>
+                  {owned ? (
+                    <button onClick={e=>{e.stopPropagation();openAccess(sessionId,p.id)}}>{t.download}</button>
+                  ) : (
+                    <div className="mg-product-actions">
+                      <button className="mg-cart-btn" onClick={e=>{e.stopPropagation();addCart(p.id)}}><ShoppingCart size={12}/> {t.addToCart}</button>
+                      <button className="mg-buy-btn" onClick={e=>{e.stopPropagation();buyNow(p.id)}}>{t.buyNow}</button>
+                    </div>
+                  )}
                 </div>
               </article>
             })}
