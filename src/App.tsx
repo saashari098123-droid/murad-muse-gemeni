@@ -795,19 +795,26 @@ export default function App() {
   };
 
   const openAccess = async (uid_: string | null, pid: string) => {
-    const prod = products.find(p => p.id === pid);
     if (!uid_) { fail(t.pleaseLogin); return; }
     if (!owns(uid_, pid)) { fail(t.accessDenied); return; }
-    const cachedLink = accessLinks[pid] || prod?.googleDriveLink;
-    if (cachedLink) { window.open(cachedLink, '_blank'); return; }
     if (!db) { fail(t.noAccessLink); return; }
+
+    // Customers always fetch the delivery URL from the purchase-gated document.
+    // LocalStorage/cache values are never treated as proof of ownership.
+    const popup = window.open('', '_blank');
     try {
       const accessDoc = await getDoc(doc(db, 'productAccess', pid));
       const link = accessDoc.exists() ? String(accessDoc.data().googleDriveLink || '').trim() : '';
-      if (!link) { fail(t.noAccessLink); return; }
+      if (!link) {
+        popup?.close();
+        fail(t.noAccessLink);
+        return;
+      }
       setAccessLinks(prev => ({ ...prev, [pid]: link }));
-      window.open(link, '_blank');
+      if (popup) popup.location.href = link;
+      else window.open(link, '_blank');
     } catch {
+      popup?.close();
       fail(t.noAccessLink);
     }
   };
