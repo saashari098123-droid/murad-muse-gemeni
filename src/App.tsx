@@ -14,7 +14,7 @@ import {
   type User, type Category, type Product, type Review, type Order, type Purchase, type Payment, type Settings, type CartLine, type View,
 } from './store';
 import { db, auth, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logoutFirebase, firebaseEnabled, compressImageForFirestore, authProviderOf } from './store/firebase';
-import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, getDoc, deleteDoc, writeBatch, deleteField, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const BROWN = '#5a2e0d';
@@ -433,6 +433,7 @@ export default function App() {
           const { googleDriveLink: _privateLink, ...publicProduct } = product;
           batch.set(doc(db, 'products', product.id), {
             ...publicProduct,
+            googleDriveLink: deleteField(),
             previewImages: hasDataImages ? [] : product.previewImages,
           }, { merge: true });
           if (driveLink) {
@@ -999,7 +1000,7 @@ export default function App() {
             previewImages: hasDataImages ? [] : nextProduct.previewImages,
           };
           const batch = writeBatch(db);
-          batch.set(doc(db, 'products', nextProduct.id), productForCloud, { merge: true });
+          batch.set(doc(db, 'products', nextProduct.id), { ...productForCloud, googleDriveLink: deleteField() }, { merge: true });
           batch.set(doc(db, 'productAccess', nextProduct.id), {
             productId: nextProduct.id,
             googleDriveLink: nextProduct.googleDriveLink.trim(),
