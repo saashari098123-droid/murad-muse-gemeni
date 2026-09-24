@@ -32,6 +32,28 @@ service cloud.firestore {
         && item.price == expectedPrice;
     }
 
+    function validCouponDiscount() {
+      let coupon = request.resource.data.coupon;
+      return coupon == ''
+        ? request.resource.data.discount == 0
+        : exists(/databases/$(database)/documents/couponClaims/$(coupon))
+          && get(/databases/$(database)/documents/couponClaims/$(coupon)).data.active == true
+          && (
+            (get(/databases/$(database)/documents/couponClaims/$(coupon)).data.type == 'percent'
+              && get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value is number
+              && get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value >= 0
+              && get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value <= 100
+              && request.resource.data.discount == math.round(request.resource.data.subtotal * get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value / 100))
+            ||
+            (get(/databases/$(database)/documents/couponClaims/$(coupon)).data.type == 'fixed'
+              && get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value is number
+              && get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value >= 0
+              && request.resource.data.discount == (get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value > request.resource.data.subtotal
+                ? request.resource.data.subtotal
+                : get(/databases/$(database)/documents/couponClaims/$(coupon)).data.value))
+          );
+    }
+
     function activePurchaseFor(productId) {
       return isSignedIn()
         && exists(/databases/$(database)/documents/purchases/$(request.auth.uid + '_' + productId))
@@ -132,6 +154,7 @@ service cloud.firestore {
         && request.resource.data.items is list
         && request.resource.data.items.size() > 0
         && request.resource.data.items.size() <= 10
+        && (request.resource.data.coupon == '' || request.resource.data.items.size() <= 9)
         && validOrderItem(request.resource.data.items[0])
         && (request.resource.data.items.size() <= 1 || validOrderItem(request.resource.data.items[1]))
         && (request.resource.data.items.size() <= 2 || validOrderItem(request.resource.data.items[2]))
@@ -147,6 +170,7 @@ service cloud.firestore {
         && request.resource.data.discount is number
         && request.resource.data.discount >= 0
         && request.resource.data.discount <= request.resource.data.subtotal
+        && validCouponDiscount()
         && request.resource.data.total is number
         && request.resource.data.total == request.resource.data.subtotal - request.resource.data.discount
         && request.resource.data.coupon is string
@@ -177,6 +201,11 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.createdAt is string;
       allow update, delete: if isAdmin();
+    }
+
+    match /couponClaims/{couponId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /payments/{paymentId} {
