@@ -44,10 +44,8 @@ if (firebaseEnabled && db) {
 }
 
 export async function loginWithGoogle() {
-  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
-    await signInWithRedirect(auth, googleProvider);
-    return null;
-  }
+  // Keep the same Google OAuth flow that was working on mobile before the
+  // redirect-specific changes: Firebase opens Google's auth popup directly.
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
 }
