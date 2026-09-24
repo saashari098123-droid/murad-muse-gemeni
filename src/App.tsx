@@ -1949,7 +1949,15 @@ export default function App() {
       )}
       {view === 'dashboard' && me && me.role === 'customer' && (
         <main className="max-w-5xl mx-auto px-3 py-6">
-          <h2 className="font-display font-black text-2xl text-slate-800">👋 {me.name}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display font-black text-2xl text-slate-800">👋 {me.name}</h2>
+            <button
+              onClick={logout}
+              className="shrink-0 flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs px-3 py-2 rounded-xl border border-rose-100 cursor-pointer"
+            >
+              <LogOut size={14} /> {t.logout}
+            </button>
+          </div>
           <div className="grid grid-cols-3 gap-3 mt-4">
             {[[String(myPurchases.length), t.totalPurchased], [String(myOrders.length), t.orderHistory], [tk(myOrders.filter(o => o.paymentStatus === 'Paid').reduce((s, o) => s + o.total, 0)), t.totalSpent]].map(([v, l]) => (
               <div key={l as string} className="text-white rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${BROWN}, #8a4a12)` }}><div className="text-xl md:text-2xl font-black font-display">{v as string}</div><div className="text-xs opacity-80">{l as string}</div></div>
