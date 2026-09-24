@@ -1713,7 +1713,7 @@ export default function App() {
             <div className="mg-mobile-hero-copy">
               <div className="mg-eyebrow">PREMIUM DIGITAL STORE</div>
               <h1>Digital<br />Products,<br /><span>Instant Access</span></h1>
-              <p>Get high-quality digital products, templates, software and more — instantly after purchase.</p>
+              <p>Get high-quality digital products, templates, software and more — access them after payment verification.</p>
               <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
             </div>
             <div className="mg-mobile-hero-art">
@@ -1723,7 +1723,7 @@ export default function App() {
           </div>
 
           <div className="mg-mobile-trust">
-            {([[Zap,'Instant Access','Get your files instantly'],[ShieldCheck,'Verified Payment','Safe & secure'],[Headphones,'24/7 Support',"We're here 24/7"],[Download,'Lifetime Library','Access anytime']] as [typeof Zap,string,string][]).map(([Icon,title,sub]) =>
+            {([[Zap,'Instant Access','Access after payment verification'],[ShieldCheck,'Verified Payment','Safe & secure'],[Headphones,'24/7 Support',"We're here 24/7"],[Download,'Lifetime Library','Access anytime']] as [typeof Zap,string,string][]).map(([Icon,title,sub]) =>
               <div key={title}><span><Icon size={21}/></span><b>{title}</b><small>{sub}</small></div>
             )}
           </div>
