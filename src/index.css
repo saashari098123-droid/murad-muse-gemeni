@@ -1252,11 +1252,6 @@ html[lang="bn"] .font-display,
 }
 
 
-/* ===== Content images fill their boxes; brand marks keep their proportions ===== */
-img:not(.brand-logo-icon):not([src*="murad-logo"]) {
-  object-fit: cover !important;
-  object-position: center !important;
-}
 
 
 /* ===== Compact desktop digital-product hero ===== */
