@@ -952,7 +952,7 @@ export default function App() {
     return (
       <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 overflow-hidden card-hover flex flex-col shadow-xs hover:shadow-md transition">
         <div className="relative cursor-pointer img-zoom group" onClick={() => goDetails(p.id)}>
-          <img src={p.previewImages[0] || IMG(p.id)} alt={p.name} loading="lazy" className="w-full h-36 sm:h-48 md:h-60 object-contain bg-slate-50" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id); }} />
+          <img src={p.previewImages[0] || IMG(p.id)} alt={p.name} loading="lazy" className="w-full h-36 sm:h-48 md:h-60 object-cover bg-slate-50" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id); }} />
           {offPct(p) > 0 && <span className="absolute bottom-2 left-2 text-white text-[9px] sm:text-[11px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full flex items-center gap-0.5 sm:gap-1 shadow" style={{ background: BROWN }}><Zap size={10} className="fill-orange-400 text-orange-400" />{offPct(p)}% {t.off}</span>}
           {owned
             ? <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 sm:py-1 rounded-full flex items-center gap-1 shadow"><Check size={10} />{t.ownedBadge}</span>
@@ -1258,7 +1258,7 @@ export default function App() {
               <div className="grid gap-2">
                 {products.map(p => (
                   <div key={p.id} className="flex items-center gap-2 sm:gap-3 border border-slate-200 rounded-xl p-2.5 bg-white hover:bg-slate-50/50 transition">
-                    <img src={p.previewImages[0] || IMG(p.id, 200)} alt="" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-contain bg-slate-50 border border-slate-100 shrink-0" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id, 200); }} />
+                    <img src={p.previewImages[0] || IMG(p.id, 200)} alt="" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover bg-slate-50 border border-slate-100 shrink-0" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(p.id, 200); }} />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-xs sm:text-sm truncate text-slate-800">{p.name}</div>
                       <div className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">{catName(p.categoryId)} • {tk(eff(p))} • <span className={p.status === 'active' ? 'text-emerald-600 font-medium' : 'text-slate-400'}>{p.status}</span> • {p.sold} sold</div>
@@ -1873,7 +1873,7 @@ export default function App() {
             {activeProducts.slice(0,10).map(p=>{
               const owned=owns(sessionId,p.id);
               return <article key={p.id} className="mg-mobile-product" onClick={()=>goDetails(p.id)}>
-                <div className="mg-product-image"><img src={p.previewImages[0] || IMG(p.id)} alt={p.name} className="w-full h-full object-contain" onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(p.id)}}/>
+                <div className="mg-product-image"><img src={p.previewImages[0] || IMG(p.id)} alt={p.name} className="w-full h-full object-cover" onError={e=>{const im=e.target as HTMLImageElement;im.onerror=null;im.src=IMG(p.id)}}/>
                   <span>{owned ? t.ownedBadge : t.digitalTag}</span>
                 </div>
                 <div className="mg-product-info">
@@ -1932,9 +1932,9 @@ export default function App() {
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
                   <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl hero-image-frame">
-                    <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-contain blur-xl scale-110 opacity-50" />
+                    <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" />
                     <div className="absolute inset-0 bg-black/10" />
-                    <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="hero-image-full relative z-10 w-full h-48 sm:h-64 md:h-80 object-contain rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
+                    <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="hero-image-full relative z-10 w-full h-48 sm:h-64 md:h-80 object-cover rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
                     <div className="mobile-hero-overlay absolute inset-0 rounded-2xl p-4 flex flex-col justify-end items-start text-white">
                       <span className="mobile-hero-badge inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#4a250d]">✦ {lang === 'bn' ? 'আজকের অফার' : 'TODAY\'S OFFER'}</span>
                       <h2 className="mt-2 max-w-[72%] font-display text-lg font-black leading-tight drop-shadow-md">{hero.name}</h2>
@@ -1988,9 +1988,9 @@ export default function App() {
             </div>
           </div>
           <button onClick={() => setView('products')} className="home-promo relative rounded-2xl overflow-hidden text-left group reveal cursor-pointer">
-            <img src={settings.promoImage || IMG('promo', 800)} alt="" aria-hidden="true" className="promo-image-backdrop absolute inset-0 w-full h-full object-contain blur-xl scale-110 opacity-45" />
+            <img src={settings.promoImage || IMG('promo', 800)} alt="" aria-hidden="true" className="promo-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-45" />
             <div className="absolute inset-0 bg-black/5" />
-            <img src={settings.promoImage || IMG('promo', 800)} alt="" className="promo-image-full relative z-10 w-full h-32 sm:h-40 md:h-44 object-contain group-hover:scale-[1.02] transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
+            <img src={settings.promoImage || IMG('promo', 800)} alt="" className="promo-image-full relative z-10 w-full h-32 sm:h-40 md:h-44 object-cover group-hover:scale-[1.02] transition duration-500" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG('promo', 800); }} />
             <span className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 text-[10px] sm:text-[11px] font-black bg-white px-3.5 py-1 rounded-full whitespace-nowrap shadow" style={{ color: BROWN }}>{settings.promoTitle} • {t.shopNow}</span>
           </button>
@@ -2063,10 +2063,10 @@ export default function App() {
           <div className="grid lg:grid-cols-[380px_1fr_300px] gap-4 items-start">
             <div>
               <div className="relative bg-white rounded-2xl overflow-hidden border">
-                <img src={detail.previewImages[gal] || IMG(detail.id, 700)} alt="" className="w-full aspect-square object-contain bg-slate-50" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(detail.id, 700); }} />
+                <img src={detail.previewImages[gal] || IMG(detail.id, 700)} alt="" className="w-full aspect-square object-cover bg-slate-50" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(detail.id, 700); }} />
                 {offPct(detail) > 0 && <span className="absolute top-3 left-0 text-white text-xs font-black px-3 py-1.5 rounded-r-full flex items-center gap-1" style={{ background: BROWN }}><Zap size={12} className="fill-orange-400 text-orange-400" />{offPct(detail)}% {t.off}</span>}
               </div>
-              {detail.previewImages.length > 1 && <div className="flex gap-2 mt-2">{detail.previewImages.map((src, i) => <button key={i} onClick={() => setGal(i)} className={`w-16 h-16 rounded-xl overflow-hidden border-2 bg-slate-50 ${gal === i ? 'border-[#5a2e0d]' : 'border-transparent'}`}><img src={src} alt="" className="w-full h-full object-contain" /></button>)}</div>}
+              {detail.previewImages.length > 1 && <div className="flex gap-2 mt-2">{detail.previewImages.map((src, i) => <button key={i} onClick={() => setGal(i)} className={`w-16 h-16 rounded-xl overflow-hidden border-2 bg-slate-50 ${gal === i ? 'border-[#5a2e0d]' : 'border-transparent'}`}><img src={src} alt="" className="w-full h-full object-cover" /></button>)}</div>}
             </div>
             <div className="bg-white rounded-2xl border p-5">
               <h1 className="font-display font-bold text-xl md:text-2xl text-slate-800">{detail.name}</h1>
@@ -2155,7 +2155,7 @@ export default function App() {
                   {cartDetailed.map(x => (
                     <div key={x.productId} className="bg-white rounded-2xl border p-4 grid md:grid-cols-[1fr_120px_120px] gap-3 items-center">
                       <div className="flex gap-3 items-center">
-                        <img src={x.p.previewImages[0] || IMG(x.p.id, 200)} alt="" className="w-20 h-20 rounded-xl object-contain bg-slate-50 border border-slate-100 cursor-pointer" onClick={() => goDetails(x.p.id)} onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(x.p.id, 200); }} />
+                        <img src={x.p.previewImages[0] || IMG(x.p.id, 200)} alt="" className="w-20 h-20 rounded-xl object-cover bg-slate-50 border border-slate-100 cursor-pointer" onClick={() => goDetails(x.p.id)} onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(x.p.id, 200); }} />
                         <div className="min-w-0"><div className="font-bold text-sm text-slate-800 line-clamp-2 cursor-pointer" onClick={() => goDetails(x.p.id)}>{x.p.name}</div>
                           <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded-md px-2 py-0.5 mt-1.5">{t.digitalTag} • {t.instantUnlock}</span></div>
                       </div>
@@ -2245,7 +2245,7 @@ export default function App() {
           <div className="grid md:grid-cols-2 gap-4 mt-4">
             <div className="bg-white rounded-2xl border p-4"><div className="flex items-center justify-between mb-2"><h3 className="font-bold">⚡ {t.quickDownload}</h3><button onClick={() => setView('purchases')} className="text-xs font-bold" style={{ color: BROWN }}>{t.viewAll} →</button></div>
               {myPurchases.length === 0 ? <p className="text-sm text-slate-500">{t.cartEmpty} <button onClick={() => setView('products')} className="font-bold" style={{ color: BROWN }}>→</button></p> :
-                myPurchases.slice(0, 3).map(pu => { const pr = products.find(x => x.id === pu.productId); return pr ? <button key={pu.id} onClick={() => openAccess(sessionId, pr.id)} className="w-full flex items-center gap-2 border rounded-xl p-2 mb-2 hover:border-emerald-400 text-left"><img src={pr.previewImages[0] || IMG(pr.id, 200)} alt="" className="w-12 h-12 rounded-lg object-contain bg-slate-50 border border-slate-100" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(pr.id, 200); }} /><span className="flex-1 text-xs font-bold truncate">{pr.name}</span><Download size={15} className="text-emerald-600" /></button> : null; })}</div>
+                myPurchases.slice(0, 3).map(pu => { const pr = products.find(x => x.id === pu.productId); return pr ? <button key={pu.id} onClick={() => openAccess(sessionId, pr.id)} className="w-full flex items-center gap-2 border rounded-xl p-2 mb-2 hover:border-emerald-400 text-left"><img src={pr.previewImages[0] || IMG(pr.id, 200)} alt="" className="w-12 h-12 rounded-lg object-cover bg-slate-50 border border-slate-100" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(pr.id, 200); }} /><span className="flex-1 text-xs font-bold truncate">{pr.name}</span><Download size={15} className="text-emerald-600" /></button> : null; })}</div>
             <div className="bg-white rounded-2xl border p-4"><div className="flex items-center justify-between mb-2"><h3 className="font-bold">🧾 {t.recentOrders}</h3><button onClick={() => setView('orders')} className="text-xs font-bold" style={{ color: BROWN }}>{t.viewAll} →</button></div>
               {myOrders.length === 0 ? <p className="text-sm text-slate-500">—</p> :
                 myOrders.slice(0, 3).map(o => <div key={o.id} className="flex items-center justify-between border rounded-xl px-3 py-2 mb-2 text-xs"><span className="font-mono font-bold">{o.id}</span><span className={`px-2 py-0.5 rounded-full font-bold ${payBadge(o.paymentStatus)}`}>{o.paymentStatus}</span><b>{tk(o.total)}</b></div>)}</div>
@@ -2263,7 +2263,7 @@ export default function App() {
               : <div className="grid md:grid-cols-2 gap-3">{myPurchases.map(pu => {
                 const pr = products.find(x => x.id === pu.productId); if (!pr) return null;
                 return <div key={pu.id} className="bg-white rounded-2xl border p-3 flex gap-3">
-                  <img src={pr.previewImages[0] || IMG(pr.id, 200)} alt="" className="w-24 h-24 rounded-xl object-contain bg-slate-50 border border-slate-100 cursor-pointer" onClick={() => goDetails(pr.id)} onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(pr.id, 200); }} />
+                  <img src={pr.previewImages[0] || IMG(pr.id, 200)} alt="" className="w-24 h-24 rounded-xl object-cover bg-slate-50 border border-slate-100 cursor-pointer" onClick={() => goDetails(pr.id)} onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(pr.id, 200); }} />
                   <div className="flex-1 min-w-0"><div className="font-bold text-sm truncate">{pr.name}</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">{t.purchasedOn}: {pu.purchasedAt} • <span className="font-mono">{pu.orderId}</span></div>
                     <button onClick={() => openAccess(sessionId, pr.id)} className="mt-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl flex items-center gap-1.5 transition"><Download size={13} />{t.download}</button></div>
