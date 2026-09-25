@@ -1886,3 +1886,22 @@ html[lang="bn"] .font-display,
     height: 5px !important;
   }
 }
+
+
+/* Final specific mobile hero-dot placement; the image and hero dimensions remain unchanged. */
+@media (max-width: 639px) {
+  .mg-mobile-home .mg-mobile-dots {
+    bottom: 0 !important;
+    gap: 3px !important;
+  }
+  .mg-mobile-home .mg-mobile-dots button {
+    width: 4px !important;
+    min-width: 4px !important;
+    height: 4px !important;
+  }
+  .mg-mobile-home .mg-mobile-dots button.active {
+    width: 8px !important;
+    min-width: 8px !important;
+    height: 4px !important;
+  }
+}
