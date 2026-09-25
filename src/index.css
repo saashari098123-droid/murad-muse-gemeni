@@ -1869,3 +1869,20 @@ html[lang="bn"] .font-display,
     width: 13px !important;
   }
 }
+
+
+/* Mobile hero dots: smaller and tucked beneath the existing image without changing the image itself. */
+@media (max-width: 639px) {
+  .mg-mobile-dots {
+    bottom: 2px !important;
+    gap: 4px !important;
+  }
+  .mg-mobile-dots button {
+    width: 5px !important;
+    height: 5px !important;
+  }
+  .mg-mobile-dots button.active {
+    width: 11px !important;
+    height: 5px !important;
+  }
+}
