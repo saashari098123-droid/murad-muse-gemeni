@@ -98,7 +98,7 @@ export default function App() {
   const [revName, setRevName] = useState('');
   const [revText, setRevText] = useState('');
   const [revStars, setRevStars] = useState(5);
-  const [adminTab, setAdminTab] = useState<'overview' | 'products' | 'orders' | 'customers' | 'cats' | 'settings'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'products' | 'orders' | 'reviews' | 'customers' | 'cats' | 'settings'>('overview');
   const [pendingBuy, setPendingBuy] = useState<string | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
@@ -201,7 +201,7 @@ export default function App() {
       setCloudReviews(grouped);
       if (!snap.empty) {
         setProducts(prev => prev.map(p => {
-          const reviews = grouped[p.id] || [];
+          const reviews = (grouped[p.id] || []).filter(review => review.verified === true && (review.moderationStatus === undefined || review.moderationStatus === 'approved'));
           return reviews.length ? { ...p, reviews, rating: Number((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)) } : p;
         }));
       }
@@ -550,7 +550,9 @@ export default function App() {
   const myOrders = orders.filter(o => o.userId === sessionId);
   const recentAdminOrders = [...orders].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 6);
 
-  const allLiveReviews = useMemo(() => Object.values(cloudReviews).flat().filter(review => review.verified === true), [cloudReviews]);
+  const allReviews = useMemo(() => Object.values(cloudReviews).flat(), [cloudReviews]);
+  const pendingReviews = useMemo(() => allReviews.filter(review => review.moderationStatus === 'pending' || (review.moderationStatus === undefined && review.verified !== true)), [allReviews]);
+  const allLiveReviews = useMemo(() => allReviews.filter(review => review.verified === true && (review.moderationStatus === undefined || review.moderationStatus === 'approved')), [allReviews]);
   const homeReviewCount = allLiveReviews.length;
   const homeAverageRating = homeReviewCount
     ? (allLiveReviews.reduce((sum, review) => sum + review.rating, 0) / homeReviewCount).toFixed(1)
@@ -961,15 +963,13 @@ export default function App() {
     const existing = (cloudReviews[detail.id] || detail.reviews || []).find(r => r.userId === me.id);
     if (existing) { fail(lang === 'bn' ? 'এই পণ্যে আপনার rating আগে থেকেই দেওয়া আছে।' : 'You have already rated this product.'); return; }
     const purchaseId = `${me.id}_${detail.id}`;
-    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: true, createdAt: Date.now() };
+    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: false, moderationStatus: 'pending', createdAt: Date.now() };
     try {
       if (!db) throw new Error('Firebase Firestore is not configured.');
       await setDoc(doc(db, 'reviews', review.id || `${detail.id}_${me.id}`), review);
       const nextReviews = [...(cloudReviews[detail.id] || detail.reviews || []), review];
-      const nextRating = Number((nextReviews.reduce((sum, r) => sum + r.rating, 0) / nextReviews.length).toFixed(1));
       setCloudReviews(prev => ({ ...prev, [detail.id]: nextReviews }));
-      setProducts(prev => prev.map(p => p.id === detail.id ? { ...p, reviews: nextReviews, rating: nextRating } : p));
-      setRevName(''); setRevText(''); setRevStars(5); notify('✓ ' + t.reviewAdded);
+      setRevName(''); setRevText(''); setRevStars(5); notify('✓ ' + (lang === 'bn' ? 'আপনার review admin approval-এর জন্য পাঠানো হয়েছে।' : 'Your review was sent for admin approval.'));
     } catch (e: unknown) {
       fail(e instanceof Error ? e.message : (lang === 'bn' ? 'Rating save হয়নি। আবার চেষ্টা করুন।' : 'Could not save rating. Please try again.'));
     }
@@ -1072,6 +1072,30 @@ export default function App() {
         return;
       }
       setDeleteConfirm({ type: 'category', id, name });
+    };
+
+    const moderateReview = async (review: Review, approved: boolean) => {
+      if (!db || !review.id) { fail(lang === 'bn' ? 'Firebase সংযোগ পাওয়া যায়নি।' : 'Firebase is not connected.'); return; }
+      const moderationStatus = approved ? 'approved' : 'rejected';
+      try {
+        await setDoc(doc(db, 'reviews', review.id), { verified: approved, moderationStatus }, { merge: true });
+        setCloudReviews(prev => ({
+          ...prev,
+          [review.productId || '']: (prev[review.productId || ''] || []).map(item => item.id === review.id ? { ...item, verified: approved, moderationStatus } : item),
+        }));
+        if (review.productId) {
+          setProducts(prev => prev.map(product => {
+            if (product.id !== review.productId) return product;
+            const current = product.reviews || [];
+            const next = approved ? [...current.filter(item => item.id !== review.id), { ...review, verified: true, moderationStatus: 'approved' as const }] : current.filter(item => item.id !== review.id);
+            const live = next.filter(item => item.verified === true && (item.moderationStatus === undefined || item.moderationStatus === 'approved'));
+            return { ...product, reviews: live, rating: live.length ? Number((live.reduce((sum, item) => sum + item.rating, 0) / live.length).toFixed(1)) : product.rating };
+          }));
+        }
+        notify('✓ ' + (approved ? (lang === 'bn' ? 'Review homepage-এ live হয়েছে।' : 'Review is now live on the homepage.') : (lang === 'bn' ? 'Review reject করা হয়েছে।' : 'Review rejected.')));
+      } catch (e: unknown) {
+        fail(e instanceof Error ? e.message : (lang === 'bn' ? 'Review update হয়নি। Firebase rules পরীক্ষা করুন।' : 'Could not update review. Check Firebase rules.'));
+      }
     };
 
     const executeDelete = async () => {
@@ -1277,8 +1301,8 @@ export default function App() {
         </header>
         <div className="max-w-6xl mx-auto p-3 sm:p-4 w-full">
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-4">
-            {([['overview', 'Overview', LayoutDashboard], ['products', 'Products', Package], ['orders', 'Orders', ShoppingBag], ['customers', 'Customers', Users], ['cats', 'Categories', Tag], ['settings', 'Settings', SettingsIcon]] as [typeof adminTab, string, typeof LayoutDashboard][]).map(([k, l, Icon]) => (
-              <button key={k} onClick={() => setAdminTab(k)} className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer transition ${adminTab === k ? 'text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-50'}`} style={adminTab === k ? { background: BROWN } : {}}><Icon size={15} />{l}{k === 'orders' && pendPay.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendPay.length}</span>}</button>
+            {([['overview', 'Overview', LayoutDashboard], ['products', 'Products', Package], ['orders', 'Orders', ShoppingBag], ['reviews', 'Reviews', Star], ['customers', 'Customers', Users], ['cats', 'Categories', Tag], ['settings', 'Settings', SettingsIcon]] as [typeof adminTab, string, typeof LayoutDashboard][]).map(([k, l, Icon]) => (
+              <button key={k} onClick={() => setAdminTab(k)} className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer transition ${adminTab === k ? 'text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-50'}`} style={adminTab === k ? { background: BROWN } : {}}><Icon size={15} />{l}{k === 'orders' && pendPay.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendPay.length}</span>}{k === 'reviews' && pendingReviews.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendingReviews.length}</span>}</button>
             ))}
           </div>
 
@@ -1404,6 +1428,29 @@ export default function App() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {adminTab === 'reviews' && (
+            <div className="bg-white rounded-2xl p-4 shadow-xs overflow-hidden">
+              <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                <div><h3 className="font-bold">Reviews moderation ({allReviews.length})</h3><p className="text-xs text-slate-500 mt-1">New reviews stay private until you approve them.</p></div>
+                <span className="text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-full">{pendingReviews.length} pending</span>
+              </div>
+              {allReviews.length === 0 ? <p className="text-sm text-slate-500 py-6 text-center">No reviews yet.</p> : <div className="grid gap-3">
+                {[...allReviews].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map(review => {
+                  const status = review.moderationStatus || (review.verified ? 'approved' : 'pending');
+                  const productName = products.find(product => product.id === review.productId)?.name || 'Digital product';
+                  return <article key={review.id || `${review.productId}-${review.createdAt}`} className="border border-slate-200 rounded-xl p-3">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="min-w-0"><div className="font-bold text-sm truncate">{review.name} <span className="text-amber-500 ml-1">{'★'.repeat(review.rating)}<span className="text-slate-200">{'★'.repeat(5 - review.rating)}</span></span></div><div className="text-[11px] text-slate-500 mt-0.5">{productName} • {review.date}</div></div>
+                      <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${status === 'approved' ? 'bg-emerald-50 text-emerald-700' : status === 'rejected' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}`}>{status}</span>
+                    </div>
+                    <p className="text-sm text-slate-700 mt-2 leading-relaxed">{review.text}</p>
+                    {status === 'pending' && <div className="flex gap-2 mt-3"><button onClick={() => moderateReview(review, true)} className="text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-2 rounded-lg cursor-pointer">✓ Approve & make live</button><button onClick={() => moderateReview(review, false)} className="text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-lg cursor-pointer">Reject</button></div>}
+                  </article>;
+                })}
+              </div>}
             </div>
           )}
 

@@ -131,7 +131,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && request.resource.data.keys().hasAll(['productId', 'userId', 'purchaseId', 'name', 'rating', 'text', 'date', 'verified', 'createdAt'])
-        && request.resource.data.keys().hasOnly(['productId', 'userId', 'purchaseId', 'name', 'rating', 'text', 'date', 'verified', 'createdAt', 'id'])
+        && request.resource.data.keys().hasOnly(['productId', 'userId', 'purchaseId', 'name', 'rating', 'text', 'date', 'verified', 'moderationStatus', 'createdAt', 'id'])
         && reviewId == request.resource.data.productId + '_' + request.auth.uid
         && request.resource.data.id == reviewId
         && request.resource.data.productId is string
@@ -147,12 +147,15 @@ service cloud.firestore {
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 2000
         && request.resource.data.date is string
-        && request.resource.data.verified == true
+        && request.resource.data.verified == false
+        && request.resource.data.moderationStatus == 'pending'
         && request.resource.data.createdAt is number
         && activePurchaseFor(request.resource.data.productId);
 
-      // Reviews are intentionally immutable from the client after submission.
-      allow update: if false;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified', 'moderationStatus'])
+        && request.resource.data.verified == (request.resource.data.moderationStatus == 'approved')
+        && request.resource.data.moderationStatus in ['approved', 'rejected'];
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
