@@ -1857,9 +1857,6 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
           <span className="font-medium truncate min-w-0">{lang === 'bn' ? settings.announcement.replace('Welcome to Murad Graphics!', 'মুরাদ গ্রাফিক্সে স্বাগতম!') : settings.announcement}</span>
           <div className="flex-1" />
-          <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="shrink-0 flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg font-bold cursor-pointer transition"><Globe size={13} />{lang === 'bn' ? 'বাংলা' : 'EN'}</button>
-          <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} className="hover:text-orange-200 font-semibold hidden sm:block cursor-pointer">{t.myOrders}</button>
-          <a href={waLink(settings.whatsapp, 'Support needed')} target="_blank" rel="noreferrer" className="hover:text-orange-200 font-semibold">{t.support}</a>
         </div>
       </div>
 
@@ -1946,7 +1943,9 @@ export default function App() {
               <button onClick={() => goNav('cart')} className="site-nav-link"><ShoppingCart size={16} />{t.cart}</button>
               <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('orders'); }} className="site-nav-link"><History size={16} />{t.orderHistory}</button>
               <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('purchases'); }} className="site-nav-link"><Download size={16} />{t.library}</button>
-              <button onClick={() => { setNavOpen(false); setLang(lang === 'bn' ? 'en' : 'bn'); }} className="site-nav-link"><Globe size={16} />{lang === 'bn' ? 'English' : 'বাংলা'}</button>
+              <button onClick={() => { setNavOpen(false); setLang(lang === 'bn' ? 'en' : 'bn'); }} className="site-nav-link"><Globe size={16} />{lang === 'bn' ? 'বাংলা' : 'English'}</button>
+              <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('orders'); }} className="site-nav-link"><History size={16} />{t.myOrders}</button>
+              <a href={waLink(settings.whatsapp, 'Support needed')} target="_blank" rel="noreferrer" className="site-nav-link"><Headphones size={16} />{t.support}</a>
             </div>
           </div>
         </div>
