@@ -1962,7 +1962,7 @@ export default function App() {
                       <button onClick={() => goDetails(hero.id)} className="mt-2 rounded-full bg-white px-3.5 py-1.5 text-[10px] font-black text-[#5a2e0d] shadow-lg cursor-pointer transition active:scale-95">{lang === 'bn' ? 'এখনই দেখুন' : 'Explore now'} <ArrowRight size={11} className="inline" /></button>
                     </div>
                   </div>
-                  <div className="absolute -left-1 sm:-left-4 bottom-0 sm:bottom-4 glass rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 float-slower shadow-xl">
+                  <div className="absolute -left-1 sm:-left-4 bottom-[-1rem] sm:bottom-0 glass rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 float-slower shadow-xl">
                     <div className="text-[9px] sm:text-[10px] text-orange-200/80 font-bold tracking-wider">{t.grandTotal}</div>
                     <div className="font-display font-black text-lg sm:text-2xl text-white">{tk(eff(hero))}</div>
                     <button onClick={() => goDetails(hero.id)} className="mt-1 bg-gradient-to-r from-orange-400 to-amber-500 text-[10px] sm:text-[11px] font-black px-3 sm:px-4 py-1.5 rounded-full shadow cursor-pointer">{t.orderNow}</button>
