@@ -1857,6 +1857,15 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
           <span className="font-medium truncate min-w-0">{lang === 'bn' ? settings.announcement.replace('Welcome to Murad Graphics!', 'মুরাদ গ্রাফিক্সে স্বাগতম!') : settings.announcement}</span>
           <div className="flex-1" />
+          <button
+            onClick={() => setNavOpen(open => !open)}
+            aria-label={lang === 'bn' ? 'নেভিগেশন মেনু' : 'Open navigation menu'}
+            aria-expanded={navOpen}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/20 hover:bg-white/10 font-bold cursor-pointer shrink-0"
+          >
+            <Menu size={16} />
+            <span>{lang === 'bn' ? 'মেনু' : 'Menu'}</span>
+          </button>
         </div>
       </div>
 
@@ -1864,7 +1873,6 @@ export default function App() {
       <header className="store-header text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
         <div className="max-w-7xl mx-auto px-3 py-2.5 sm:py-3 flex items-center gap-3">
           <button onClick={() => setView('home')} className="shrink-0 cursor-pointer"><Logo /></button>
-          <button onClick={() => setNavOpen(open => !open)} aria-label={lang === 'bn' ? 'নেভিগেশন মেনু' : 'Open navigation menu'} aria-expanded={navOpen} className="nav-trigger hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/25 hover:bg-white/10 font-bold text-xs cursor-pointer transition-colors"><Menu size={17} /><span>{lang === 'bn' ? 'মেনু' : 'Menu'}</span></button>
           <div className="header-search flex-1 max-w-2xl mx-auto relative flex items-center">
             <input
               value={search}
@@ -1883,7 +1891,6 @@ export default function App() {
           </div>
           <div className="flex-1 sm:hidden" />
           <div className="mobile-header-actions sm:hidden flex items-center gap-1">
-            <button onClick={() => setNavOpen(open => !open)} aria-label={lang === 'bn' ? 'নেভিগেশন মেনু' : 'Open navigation menu'} aria-expanded={navOpen} className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Menu size={19} /></button>
             <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
             <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
           </div>
