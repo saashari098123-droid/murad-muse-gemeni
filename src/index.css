@@ -1905,3 +1905,12 @@ html[lang="bn"] .font-display,
     height: 4px !important;
   }
 }
+
+
+/* Align mobile hero pagination with the center of the existing image column. */
+@media (max-width: 639px) {
+  .mg-mobile-home .mg-mobile-dots {
+    left: 74% !important;
+    transform: translateX(-50%) !important;
+  }
+}
