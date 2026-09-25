@@ -2059,7 +2059,7 @@ export default function App() {
 
         <main className="home-desktop-main max-w-7xl mx-auto px-3 py-4 sm:py-6">
           <h2 className="font-display font-black text-lg sm:text-2xl text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 reveal"><span className="w-1.5 h-6 sm:h-7 rounded-full" style={{ background: BROWN }} /><Zap size={18} style={{ color: BROWN }} />{t.newTrending}</h2>
-          <div className="home-products-static grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4">{activeProducts.slice(0, 20).map(p => <ProductCard key={p.id} p={p} />)}</div>
+          <div className="home-products-static grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">{activeProducts.slice(0, 8).map(p => <ProductCard key={p.id} p={p} />)}</div>
 
           <div className="mt-12 bg-white border border-orange-100 rounded-[1.75rem] p-6 md:p-10 reveal">
             <div className="text-center text-[11px] font-black tracking-[.25em] text-amber-600">✦ HOW IT WORKS ✦</div>
