@@ -1850,9 +1850,9 @@ export default function App() {
           <div className="mg-mobile-hero">
             {hero && <img className="mg-mobile-hero-bg" src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" onError={e => { const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG(hero.id); }} />}
             <div className="mg-mobile-hero-copy">
-              <div className="mg-eyebrow">PREMIUM DIGITAL STORE</div>
-              <h1>Digital<br />Products,<br /><span>Instant Access</span></h1>
-              <p>Get high-quality digital products, templates, software and more — access them after payment verification.</p>
+              <div className="mg-eyebrow">{lang === 'bn' ? 'প্রিমিয়াম ডিজিটাল স্টোর' : 'PREMIUM DIGITAL STORE'}</div>
+              <h1>{lang === 'bn' ? <>ডিজিটাল<br />প্রোডাক্টস,<br /><span>ইনস্ট্যান্ট অ্যাক্সেস</span></> : <>Digital<br />Products,<br /><span>Instant Access</span></>}</h1>
+              <p>{lang === 'bn' ? 'হাই-কোয়ালিটি ডিজিটাল প্রোডাক্ট, টেমপ্লেট ও সফটওয়্যার — পেমেন্ট ভেরিফাই হলেই অ্যাক্সেস পান।' : 'Get high-quality digital products, templates, software and more — access them after payment verification.'}</p>
               <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
             </div>
             <div className="mg-mobile-hero-art">
@@ -1862,14 +1862,14 @@ export default function App() {
           </div>
 
           <div className="mg-mobile-trust">
-            {([[Zap,'Instant Access','Access after payment verification'],[ShieldCheck,'Verified Payment','Safe & secure'],[Headphones,'24/7 Support',"We're here 24/7"],[Download,'Lifetime Library','Access anytime']] as [typeof Zap,string,string][]).map(([Icon,title,sub]) =>
+            {([[Zap,lang === 'bn' ? 'ইনস্ট্যান্ট অ্যাক্সেস' : 'Instant Access',lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই অ্যাক্সেস' : 'Access after payment verification'],[ShieldCheck,lang === 'bn' ? 'ভেরিফাইড পেমেন্ট' : 'Verified Payment',lang === 'bn' ? 'নিরাপদ ও সুরক্ষিত' : 'Safe & secure'],[Headphones,lang === 'bn' ? '২৪/৭ সাপোর্ট' : '24/7 Support',lang === 'bn' ? 'সবসময় পাশে আছি' : "We're here 24/7"],[Download,lang === 'bn' ? 'লাইফটাইম লাইব্রেরি' : 'Lifetime Library',lang === 'bn' ? 'যেকোনো সময় অ্যাক্সেস' : 'Access anytime']] as [typeof Zap,string,string][]).map(([Icon,title,sub]) =>
               <div key={title}><span><Icon size={21}/></span><b>{title}</b><small>{sub}</small></div>
             )}
           </div>
 
           <button className="mg-mobile-promo" onClick={() => setView('products')}>
             <img src={settings.promoImage || IMG('promo', 1000)} alt="" onError={e=>{const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG('promo',1000);}} />
-            <span className="mg-promo-copy"><b>{settings.promoTitle || 'Mega Bundle Sale'}</b><small>Get Premium Digital Products<br />at Unbeatable Prices!</small><em>{t.shopNow} <ArrowRight size={14}/></em></span>
+            <span className="mg-promo-copy"><b>{settings.promoTitle || (lang === 'bn' ? 'মেগা বান্ডেল সেল' : 'Mega Bundle Sale')}</b><small>{lang === 'bn' ? <>সেরা দামে প্রিমিয়াম ডিজিটাল<br />প্রোডাক্ট নিন!</> : <>Get Premium Digital Products<br />at Unbeatable Prices!</>}</small><em>{t.shopNow} <ArrowRight size={14}/></em></span>
           </button>
 
           <div className="mg-mobile-section-head">
