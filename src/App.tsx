@@ -1853,7 +1853,10 @@ export default function App() {
               <div className="mg-eyebrow">{lang === 'bn' ? 'প্রিমিয়াম ডিজিটাল স্টোর' : 'PREMIUM DIGITAL STORE'}</div>
               <h1>{lang === 'bn' ? <>ডিজিটাল<br />প্রোডাক্টস,<br /><span>ইনস্ট্যান্ট অ্যাক্সেস</span></> : <>Digital<br />Products,<br /><span>Instant Access</span></>}</h1>
               <p>{lang === 'bn' ? 'হাই-কোয়ালিটি ডিজিটাল প্রোডাক্ট, টেমপ্লেট ও সফটওয়্যার — পেমেন্ট ভেরিফাই হলেই অ্যাক্সেস পান।' : 'Get high-quality digital products, templates, software and more — access them after payment verification.'}</p>
-              <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
+              <div className="mg-mobile-hero-actions">
+                <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
+                {!me && <button type="button" onClick={() => setAuthOpen('register')}>{t.createAccount}</button>}
+              </div>
             </div>
             <div className="mg-mobile-hero-art">
               {hero && <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} onError={e => { const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG(hero.id); }} />}

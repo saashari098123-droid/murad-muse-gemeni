@@ -1791,11 +1791,29 @@ html[lang="bn"] .font-display,
     text-shadow: 0 2px 8px rgba(0, 0, 0, .16) !important;
   }
 
+  .mg-mobile-home .mg-mobile-hero-actions {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    margin-top: 7px !important;
+    min-width: 0 !important;
+  }
+
   .mg-mobile-home .mg-mobile-hero-copy button {
     background: linear-gradient(135deg, #18d6ff, #5260ff) !important;
     color: #071a42 !important;
-    padding: 7px 11px !important;
+    padding: 6px 8px !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    font-size: 8px !important;
     box-shadow: 0 8px 18px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .42) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-actions button + button {
+    background: rgba(255, 255, 255, .16) !important;
+    color: #e8faff !important;
+    border: 1px solid rgba(255, 255, 255, .28) !important;
   }
 
   .mg-mobile-home .mg-mobile-hero-art {
