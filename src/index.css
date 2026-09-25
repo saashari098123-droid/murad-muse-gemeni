@@ -1811,9 +1811,9 @@ html[lang="bn"] .font-display,
   }
 
   .mg-mobile-home .mg-mobile-hero-actions button + button {
-    background: rgba(255, 255, 255, .16) !important;
-    color: #e8faff !important;
-    border: 1px solid rgba(255, 255, 255, .28) !important;
+    background: linear-gradient(135deg, #18d6ff, #5260ff) !important;
+    color: #071a42 !important;
+    border: 0 !important;
   }
 
   .mg-mobile-home .mg-mobile-hero-art {

@@ -2449,7 +2449,7 @@ export default function App() {
       {authOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setAuthOpen(null); setPendingBuy(null); }}>
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm fade-up" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center"><img src="/murad-logo-icon.svg" alt="Murad Graphics" className="w-16 h-16 rounded-2xl object-contain" /></div>
+            <div className="flex justify-center"><img src="/murad-logo.png" alt="Murad Graphics" className="w-16 h-16 rounded-2xl object-contain" /></div>
             <h3 className="font-black text-center mt-2 text-lg">{authOpen === 'login' ? t.welcomeBack : t.createAccount}</h3>
             <p className="text-[11px] text-center text-slate-400 mt-0.5">{authOpen === 'login' ? (lang === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Sign in to your account') : (lang === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create your free account')}</p>
             <div className="grid gap-2 mt-3 text-sm">
