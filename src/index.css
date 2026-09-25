@@ -1580,8 +1580,8 @@ html[lang="bn"] .font-display,
 @media (min-width: 1024px) {
   .mg-desktop-home-only .home-hero,
   .mg-desktop-home-only .home-hero > .relative.grid {
-    height: 340px !important;
-    min-height: 340px !important;
+    height: 370px !important;
+    min-height: 370px !important;
   }
 
   .mg-desktop-home-only .home-hero > .relative.grid {
