@@ -1940,7 +1940,7 @@ export default function App() {
               <p className="text-orange-100/90 text-xs sm:text-sm md:text-base mt-2.5 sm:mt-4 max-w-md leading-relaxed">{lang === 'bn' ? 'পেমেন্ট ভেরিফাই হলেই Google Drive অ্যাক্সেস — কোনো অপেক্ষা নেই, কোনো ডেলিভারি চার্জ নেই।' : 'Verified payment unlocks Google Drive access instantly — no waiting, no delivery fees.'}</p>
               <div className="flex flex-wrap gap-2 sm:gap-2.5 mt-4 sm:mt-6">
                 <button onClick={() => setView('products')} className="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white font-black px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full text-xs sm:text-sm shadow-lg shadow-orange-950/40 transition flex items-center gap-1.5 cursor-pointer">{t.shopNow}<ArrowRight size={15} /></button>
-                {!me && <button onClick={() => setAuthOpen('register')} className="glass px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm hover:bg-white/15 transition cursor-pointer">{t.createAccount}</button>}
+                <button onClick={() => me ? setView('dashboard') : setAuthOpen('register')} className="glass px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm hover:bg-white/15 transition cursor-pointer">{t.createAccount}</button>
               </div>
               <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-8 flex-wrap">
                 {homeReviewCount > 0 && <div className="flex -space-x-2">{homeReviews.map((review, i) => <span key={review.id || i} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#3d1e07] flex items-center justify-center text-[10px] sm:text-xs font-black text-white bg-blue-700">{review.name.slice(0, 1).toUpperCase()}</span>)}</div>}
