@@ -1846,12 +1846,26 @@ html[lang="bn"] .font-display,
   .mg-mobile-home .mg-mobile-hero-art img {
     position: relative !important;
     z-index: 1 !important;
+    height: 148px !important;
+    max-height: 148px !important;
     box-shadow: 0 12px 24px rgba(0, 0, 0, .3), -8px 0 22px rgba(1, 15, 48, .18) !important;
     border: 1px solid rgba(255, 255, 255, .28) !important;
   }
 
   .mg-mobile-home .mg-mobile-dots {
     z-index: 4 !important;
-    bottom: 7px !important;
+    bottom: 4px !important;
+    gap: 4px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-dots button {
+    width: 5px !important;
+    height: 5px !important;
+    min-width: 5px !important;
+    border-radius: 999px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-dots button.active {
+    width: 13px !important;
   }
 }
