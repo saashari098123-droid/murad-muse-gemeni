@@ -1626,3 +1626,68 @@ html[lang="bn"] .font-display,
     height: 125px !important;
   }
 }
+
+/* Mobile home hero: give the product artwork a larger, balanced right-side area. */
+@media (max-width: 639px) {
+  .mg-desktop-home-only .home-hero {
+    min-height: 226px !important;
+    height: 226px !important;
+  }
+
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    grid-template-columns: 40% 60% !important;
+    min-height: 226px !important;
+    height: 226px !important;
+    align-items: center !important;
+    padding: 14px 0 14px 14px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-copy {
+    align-self: center !important;
+    padding-right: 6px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual {
+    align-self: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual > div:first-child,
+  .mg-desktop-home-only .home-hero-visual .float-slow,
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    height: 196px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    border-radius: 20px 0 0 20px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    width: 100% !important;
+    height: 196px !important;
+    max-height: 196px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 20px 0 0 20px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .absolute.-left-1 {
+    left: -4px !important;
+    bottom: 18px !important;
+    transform: scale(.78) !important;
+    transform-origin: left bottom !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-verified-badge {
+    top: 5px !important;
+    right: 5px !important;
+    transform: scale(.82) !important;
+    transform-origin: right top !important;
+  }
+}
