@@ -1252,11 +1252,6 @@ html[lang="bn"] .font-display,
 }
 
 
-/* ===== Content images fill their boxes; brand marks keep their proportions ===== */
-img:not(.brand-logo-icon):not([src*="murad-logo"]) {
-  object-fit: cover !important;
-  object-position: center !important;
-}
 
 
 /* ===== Compact desktop digital-product hero ===== */
@@ -1330,7 +1325,7 @@ img:not(.brand-logo-icon):not([src*="murad-logo"]) {
   .mg-desktop-home-only .home-hero-visual img {
     height: 205px !important;
     border-radius: 18px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     background: rgba(255,255,255,.06) !important;
     transform: none !important;
   }
@@ -1412,7 +1407,7 @@ img:not(.brand-logo-icon):not([src*="murad-logo"]) {
     width: 100% !important;
     height: 220px !important;
     max-height: 220px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
     transform: none !important;
     border-radius: 16px !important;
@@ -1441,7 +1436,7 @@ img:not(.brand-logo-icon):not([src*="murad-logo"]) {
   }
   .mg-desktop-home-only .hero-image-full {
     height: 220px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
     transform: none !important;
   }
@@ -1455,7 +1450,7 @@ img:not(.brand-logo-icon):not([src*="murad-logo"]) {
   }
   .mg-desktop-home-only .promo-image-full {
     height: 175px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
     transform: none !important;
   }
@@ -1465,46 +1460,412 @@ img:not(.brand-logo-icon):not([src*="murad-logo"]) {
   }
 }
 
-/* Compact mobile hero carousel indicators */
-@media (max-width: 639px) {
-  .mg-mobile-dots {
-    bottom: 3px !important;
-    gap: 4px !important;
-    height: 5px !important;
+
+/* Final desktop hero: keep the complete product preview visible and make the whole visual area feel filled */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .hero-image-frame {
+    width: 100% !important;
+    height: 220px !important;
+    display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0,0,0,.08) !important;
   }
-  .mg-mobile-dots button,
-  .mg-mobile-dots button.active {
-    width: 5px !important;
-    height: 5px !important;
-    min-width: 5px !important;
-    border-radius: 999px !important;
-    padding: 0 !important;
+
+  .mg-desktop-home-only .hero-image-full {
+    position: relative !important;
+    z-index: 10 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
   }
-  .mg-mobile-dots button.active {
-    width: 9px !important;
-    min-width: 9px !important;
+
+  .mg-desktop-home-only .hero-image-backdrop {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    filter: blur(18px) !important;
+    transform: scale(1.08) !important;
   }
 }
 
-/* Compact mobile hero carousel indicators */
-@media (max-width: 639px) {
-  .mg-mobile-dots {
-    bottom: 3px !important;
-    gap: 4px !important;
-    height: 5px !important;
+
+/* ===== Hero image fix: show the complete artwork without cropping ===== */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    height: 220px !important;
+    display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: rgba(0,0,0,.08) !important;
   }
-  .mg-mobile-dots button,
-  .mg-mobile-dots button.active {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    position: relative !important;
+    z-index: 10 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    transform: none !important;
+    flex: 1 1 auto !important;
+  }
+}
+
+
+/* Home hero: keep the verified-payment badge smaller and higher. */
+.hero-verified-badge {
+  animation: none !important;
+  transform: none !important;
+  z-index: 20;
+  top: -7px !important;
+  right: -2px !important;
+  padding: 3px 6px !important;
+  gap: 4px !important;
+  border-radius: 9px !important;
+}
+.hero-verified-badge svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+.hero-verified-badge > div {
+  font-size: 8px !important;
+  line-height: 1.05 !important;
+}
+.hero-verified-badge > div span {
+  font-size: 7px !important;
+}
+
+@media (max-width: 639px) {
+  .hero-verified-badge {
+    top: -4px !important;
+    right: -1px !important;
+    padding: 2px 5px !important;
+    border-radius: 8px !important;
+  }
+  .hero-verified-badge svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  .hero-verified-badge > div {
+    font-size: 7px !important;
+  }
+  .hero-verified-badge > div span {
+    font-size: 6px !important;
+  }
+}
+
+/* Home product cards: stay completely still; no repeated animation/jump. */
+.home-products-static,
+.home-products-static > *,
+.mg-mobile-products,
+.mg-mobile-products > *,
+.mg-mobile-product {
+  animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Desktop home composition: larger hero artwork with a slimmer, wider promo strip. */
+@media (min-width: 1024px) {
+  .mg-desktop-home-only .home-hero,
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    height: 370px !important;
+    min-height: 370px !important;
+  }
+
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important;
+    gap: 12px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual > div:first-child {
+    max-width: none !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .float-slow,
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    height: 280px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    height: 280px !important;
+    max-height: 280px !important;
+  }
+
+  .mg-desktop-home-only .home-trust {
+    height: 340px !important;
+  }
+
+  .mg-desktop-home-only .home-category-row {
+    grid-template-columns: minmax(0, 1fr) 460px !important;
+    gap: 14px !important;
+  }
+
+  .mg-desktop-home-only .home-promo,
+  .mg-desktop-home-only .home-promo img {
+    height: 125px !important;
+    min-height: 125px !important;
+  }
+
+  .mg-desktop-home-only .promo-image-full {
+    height: 125px !important;
+  }
+}
+
+/* Mobile home hero: give the product artwork a larger, balanced right-side area. */
+@media (max-width: 639px) {
+  .mg-desktop-home-only .home-hero {
+    min-height: 226px !important;
+    height: 226px !important;
+  }
+
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    grid-template-columns: 40% 60% !important;
+    min-height: 226px !important;
+    height: 226px !important;
+    align-items: center !important;
+    padding: 14px 0 14px 14px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-copy {
+    align-self: center !important;
+    padding-right: 6px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual {
+    align-self: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual > div:first-child,
+  .mg-desktop-home-only .home-hero-visual .float-slow,
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    height: 196px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    border-radius: 20px 0 0 20px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    width: 100% !important;
+    height: 196px !important;
+    max-height: 196px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 20px 0 0 20px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .absolute.-left-1 {
+    left: -4px !important;
+    bottom: 18px !important;
+    transform: scale(.78) !important;
+    transform-origin: left bottom !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-verified-badge {
+    top: 5px !important;
+    right: 5px !important;
+    transform: scale(.82) !important;
+    transform-origin: right top !important;
+  }
+
+  /* The mobile storefront uses its own hero component, not the desktop hero above. */
+  .mg-mobile-home .mg-mobile-hero {
+    height: 198px !important;
+    min-height: 198px !important;
+    grid-template-columns: 46% 54% !important;
+    align-items: center !important;
+    padding: 13px 12px 13px 14px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-copy {
+    align-self: center !important;
+    min-width: 0 !important;
+    padding-right: 5px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art {
+    align-self: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art img {
+    width: 100% !important;
+    height: 160px !important;
+    max-height: 160px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 18px 0 0 18px !important;
+  }
+
+  /* Premium mobile hero finish: stronger hierarchy, glow, depth and seamless image blend. */
+  .mg-mobile-home .mg-mobile-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(120px 150px at 91% 42%, rgba(31, 211, 255, .28), transparent 72%),
+      radial-gradient(180px 180px at 4% 100%, rgba(70, 65, 255, .26), transparent 72%),
+      linear-gradient(135deg, #06183d 0%, #0a2b63 54%, #183aa5 100%) !important;
+    box-shadow: 0 14px 30px rgba(4, 26, 75, .28) !important;
+    border: 1px solid rgba(126, 211, 252, .18) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-bg {
+    position: absolute !important;
+    inset: -12px !important;
+    z-index: 0 !important;
+    width: calc(100% + 24px) !important;
+    height: calc(100% + 24px) !important;
+    object-fit: cover !important;
+    object-position: center 38% !important;
+    opacity: .13 !important;
+    filter: blur(10px) saturate(.92) brightness(.9) !important;
+    transform: scale(1.06) !important;
+    mix-blend-mode: normal !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(3, 14, 40, .68) 0%, rgba(3, 14, 40, .3) 42%, rgba(3, 14, 40, .12) 72%, rgba(3, 14, 40, .18) 100%);
+    z-index: 2;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-copy {
+    z-index: 3 !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero .mg-eyebrow {
+    display: inline-flex !important;
+    width: fit-content !important;
+    padding: 4px 7px !important;
+    border: 1px solid rgba(126, 211, 252, .28) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, .09) !important;
+    color: #baf3ff !important;
+    letter-spacing: .12em !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero h1 {
+    margin-top: 8px !important;
+    font-weight: 900 !important;
+    letter-spacing: -.045em !important;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, .22) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero h1 span {
+    background: linear-gradient(90deg, #42e7ff, #a9b5ff) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero p {
+    color: rgba(231, 246, 255, .84) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .16) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-actions {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    margin-top: 7px !important;
+    min-width: 0 !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-copy button {
+    background: linear-gradient(135deg, #18d6ff, #5260ff) !important;
+    color: #071a42 !important;
+    padding: 6px 8px !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    font-size: 8px !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .42) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-actions button + button {
+    background: linear-gradient(135deg, #18d6ff, #5260ff) !important;
+    color: #071a42 !important;
+    border: 0 !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art {
+    z-index: 2 !important;
+    position: relative !important;
+    padding: 5px 0 5px 5px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art::before {
+    content: '';
+    position: absolute;
+    inset: 8px 0 8px 7px;
+    border-radius: 20px 0 0 20px;
+    background: rgba(59, 220, 255, .24);
+    filter: blur(16px);
+    transform: scale(.96);
+    pointer-events: none;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art::after {
+    content: '';
+    position: absolute;
+    inset: 5px 0 5px 5px;
+    border-radius: 18px 0 0 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .12), transparent 38%, rgba(3, 17, 52, .16));
+    border: 1px solid rgba(255, 255, 255, .3);
+    pointer-events: none;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art img {
+    position: relative !important;
+    z-index: 1 !important;
+    height: 148px !important;
+    max-height: 148px !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, .3), -8px 0 22px rgba(1, 15, 48, .18) !important;
+    border: 1px solid rgba(255, 255, 255, .28) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-dots {
+    z-index: 4 !important;
+    bottom: 4px !important;
+    gap: 4px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-dots button {
     width: 5px !important;
     height: 5px !important;
     min-width: 5px !important;
     border-radius: 999px !important;
-    padding: 0 !important;
   }
-  .mg-mobile-dots button.active {
-    width: 9px !important;
-    min-width: 9px !important;
+
+  .mg-mobile-home .mg-mobile-dots button.active {
+    width: 13px !important;
   }
 }
