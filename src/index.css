@@ -1741,10 +1741,10 @@ html[lang="bn"] .font-display,
     height: calc(100% + 24px) !important;
     object-fit: cover !important;
     object-position: center !important;
-    opacity: .34 !important;
-    filter: blur(22px) saturate(1.28) !important;
-    transform: scale(1.08) !important;
-    mix-blend-mode: screen !important;
+    opacity: .18 !important;
+    filter: blur(8px) saturate(1.08) !important;
+    transform: scale(1.04) !important;
+    mix-blend-mode: normal !important;
   }
 
   .mg-mobile-home .mg-mobile-hero::after {
@@ -1752,7 +1752,7 @@ html[lang="bn"] .font-display,
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: linear-gradient(90deg, rgba(3, 14, 40, .52) 0%, rgba(3, 14, 40, .15) 50%, rgba(3, 14, 40, .2) 100%);
+    background: linear-gradient(90deg, rgba(3, 14, 40, .68) 0%, rgba(3, 14, 40, .3) 42%, rgba(3, 14, 40, .12) 72%, rgba(3, 14, 40, .18) 100%);
     z-index: 2;
   }
 
