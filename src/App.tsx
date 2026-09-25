@@ -541,8 +541,9 @@ export default function App() {
     } else if (schema) schema.remove();
   }, [detail]);
 
-  // access rule: logged in + owns (paid purchase)
-  const owns = (uid_: string | null, pid: string) => !!uid_ && (products.some(p => p.id === pid && p.isFree === true) || purchases.some(p => p.userId === uid_ && p.productId === pid && p.accessStatus === 'active'));
+  // Access is granted only after an explicit purchase/claim. Free products are
+  // not treated as owned merely because they are marked free in the catalog.
+  const owns = (uid_: string | null, pid: string) => !!uid_ && purchases.some(p => p.userId === uid_ && p.productId === pid && p.accessStatus === 'active');
   const myPurchases = purchases.filter(p => p.userId === sessionId && p.accessStatus === 'active');
   const myOrders = orders.filter(o => o.userId === sessionId);
   const recentAdminOrders = [...orders].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 6);
@@ -747,16 +748,41 @@ export default function App() {
   };
 
   // ---------- cart (digital: one per product, no qty) ----------
+  const claimFreeProduct = async (pid: string) => {
+    if (!me) { setPendingBuy(pid); setAuthOpen('login'); return; }
+    if (owns(me.id, pid)) { setView('purchases'); return; }
+    const product = products.find(p => p.id === pid);
+    if (!product?.isFree) return;
+    if (!db) { fail('Firebase Firestore is not configured.'); return; }
+    const purchaseId = me.id + '_' + pid;
+    const purchase: Purchase = {
+      id: purchaseId,
+      userId: me.id,
+      productId: pid,
+      orderId: 'FREE-' + Date.now().toString(36).toUpperCase(),
+      accessStatus: 'active',
+      purchasedAt: nowStr(),
+    };
+    try {
+      await setDoc(doc(db, 'purchases', purchaseId), purchase);
+      setPurchases(prev => [...prev.filter(p => p.id !== purchaseId), purchase]);
+      notify('✓ ' + (lang === 'bn' ? 'ফ্রি প্রোডাক্টটি আপনার লাইব্রেরিতে যোগ হয়েছে' : 'Free product added to your library'));
+      setView('purchases');
+    } catch (e: unknown) {
+      fail(e instanceof Error ? e.message : 'Could not claim free product.');
+    }
+  };
+
   const addCart = (pid: string) => {
     const product = products.find(p => p.id === pid);
-    if (product?.isFree) { if (!me) { setPendingBuy(pid); setAuthOpen('login'); return; } void openAccess(me.id, pid); return; }
+    if (product?.isFree) { if (view !== 'details') goDetails(pid); return; }
     if (owns(sessionId, pid)) { fail(t.alreadyPurchased); setView('purchases'); return; }
     if (cart.some(c => c.productId === pid)) { fail(t.alreadyCart); return; }
     setCart([...cart, { productId: pid }]); notify('✓ ' + t.cartAdded);
   };
   const buyNow = (pid: string) => {
     const product = products.find(p => p.id === pid);
-    if (product?.isFree) { if (!me) { setPendingBuy(pid); setAuthOpen('login'); return; } void openAccess(me.id, pid); return; }
+    if (product?.isFree) { void claimFreeProduct(pid); return; }
     if (owns(sessionId, pid)) { fail(t.alreadyPurchased); setView('purchases'); return; }
     if (!me) { setPendingBuy(pid); setAuthOpen('login'); fail(t.loginRequired); return; }
     setCart([{ productId: pid }]); setView('checkout');
@@ -766,7 +792,7 @@ export default function App() {
       const pid = pendingBuy;
       const product = products.find(p => p.id === pid);
       setPendingBuy(null);
-      if (product?.isFree) { void openAccess(uid_, pid); return; }
+      if (product?.isFree) { void claimFreeProduct(pid); return; }
       if (!owns(uid_, pid)) { setCart([{ productId: pid }]); setView('checkout'); return; }
       setView('purchases'); return;
     }
@@ -885,8 +911,7 @@ export default function App() {
   const openAccess = async (uid_: string | null, pid: string) => {
     if (!uid_) { fail(t.pleaseLogin); return; }
     const product = products.find(p => p.id === pid);
-    const freeAccess = product?.isFree === true;
-    if (!freeAccess && !owns(uid_, pid)) { fail(t.accessDenied); return; }
+    if (!product || !owns(uid_, pid)) { fail(t.accessDenied); return; }
     if (!db) { fail(t.noAccessLink); return; }
 
     // Customers always fetch the delivery URL from the purchase-gated document.
