@@ -1575,3 +1575,40 @@ html[lang="bn"] .font-display,
   transform: none !important;
   will-change: auto !important;
 }
+
+/* Desktop home composition: larger hero artwork with a slimmer, wider promo strip. */
+@media (min-width: 1024px) {
+  .mg-desktop-home-only .home-hero,
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    height: 340px !important;
+    min-height: 340px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    height: 280px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    height: 280px !important;
+    max-height: 280px !important;
+  }
+
+  .mg-desktop-home-only .home-trust {
+    height: 340px !important;
+  }
+
+  .mg-desktop-home-only .home-category-row {
+    grid-template-columns: minmax(0, 1fr) 460px !important;
+    gap: 14px !important;
+  }
+
+  .mg-desktop-home-only .home-promo,
+  .mg-desktop-home-only .home-promo img {
+    height: 125px !important;
+    min-height: 125px !important;
+  }
+
+  .mg-desktop-home-only .promo-image-full {
+    height: 125px !important;
+  }
+}
