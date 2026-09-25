@@ -1720,4 +1720,106 @@ html[lang="bn"] .font-display,
     object-position: center !important;
     border-radius: 18px 0 0 18px !important;
   }
+
+  /* Premium mobile hero finish: stronger hierarchy, glow, depth and seamless image blend. */
+  .mg-mobile-home .mg-mobile-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(120px 150px at 91% 42%, rgba(31, 211, 255, .28), transparent 72%),
+      radial-gradient(180px 180px at 4% 100%, rgba(70, 65, 255, .26), transparent 72%),
+      linear-gradient(135deg, #06183d 0%, #0a2b63 54%, #183aa5 100%) !important;
+    box-shadow: 0 14px 30px rgba(4, 26, 75, .28) !important;
+    border: 1px solid rgba(126, 211, 252, .18) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(3, 14, 40, .36) 0%, rgba(3, 14, 40, .04) 48%, rgba(3, 14, 40, .12) 100%);
+    z-index: 1;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-copy {
+    z-index: 3 !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero .mg-eyebrow {
+    display: inline-flex !important;
+    width: fit-content !important;
+    padding: 4px 7px !important;
+    border: 1px solid rgba(126, 211, 252, .28) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, .09) !important;
+    color: #baf3ff !important;
+    letter-spacing: .12em !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero h1 {
+    margin-top: 8px !important;
+    font-weight: 900 !important;
+    letter-spacing: -.045em !important;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, .22) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero h1 span {
+    background: linear-gradient(90deg, #42e7ff, #a9b5ff) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero p {
+    color: rgba(231, 246, 255, .84) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .16) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-copy button {
+    background: linear-gradient(135deg, #18d6ff, #5260ff) !important;
+    color: #071a42 !important;
+    padding: 7px 11px !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .42) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art {
+    z-index: 2 !important;
+    position: relative !important;
+    padding: 5px 0 5px 5px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art::before {
+    content: '';
+    position: absolute;
+    inset: 8px 0 8px 7px;
+    border-radius: 20px 0 0 20px;
+    background: rgba(59, 220, 255, .24);
+    filter: blur(16px);
+    transform: scale(.96);
+    pointer-events: none;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art::after {
+    content: '';
+    position: absolute;
+    inset: 5px 0 5px 5px;
+    border-radius: 18px 0 0 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .12), transparent 38%, rgba(3, 17, 52, .16));
+    border: 1px solid rgba(255, 255, 255, .3);
+    pointer-events: none;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art img {
+    position: relative !important;
+    z-index: 1 !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, .3), -8px 0 22px rgba(1, 15, 48, .18) !important;
+    border: 1px solid rgba(255, 255, 255, .28) !important;
+  }
+
+  .mg-mobile-home .mg-mobile-dots {
+    z-index: 4 !important;
+    bottom: 7px !important;
+  }
 }
