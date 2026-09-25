@@ -1880,7 +1880,7 @@ export default function App() {
               <p>{lang === 'bn' ? 'হাই-কোয়ালিটি ডিজিটাল প্রোডাক্ট, টেমপ্লেট ও সফটওয়্যার — পেমেন্ট ভেরিফাই হলেই অ্যাক্সেস পান।' : 'Get high-quality digital products, templates, software and more — access them after payment verification.'}</p>
               <div className="mg-mobile-hero-actions">
                 <button onClick={() => setView('products')}>{t.shopNow} <ArrowRight size={15} /></button>
-                {!me && <button type="button" onClick={() => setAuthOpen('register')}>{t.createAccount}</button>}
+                <button type="button" onClick={() => me ? setView('dashboard') : setAuthOpen('register')}>{t.createAccount}</button>
               </div>
             </div>
             <div className="mg-mobile-hero-art">
