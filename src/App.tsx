@@ -1857,15 +1857,28 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center gap-2">
           <span className="font-medium truncate min-w-0">{lang === 'bn' ? settings.announcement.replace('Welcome to Murad Graphics!', 'মুরাদ গ্রাফিক্সে স্বাগতম!') : settings.announcement}</span>
           <div className="flex-1" />
-          <button
-            onClick={() => setNavOpen(open => !open)}
-            aria-label={lang === 'bn' ? 'নেভিগেশন মেনু' : 'Open navigation menu'}
-            aria-expanded={navOpen}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/20 hover:bg-white/10 font-bold cursor-pointer shrink-0"
-          >
-            <Menu size={16} />
-            <span>{lang === 'bn' ? 'মেনু' : 'Menu'}</span>
-          </button>
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <button
+              onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+              className="px-3 py-1.5 rounded-lg hover:bg-white/10 font-bold cursor-pointer"
+            >
+              {lang === 'bn' ? 'বাংলা' : 'English'}
+            </button>
+            <button
+              onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }}
+              className="px-2 sm:px-3 py-1.5 rounded-lg hover:bg-white/10 font-bold cursor-pointer"
+            >
+              {t.myOrders}
+            </button>
+            <a
+              href={waLink(settings.whatsapp, 'Support needed')}
+              target="_blank"
+              rel="noreferrer"
+              className="px-2 sm:px-3 py-1.5 rounded-lg hover:bg-white/10 font-bold cursor-pointer"
+            >
+              {t.support}
+            </a>
+          </div>
         </div>
       </div>
 
@@ -1941,22 +1954,6 @@ export default function App() {
         </div>
       </header>
 
-      {navOpen && (
-        <div className="site-nav-panel fixed sm:absolute top-[62px] sm:top-[112px] left-0 right-0 z-40 px-3 sm:px-0" role="navigation" aria-label={lang === 'bn' ? 'প্রধান নেভিগেশন' : 'Main navigation'}>
-          <div className="site-nav-card max-w-7xl mx-auto rounded-2xl shadow-2xl p-2 sm:p-3">
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2">
-              <button onClick={() => goNav('home')} className="site-nav-link"><Store size={16} />{t.home}</button>
-              <button onClick={() => { setCatFilter('All'); goNav('products'); }} className="site-nav-link"><ShoppingBag size={16} />{t.shopNow}</button>
-              <button onClick={() => goNav('cart')} className="site-nav-link"><ShoppingCart size={16} />{t.cart}</button>
-              <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('orders'); }} className="site-nav-link"><History size={16} />{t.orderHistory}</button>
-              <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('purchases'); }} className="site-nav-link"><Download size={16} />{t.library}</button>
-              <button onClick={() => { setNavOpen(false); setLang(lang === 'bn' ? 'en' : 'bn'); }} className="site-nav-link"><Globe size={16} />{lang === 'bn' ? 'বাংলা' : 'English'}</button>
-              <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('orders'); }} className="site-nav-link"><History size={16} />{t.myOrders}</button>
-              <a href={waLink(settings.whatsapp, 'Support needed')} target="_blank" rel="noreferrer" className="site-nav-link"><Headphones size={16} />{t.support}</a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ============ HOME ============ */}
       {view === 'home' && <>
