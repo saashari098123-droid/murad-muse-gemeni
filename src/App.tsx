@@ -1848,6 +1848,7 @@ export default function App() {
         {/* Reference-matched mobile home. Desktop/home logic remains untouched. */}
         <section className="mg-mobile-home sm:hidden">
           <div className="mg-mobile-hero">
+            {hero && <img className="mg-mobile-hero-bg" src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" onError={e => { const im=e.target as HTMLImageElement; im.onerror=null; im.src=IMG(hero.id); }} />}
             <div className="mg-mobile-hero-copy">
               <div className="mg-eyebrow">PREMIUM DIGITAL STORE</div>
               <h1>Digital<br />Products,<br /><span>Instant Access</span></h1>
