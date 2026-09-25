@@ -1690,4 +1690,34 @@ html[lang="bn"] .font-display,
     transform: scale(.82) !important;
     transform-origin: right top !important;
   }
+
+  /* The mobile storefront uses its own hero component, not the desktop hero above. */
+  .mg-mobile-home .mg-mobile-hero {
+    height: 214px !important;
+    min-height: 214px !important;
+    grid-template-columns: 40% 60% !important;
+    align-items: center !important;
+    padding: 13px 12px 13px 14px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-copy {
+    align-self: center !important;
+    min-width: 0 !important;
+    padding-right: 5px !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art {
+    align-self: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .mg-mobile-home .mg-mobile-hero-art img {
+    width: 100% !important;
+    height: 188px !important;
+    max-height: 188px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 18px 0 0 18px !important;
+  }
 }
