@@ -5,7 +5,7 @@ import {
   ChevronRight, ChevronLeft, ChevronDown, User as UserIcon, Users, Tag, Bell, Box, Globe, Store,
   Download, Headphones, BadgeCheck, ShieldCheck, Zap, History, LogIn, AlertCircle,
   ArrowRight, ArrowLeft, LayoutGrid, MapPin, Phone, Facebook, Youtube, Instagram, Send,
-  Lock, Key,
+  Lock, Key, Menu,
 } from 'lucide-react';
 import { STR, type Lang } from './i18n';
 import {
@@ -89,6 +89,7 @@ export default function App() {
   const [err, setErr] = useState('');
   const [copied, setCopied] = useState('');
   const [acctMenu, setAcctMenu] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [payMethod, setPayMethod] = useState('bKash');
   const [trxId, setTrxId] = useState('');
   const [couponInput, setCouponInput] = useState('');
@@ -758,6 +759,12 @@ export default function App() {
     setSessionId(null);
     setAcctMenu(false);
     setView('home');
+  };
+
+  const goNav = (next: View) => {
+    setNavOpen(false);
+    setAcctMenu(false);
+    setView(next);
   };
 
   // ---------- cart (digital: one per product, no qty) ----------
@@ -1813,6 +1820,7 @@ export default function App() {
       <header className="store-header text-white sticky top-0 z-30 shadow-lg w-full" style={{ background: BROWN }}>
         <div className="max-w-7xl mx-auto px-3 py-2.5 sm:py-3 flex items-center gap-3">
           <button onClick={() => setView('home')} className="shrink-0 cursor-pointer"><Logo /></button>
+          <button onClick={() => setNavOpen(open => !open)} aria-label={lang === 'bn' ? 'নেভিগেশন মেনু' : 'Open navigation menu'} aria-expanded={navOpen} className="nav-trigger hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/25 hover:bg-white/10 font-bold text-xs cursor-pointer transition-colors"><Menu size={17} /><span>{lang === 'bn' ? 'মেনু' : 'Menu'}</span></button>
           <div className="header-search flex-1 max-w-2xl mx-auto relative flex items-center">
             <input
               value={search}
@@ -1831,6 +1839,7 @@ export default function App() {
           </div>
           <div className="flex-1 sm:hidden" />
           <div className="mobile-header-actions sm:hidden flex items-center gap-1">
+            <button onClick={() => setNavOpen(open => !open)} aria-label={lang === 'bn' ? 'নেভিগেশন মেনু' : 'Open navigation menu'} aria-expanded={navOpen} className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Menu size={19} /></button>
             <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} aria-label="Change language" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Globe size={18} /></button>
             <button onClick={() => { if (!me) { setAuthOpen('login'); fail(t.loginRequired); return; } setView('orders'); }} aria-label="Notifications and orders" className="header-icon-btn p-1.5 rounded-full hover:bg-white/10 cursor-pointer"><Bell size={19} /></button>
           </div>
@@ -1880,6 +1889,21 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {navOpen && (
+        <div className="site-nav-panel fixed sm:absolute top-[62px] sm:top-[112px] left-0 right-0 z-40 px-3 sm:px-0" role="navigation" aria-label={lang === 'bn' ? 'প্রধান নেভিগেশন' : 'Main navigation'}>
+          <div className="site-nav-card max-w-7xl mx-auto rounded-2xl shadow-2xl p-2 sm:p-3">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2">
+              <button onClick={() => goNav('home')} className="site-nav-link"><Store size={16} />{t.home}</button>
+              <button onClick={() => { setCatFilter('All'); goNav('products'); }} className="site-nav-link"><ShoppingBag size={16} />{t.shopNow}</button>
+              <button onClick={() => goNav('cart')} className="site-nav-link"><ShoppingCart size={16} />{t.cart}</button>
+              <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('orders'); }} className="site-nav-link"><History size={16} />{t.orderHistory}</button>
+              <button onClick={() => { if (!me) { setNavOpen(false); setAuthOpen('login'); fail(t.loginRequired); return; } goNav('purchases'); }} className="site-nav-link"><Download size={16} />{t.library}</button>
+              <button onClick={() => { setNavOpen(false); setLang(lang === 'bn' ? 'en' : 'bn'); }} className="site-nav-link"><Globe size={16} />{lang === 'bn' ? 'English' : 'বাংলা'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ============ HOME ============ */}
       {view === 'home' && <>

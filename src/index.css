@@ -1914,3 +1914,20 @@ html[lang="bn"] .font-display,
     transform: translateX(-50%) !important;
   }
 }
+
+/* Professional storefront navigation menu */
+.site-nav-panel { pointer-events: none; }
+.site-nav-card { pointer-events: auto; background: #ffffff; border: 1px solid rgba(11, 61, 159, .14); }
+.site-nav-link { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 42px; padding: .65rem .9rem; border-radius: .8rem; color: #17305f; background: #f5f8ff; font-size: .82rem; font-weight: 800; cursor: pointer; transition: background .18s ease, color .18s ease, transform .18s ease; }
+.site-nav-link:hover { color: #ffffff; background: #0b3d9f; transform: translateY(-1px); }
+.nav-trigger[aria-expanded="true"], .header-icon-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); }
+@media (max-width: 639px) {
+  .store-header .mobile-header-actions { flex: 0 0 68px !important; width: 68px !important; justify-content: flex-end !important; }
+  .store-header .mobile-header-actions button { width: 21px !important; flex: 0 0 21px !important; }
+  .site-nav-panel { top: 70px !important; }
+  .site-nav-card { border-color: #c9d9f5; background: rgba(255,255,255,.98); }
+  .site-nav-link { min-height: 44px; padding: .6rem .4rem; font-size: .72rem; }
+}
+@media (min-width: 640px) {
+  .site-nav-panel { top: 112px !important; }
+}
