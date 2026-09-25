@@ -77,6 +77,7 @@ export default function App() {
   const [catFilter, setCatFilter] = useState('All');
   const [maxPrice, setMaxPrice] = useState('');
   const [sort, setSort] = useState('popular');
+  const [productPage, setProductPage] = useState(1);
   const [slide, setSlide] = useState(0);
   const [gal, setGal] = useState(0);
   const [tab, setTab] = useState<'desc' | 'rev'>('desc');
@@ -570,6 +571,18 @@ export default function App() {
     else list = [...list].sort((a, b) => b.sold - a.sold);
     return list;
   }, [activeProducts, catFilter, search, maxPrice, sort]);
+
+  const productsPerPage = 25;
+  const productPageCount = Math.max(1, Math.ceil(filtered.length / productsPerPage));
+  const visibleProducts = filtered.slice((productPage - 1) * productsPerPage, productPage * productsPerPage);
+
+  useEffect(() => {
+    setProductPage(1);
+  }, [catFilter, search, maxPrice, sort]);
+
+  useEffect(() => {
+    setProductPage(page => Math.min(page, productPageCount));
+  }, [productPageCount]);
 
   const cartDetailed = cart.map(c => ({ ...c, p: products.find(p => p.id === c.productId && p.status === 'active')! })).filter(x => x.p);
   const subtotal = cartDetailed.reduce((s, x) => s + eff(x.p), 0);
@@ -2096,8 +2109,22 @@ export default function App() {
               <select value={sort} onChange={e => setSort(e.target.value)} className="border rounded-xl px-3 py-2.5 text-sm"><option value="popular">{t.popular}</option><option value="new">{t.newest}</option><option value="low">{t.lowHigh}</option><option value="high">{t.highLow}</option></select>
             </div>
           </div>
-          {filtered.length === 0 ? <div className="bg-white rounded-2xl p-10 text-center text-slate-500 text-sm">—</div> : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 stagger-in">{filtered.map(p => <ProductCard key={p.id} p={p} />)}</div>)}
+          {filtered.length === 0 ? <div className="bg-white rounded-2xl p-10 text-center text-slate-500 text-sm">—</div> : <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 stagger-in">{visibleProducts.map(p => <ProductCard key={p.id} p={p} />)}</div>
+            <div className="flex items-center justify-center gap-2 mt-6" aria-label={lang === 'bn' ? 'পেজিনেশন' : 'Pagination'}>
+              <button
+                onClick={() => setProductPage(page => Math.max(1, page - 1))}
+                disabled={productPage === 1}
+                className="px-3 py-2 rounded-xl border text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-orange-50 transition"
+              >{lang === 'bn' ? 'আগের' : 'Previous'}</button>
+              <span className="min-w-24 text-center text-sm font-bold text-slate-600">{lang === 'bn' ? 'পৃষ্ঠা' : 'Page'} {productPage} {lang === 'bn' ? 'এর' : 'of'} {productPageCount}</span>
+              <button
+                onClick={() => setProductPage(page => Math.min(productPageCount, page + 1))}
+                disabled={productPage === productPageCount}
+                className="px-3 py-2 rounded-xl border text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-orange-50 transition"
+              >{lang === 'bn' ? 'পরের' : 'Next'}</button>
+            </div>
+          </>}
         </main>
       )}
 
