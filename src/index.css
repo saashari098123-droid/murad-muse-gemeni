@@ -1627,23 +1627,6 @@ html[lang="bn"] .font-display,
   }
 }
 
-/* Square hero posters: keep the full artwork large inside a near-1:1 frame. */
-@media (min-width: 640px) {
-  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
-    width: min(100%, 460px) !important;
-    height: auto !important;
-    aspect-ratio: 1 / 1 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: none !important;
-    object-fit: contain !important;
-  }
-}
-
 /* Mobile home hero: give the product artwork a larger, balanced right-side area. */
 @media (max-width: 639px) {
   .mg-desktop-home-only .home-hero {
