@@ -2156,3 +2156,57 @@ html[lang="bn"] .font-display,
     display: none !important;
   }
 }
+
+
+/* Balanced desktop hero: large sharp artwork + image-derived soft backdrop. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual > .slide-in {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    max-width: none !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    background: transparent !important;
+    isolation: isolate !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-backdrop {
+    display: block !important;
+    position: absolute !important;
+    inset: -4% !important;
+    width: 108% !important;
+    height: 108% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    opacity: .72 !important;
+    filter: blur(16px) saturate(.9) !important;
+    transform: scale(1.05) !important;
+    z-index: 0 !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    position: relative !important;
+    z-index: 2 !important;
+    display: block !important;
+    width: auto !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    margin: 0 auto !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background: rgba(0,0,0,.08) !important;
+  }
+}
