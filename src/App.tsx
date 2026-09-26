@@ -2070,7 +2070,24 @@ export default function App() {
                   <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl hero-image-frame">
                     <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-45" />
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10" />
-                    <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="hero-image-full relative z-10 block w-auto max-w-full h-48 sm:h-64 md:h-80 max-h-full object-contain rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
+                    <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="hero-image-full relative z-10 block w-auto max-w-full h-48 sm:h-64 md:h-80 max-h-full object-contain rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20" onLoad={e => {
+                      const im = e.currentTarget;
+                      const frame = im.closest('.hero-image-frame') as HTMLElement | null;
+                      if (frame && im.naturalWidth && im.naturalHeight && window.matchMedia('(min-width: 640px)').matches) {
+                        const ratio = im.naturalWidth / im.naturalHeight;
+                        const parentWidth = frame.parentElement?.clientWidth || 448;
+                        const maxWidth = Math.min(parentWidth, 448);
+                        const maxHeight = 280;
+                        let width = maxWidth;
+                        let height = width / ratio;
+                        if (height > maxHeight) {
+                          height = maxHeight;
+                          width = height * ratio;
+                        }
+                        frame.style.setProperty('--hero-frame-width', Math.round(width) + 'px');
+                        frame.style.setProperty('--hero-frame-height', Math.round(height) + 'px');
+                      }
+                    }} onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
                     <div className="mobile-hero-overlay absolute inset-0 rounded-2xl p-4 flex flex-col justify-end items-start text-white">
                       <span className="mobile-hero-badge inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#4a250d]">✦ {lang === 'bn' ? 'আজকের অফার' : 'TODAY\'S OFFER'}</span>
                       <h2 className="mt-2 max-w-[72%] font-display text-lg font-black leading-tight drop-shadow-md">{hero.name}</h2>
