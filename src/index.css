@@ -2031,9 +2031,9 @@ html[lang="bn"] .font-display,
     height: 100% !important;
     object-fit: cover !important;
     object-position: center !important;
-    filter: blur(14px) !important;
-    transform: scale(1.08) !important;
-    opacity: .52 !important;
+    filter: blur(8px) !important;
+    transform: scale(1.06) !important;
+    opacity: .68 !important;
   }
 }
 
