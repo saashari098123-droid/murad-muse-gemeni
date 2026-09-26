@@ -2091,3 +2091,39 @@ html[lang="bn"] .font-display,
     opacity: .18 !important;
   }
 }
+
+
+/* Final desktop hero: make the actual hero artwork fill the entire frame. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
+    background: transparent !important;
+    overflow: hidden !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-backdrop {
+    display: none !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    position: relative !important;
+    inset: auto !important;
+    z-index: 10 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: inherit !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame > .absolute.inset-0.bg-gradient-to-br {
+    z-index: 11 !important;
+    opacity: .08 !important;
+  }
+}
