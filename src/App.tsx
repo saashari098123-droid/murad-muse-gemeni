@@ -561,7 +561,7 @@ export default function App() {
     .flatMap(([productId, reviews]) => reviews.map(review => ({ ...review, productName: products.find(p => p.id === productId)?.name || '' })))
     .filter(review => review.verified === true)
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-    .slice(0, 6), [cloudReviews, products]);
+    .slice(0, 4), [cloudReviews, products]);
 
   const filtered = useMemo(() => {
     let list = activeProducts.filter(p =>
@@ -963,13 +963,13 @@ export default function App() {
     const existing = (cloudReviews[detail.id] || detail.reviews || []).find(r => r.userId === me.id);
     if (existing) { fail(lang === 'bn' ? 'এই পণ্যে আপনার rating আগে থেকেই দেওয়া আছে।' : 'You have already rated this product.'); return; }
     const purchaseId = `${me.id}_${detail.id}`;
-    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: false, moderationStatus: 'pending', createdAt: Date.now() };
+    const review: Review = { id: `${detail.id}_${me.id}`, productId: detail.id, userId: me.id, purchaseId, name: revName.trim(), rating: Math.min(5, Math.max(1, revStars)), text: revText.trim(), date: nowStr(), verified: true, moderationStatus: 'approved', createdAt: Date.now() };
     try {
       if (!db) throw new Error('Firebase Firestore is not configured.');
       await setDoc(doc(db, 'reviews', review.id || `${detail.id}_${me.id}`), review);
       const nextReviews = [...(cloudReviews[detail.id] || detail.reviews || []), review];
       setCloudReviews(prev => ({ ...prev, [detail.id]: nextReviews }));
-      setRevName(''); setRevText(''); setRevStars(5); notify('✓ ' + (lang === 'bn' ? 'আপনার review admin approval-এর জন্য পাঠানো হয়েছে।' : 'Your review was sent for admin approval.'));
+      setRevName(''); setRevText(''); setRevStars(5); notify('✓ ' + (lang === 'bn' ? 'আপনার review এখনই homepage-এ live হয়েছে।' : 'Your review is now live on the homepage.'));
     } catch (e: unknown) {
       fail(e instanceof Error ? e.message : (lang === 'bn' ? 'Rating save হয়নি। আবার চেষ্টা করুন।' : 'Could not save rating. Please try again.'));
     }
