@@ -2044,3 +2044,50 @@ html[lang="bn"] .font-display,
     min-height: 300px !important;
   }
 }
+
+
+/* Image-filled desktop hero:
+   The entire frame is visually filled by the same hero artwork.
+   The sharp artwork stays uncropped in the center while its enlarged,
+   softly blurred copy fills all surrounding space. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    background: transparent !important;
+    isolation: isolate !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,.10), transparent 22%, transparent 78%, rgba(0,0,0,.10)),
+      linear-gradient(180deg, rgba(0,0,0,.06), transparent 22%, transparent 78%, rgba(0,0,0,.10)) !important;
+    border-radius: inherit !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-backdrop {
+    z-index: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    opacity: .82 !important;
+    filter: blur(18px) saturate(.9) !important;
+    transform: scale(1.16) !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    z-index: 2 !important;
+    object-fit: contain !important;
+    object-position: center !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame > .absolute.inset-0.bg-gradient-to-br {
+    z-index: 3 !important;
+    opacity: .18 !important;
+  }
+}
