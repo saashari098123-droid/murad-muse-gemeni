@@ -1948,3 +1948,15 @@ html[lang="bn"] .font-display,
     object-fit: contain !important;
   }
 }
+
+/* Make the full-frame poster backdrop clearly visible beside the contained artwork. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .hero-image-frame .hero-image-backdrop {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    opacity: .78 !important;
+    filter: blur(8px) !important;
+    transform: scale(1.12) !important;
+  }
+}
