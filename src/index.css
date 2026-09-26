@@ -2127,3 +2127,32 @@ html[lang="bn"] .font-display,
     opacity: .08 !important;
   }
 }
+
+
+/* Final width correction: let the desktop hero artwork use the whole visual column. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual > .slide-in {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    max-width: none !important;
+    height: 300px !important;
+    min-height: 300px !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-backdrop {
+    display: none !important;
+  }
+}
