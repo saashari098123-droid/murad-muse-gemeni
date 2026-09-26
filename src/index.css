@@ -1931,3 +1931,20 @@ html[lang="bn"] .font-display,
 @media (min-width: 640px) {
   .site-nav-panel { top: 112px !important; }
 }
+
+/* Desktop hero: trim excess bottom space while keeping the poster frame unchanged. */
+@media (min-width: 1024px) {
+  .mg-desktop-home-only .home-hero,
+  .mg-desktop-home-only .home-hero > .relative.grid {
+    height: 325px !important;
+    min-height: 325px !important;
+  }
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    height: 280px !important;
+  }
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    height: 280px !important;
+    max-height: 280px !important;
+    object-fit: contain !important;
+  }
+}
