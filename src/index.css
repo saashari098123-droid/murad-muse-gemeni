@@ -1960,3 +1960,36 @@ html[lang="bn"] .font-display,
     transform: scale(1.12) !important;
   }
 }
+
+
+/* Smart desktop hero frame: match the frame to the loaded image ratio so the
+   complete artwork is visible without crop and without letterbox gaps. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: var(--hero-frame-width, 100%) !important;
+    height: var(--hero-frame-height, 280px) !important;
+    max-width: 100% !important;
+    max-height: 280px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    background: transparent !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    border-radius: inherit !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-backdrop {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: inherit !important;
+  }
+}
