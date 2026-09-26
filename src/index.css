@@ -1993,3 +1993,54 @@ html[lang="bn"] .font-display,
     border-radius: inherit !important;
   }
 }
+
+
+/* Final desktop hero layout:
+   Keep the hero frame large/full-width. Only the artwork adapts inside it.
+   Square/portrait images remain uncropped instead of shrinking the frame. */
+@media (min-width: 640px) {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    width: 100% !important;
+    max-width: none !important;
+    height: 300px !important;
+    max-height: 300px !important;
+    min-height: 300px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: rgba(0,0,0,.08) !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-full {
+    width: auto !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame .hero-image-backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    filter: blur(14px) !important;
+    transform: scale(1.08) !important;
+    opacity: .52 !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mg-desktop-home-only .home-hero-visual .hero-image-frame {
+    height: 300px !important;
+    max-height: 300px !important;
+    min-height: 300px !important;
+  }
+}
