@@ -2066,7 +2066,7 @@ export default function App() {
             </div>
             <div className="home-hero-visual relative mt-2 lg:mt-0">
               {hero && (
-                <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
+                <div key={hero.id + slide} className="slide-in relative mx-auto w-full max-w-none">
                   <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl hero-image-frame">
                     <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-45" />
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10" />
