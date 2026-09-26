@@ -1515,7 +1515,7 @@ html[lang="bn"] .font-display,
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
     transform: none !important;
     flex: 1 1 auto !important;
@@ -1672,7 +1672,7 @@ html[lang="bn"] .font-display,
     width: 100% !important;
     height: 196px !important;
     max-height: 196px !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
     border-radius: 20px 0 0 20px !important;
   }
