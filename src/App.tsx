@@ -2068,6 +2068,7 @@ export default function App() {
               {hero && (
                 <div key={hero.id + slide} className="slide-in relative mx-auto max-w-md">
                   <div className="float-slow relative overflow-hidden rounded-2xl sm:rounded-3xl hero-image-frame">
+                    <img src={hero.previewImages[0] || IMG(hero.id)} alt="" aria-hidden="true" className="hero-image-backdrop absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-45" />
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10" />
                     <img src={hero.previewImages[0] || IMG(hero.id)} alt={hero.name} className="hero-image-full relative z-10 block w-auto max-w-full h-48 sm:h-64 md:h-80 max-h-full object-contain rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20" onError={e => { const im = e.target as HTMLImageElement; im.onerror = null; im.src = IMG(hero.id); }} />
                     <div className="mobile-hero-overlay absolute inset-0 rounded-2xl p-4 flex flex-col justify-end items-start text-white">
